@@ -222,7 +222,7 @@
               <!-- iframe模式：直接显示 message 内容 -->
               <iframe
                 v-else-if="settingsStore.useIframeShowMail"
-                :srcdoc="getDisplayMessage()"
+                :srcdoc="sanitizedHtmlContent"
                 class="html-iframe"
                 sandbox="allow-same-origin"
                 @load="handleIframeLoad"
@@ -231,7 +231,8 @@
               <!-- 安全渲染模式：使用 ShadowHtmlComponent -->
               <ShadowHtmlComponent
                 v-else
-                :html-content="getDisplayMessage()"
+                :html-content="sanitizedHtmlContent"
+                :display-mode="effectiveMailDisplayMode"
                 class="shadow-content"
               />
             </div>
@@ -518,6 +519,13 @@ const mailContentClasses = computed(() => {
   return classes
 })
 
+const effectiveMailDisplayMode = computed<'light' | 'dark' | 'high-contrast'>(() => {
+  if (settingsStore.mailDisplayMode === 'high-contrast') return 'high-contrast'
+  if (settingsStore.mailDisplayMode === 'dark') return 'dark'
+  if (settingsStore.mailDisplayMode === 'light') return 'light'
+  return settingsStore.isDark ? 'dark' : 'light'
+})
+
 const sanitizedHtmlContent = computed(() => {
   const content = getDisplayMessage()
   if (!content) return '<p>邮件内容为空</p>'
@@ -531,22 +539,60 @@ const sanitizedHtmlContent = computed(() => {
   // Remove dangerous attributes
   html = html.replace(/\s*on\w+\s*=\s*["'][^"']*["']/gi, '')
   html = html.replace(/\s*javascript\s*:/gi, '')
+  html = html.replace(/\s+(src|href)\s*=\s*(['"])\s*data:(?!image\/)[^'"]*\2/gi, '')
 
   // Add base styles for better rendering
+  const mode = effectiveMailDisplayMode.value
+  const isDarkReader = mode === 'dark'
+  const isHighContrast = mode === 'high-contrast'
+  const readerBackground = isHighContrast ? '#ffffff' : isDarkReader ? '#101827' : '#ffffff'
+  const readerText = isHighContrast ? '#000000' : isDarkReader ? '#e8eef7' : '#1f2937'
+  const readerMuted = isHighContrast ? '#000000' : isDarkReader ? '#b8c4d4' : '#4b5563'
+  const readerLink = isHighContrast ? '#0000ee' : isDarkReader ? '#8cc8ff' : '#0b63ce'
+  const readerBorder = isHighContrast ? '#000000' : isDarkReader ? '#334155' : '#d8dee8'
+  const readerCodeBg = isHighContrast ? '#ffffff' : isDarkReader ? '#172235' : '#f5f7fa'
+
   const styles = `
     <style>
+      html {
+        color-scheme: ${isDarkReader ? 'dark' : 'light'};
+        background: ${readerBackground};
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
       body {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        line-height: 1.6;
-        color: #333;
-        margin: 16px;
-        word-wrap: break-word;
+        font-size: 15px;
+        line-height: 1.72;
+        color: ${readerText};
+        background: ${readerBackground};
+        margin: 0;
+        padding: 24px;
+        overflow-wrap: anywhere;
+        word-break: normal;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
       }
-      img { max-width: 100%; height: auto; }
-      table { border-collapse: collapse; width: 100%; }
-      td, th { padding: 8px; border: 1px solid #ddd; }
-      a { color: #0066cc; }
-      pre { white-space: pre-wrap; }
+      img { max-width: 100%; height: auto; vertical-align: middle; }
+      table { border-collapse: collapse; max-width: 100%; }
+      td, th { padding: 8px; border-color: ${readerBorder}; }
+      p, li, blockquote { line-height: 1.72; }
+      a { color: ${readerLink}; text-decoration-thickness: 1px; text-underline-offset: 2px; }
+      small, .muted { color: ${readerMuted}; }
+      pre, code {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        background: ${readerCodeBg};
+        color: ${readerText};
+      }
+      pre {
+        padding: 12px;
+        border: 1px solid ${readerBorder};
+        border-radius: 6px;
+      }
     </style>
   `
 
@@ -982,12 +1028,17 @@ function handleIframeLoad(event: Event) {
 .mail-body-content {
   flex: 1;
   min-height: 0;
-  background: var(--detail-content-bg);
+  background: linear-gradient(180deg, rgba(79, 143, 199, 0.06), rgba(255, 255, 255, 0.04));
 }
 
 .rendered-content {
-  height: 100%;
+  min-height: 100%;
   padding: 18px;
+  --reader-shell: #f4f7fb;
+  --reader-paper: #ffffff;
+  --reader-text: #1f2937;
+  --reader-border: rgba(116, 146, 174, 0.28);
+  background: var(--reader-shell);
 }
 
 .html-content {
@@ -996,9 +1047,10 @@ function handleIframeLoad(event: Event) {
 
 .html-iframe {
   width: 100%;
-  min-height: 300px;
-  border: none;
-  background: white;
+  min-height: 520px;
+  border: 1px solid var(--reader-border);
+  border-radius: 8px;
+  background: var(--reader-paper);
 }
 
 .text-content {
@@ -1006,15 +1058,19 @@ function handleIframeLoad(event: Event) {
 }
 
 .text-display {
-  margin: 0;
-  padding: 0;
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 24px;
+  border: 1px solid var(--reader-border);
+  border-radius: 8px;
   white-space: pre-wrap;
-  word-break: break-word;
-  line-height: 1.7;
-  color: var(--n-text-color);
+  overflow-wrap: anywhere;
+  word-break: normal;
+  line-height: 1.76;
+  color: var(--reader-text);
   font-family: inherit;
-  background: transparent;
-  border: none;
+  font-size: 15px;
+  background: var(--reader-paper);
 }
 
 .shadow-content {
@@ -1025,114 +1081,60 @@ function handleIframeLoad(event: Event) {
 
 /* 自动适配模式 - 跟随系统主题 */
 .mail-display-auto {
-  color: var(--n-text-color);
-  background: var(--detail-content-bg);
+  color: var(--reader-text);
+  background: var(--reader-shell);
 }
 
 .mail-display-auto.system-dark {
   /* 深色模式下强制覆盖邮件内的颜色 */
 }
 
-.mail-display-auto.system-dark :deep(*) {
-  color: #e0e0e0 !important;
-  background-color: transparent !important;
-}
-
-.mail-display-auto.system-dark :deep(a) {
-  color: #66b3ff !important;
-}
-
 /* 明亮模式 - 强制明亮显示 */
 .mail-display-light {
-  color: #333 !important;
-  background: #fff !important;
-}
-
-.mail-display-light :deep(*) {
-  color: #333 !important;
-  background-color: transparent !important;
-}
-
-.mail-display-light :deep(a) {
-  color: #0066cc !important;
-}
-
-.mail-display-light :deep(pre) {
-  background: #f8f9fa !important;
-  color: #333 !important;
+  --reader-shell: #f4f7fb;
+  --reader-paper: #ffffff;
+  --reader-text: #1f2937;
+  --reader-border: rgba(116, 146, 174, 0.28);
 }
 
 /* 深色模式 - 强制深色显示 */
 .mail-display-dark {
-  color: #e0e0e0 !important;
-  background: #1a1a1a !important;
-}
-
-.mail-display-dark :deep(*) {
-  color: #e0e0e0 !important;
-  background-color: transparent !important;
-}
-
-.mail-display-dark :deep(a) {
-  color: #66b3ff !important;
-}
-
-.mail-display-dark :deep(pre) {
-  background: #2a2a2a !important;
-  color: #e0e0e0 !important;
+  --reader-shell: #08111f;
+  --reader-paper: #101827;
+  --reader-text: #e8eef7;
+  --reader-border: rgba(148, 190, 225, 0.24);
 }
 
 /* 高对比度模式 - 最大化可读性 */
 .mail-display-high-contrast {
-  color: #000 !important;
-  background: #fff !important;
-  font-weight: 600 !important;
-}
-
-.mail-display-high-contrast :deep(*) {
-  color: #000 !important;
-  background-color: #fff !important;
-  font-weight: 600 !important;
-  border: 1px solid #000 !important;
-}
-
-.mail-display-high-contrast :deep(a) {
-  color: #0000ff !important;
-  text-decoration: underline !important;
-  font-weight: 700 !important;
-}
-
-.mail-display-high-contrast :deep(pre) {
-  background: #f0f0f0 !important;
-  color: #000 !important;
-  border: 2px solid #000 !important;
+  --reader-shell: #ffffff;
+  --reader-paper: #ffffff;
+  --reader-text: #000000;
+  --reader-border: #000000;
+  font-weight: 600;
 }
 
 /* iframe 特殊处理 */
-.mail-display-dark .html-iframe,
-.mail-display-high-contrast .html-iframe {
-  filter: invert(1) hue-rotate(180deg);
-}
-
-.mail-display-dark .html-iframe img,
-.mail-display-high-contrast .html-iframe img {
-  filter: invert(1) hue-rotate(180deg);
-}
-
 .source-content {
   height: 100%;
   padding: 18px;
+  background: var(--reader-shell, #f4f7fb);
 }
 
 .source-code {
-  margin: 0;
-  padding: 0;
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 20px;
+  border: 1px solid var(--detail-border);
+  border-radius: 8px;
   white-space: pre-wrap;
-  word-break: break-word;
-  line-height: 1.4;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  line-height: 1.56;
   color: var(--n-text-color);
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-  font-size: 12px;
+  font-size: 12.5px;
+  background: var(--detail-panel-strong);
   tab-size: 2;
 }
 

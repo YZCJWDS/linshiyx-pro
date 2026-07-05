@@ -1,21 +1,25 @@
 <template>
-  <div 
-    v-if="useFallback" 
+  <div
+    v-if="useFallback"
     v-html="htmlContent"
     class="html-fallback"
+    :class="`html-fallback--${resolvedDisplayMode}`"
   />
-  <div 
-    v-else 
-    ref="shadowHost" 
+  <div
+    v-else
+    ref="shadowHost"
     class="shadow-host"
   />
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { computed, ref, onMounted, onUnmounted, watch } from 'vue'
+
+type ReaderDisplayMode = 'light' | 'dark' | 'high-contrast'
 
 interface Props {
   htmlContent: string
+  displayMode?: ReaderDisplayMode
 }
 
 const props = defineProps<Props>()
@@ -24,11 +28,124 @@ const shadowHost = ref<HTMLElement>()
 const useFallback = ref(false)
 let shadowRoot: ShadowRoot | null = null
 
+const resolvedDisplayMode = computed<ReaderDisplayMode>(() => props.displayMode || 'light')
+
+function getReaderPalette(mode = resolvedDisplayMode.value) {
+  if (mode === 'high-contrast') {
+    return {
+      mode,
+      background: '#ffffff',
+      surface: '#ffffff',
+      text: '#000000',
+      muted: '#000000',
+      link: '#0000ee',
+      border: '#000000',
+      codeBg: '#ffffff'
+    }
+  }
+
+  if (mode === 'dark') {
+    return {
+      mode,
+      background: '#101827',
+      surface: '#162033',
+      text: '#e8eef7',
+      muted: '#b8c4d4',
+      link: '#8cc8ff',
+      border: '#334155',
+      codeBg: '#172235'
+    }
+  }
+
+  return {
+    mode,
+    background: '#ffffff',
+    surface: '#f8fafc',
+    text: '#1f2937',
+    muted: '#4b5563',
+    link: '#0b63ce',
+    border: '#d8dee8',
+    codeBg: '#f5f7fa'
+  }
+}
+
+function parseRgb(color: string): [number, number, number, number] | null {
+  const match = color.match(/rgba?\(([^)]+)\)/i)
+  if (!match) return null
+
+  const parts = match[1].split(',').map(part => Number(part.trim()))
+  if (parts.length < 3 || parts.some((part, index) => index < 3 && Number.isNaN(part))) {
+    return null
+  }
+
+  return [parts[0], parts[1], parts[2], Number.isNaN(parts[3]) ? 1 : parts[3]]
+}
+
+function luminance([red, green, blue]: [number, number, number, number]) {
+  const values = [red, green, blue].map(value => {
+    const normalized = value / 255
+    return normalized <= 0.03928
+      ? normalized / 12.92
+      : Math.pow((normalized + 0.055) / 1.055, 2.4)
+  })
+
+  return values[0] * 0.2126 + values[1] * 0.7152 + values[2] * 0.0722
+}
+
+function contrastRatio(
+  foreground: [number, number, number, number],
+  background: [number, number, number, number]
+) {
+  const light = Math.max(luminance(foreground), luminance(background))
+  const dark = Math.min(luminance(foreground), luminance(background))
+  return (light + 0.05) / (dark + 0.05)
+}
+
+function findEffectiveBackground(element: Element): [number, number, number, number] {
+  let current: Element | null = element
+
+  while (current) {
+    const parsed = parseRgb(getComputedStyle(current).backgroundColor)
+    if (parsed && parsed[3] > 0.05) return parsed
+    current = current.parentElement
+  }
+
+  return resolvedDisplayMode.value === 'dark'
+    ? [16, 24, 39, 1]
+    : [255, 255, 255, 1]
+}
+
+function readableTextColor(background: [number, number, number, number]) {
+  return luminance(background) > 0.45 ? '#1f2937' : '#f8fafc'
+}
+
+function elementHasReadableText(element: HTMLElement) {
+  return Array.from(element.childNodes).some(node => {
+    return node.nodeType === Node.TEXT_NODE && Boolean(node.textContent?.trim())
+  })
+}
+
+function improveReadableColors(root: ShadowRoot) {
+  const elements = Array.from(root.querySelectorAll<HTMLElement>('.mail-reader, .mail-reader *'))
+
+  for (const element of elements) {
+    if (!elementHasReadableText(element)) continue
+
+    const style = getComputedStyle(element)
+    const foreground = parseRgb(style.color)
+    if (!foreground || foreground[3] < 0.45) continue
+
+    const background = findEffectiveBackground(element)
+    if (contrastRatio(foreground, background) < 4.5) {
+      element.style.setProperty('color', readableTextColor(background), 'important')
+    }
+  }
+}
+
 function renderShadowDOM() {
   if (!shadowHost.value || useFallback.value) return
 
   try {
-    // 创建 Shadow DOM
     if (!shadowRoot) {
       try {
         shadowRoot = shadowHost.value.attachShadow({ mode: 'closed' })
@@ -40,141 +157,145 @@ function renderShadowDOM() {
     }
 
     if (shadowRoot && props.htmlContent) {
-      // 添加基础样式
+      const palette = getReaderPalette()
       const styles = `
         <style>
           :host {
             display: block;
+            color-scheme: ${palette.mode === 'dark' ? 'dark' : 'light'};
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            line-height: 1.6;
-            color: #333;
+            font-size: 15px;
+            line-height: 1.72;
+            color: ${palette.text};
             word-wrap: break-word;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
           }
-          
+
+          * {
+            box-sizing: border-box;
+          }
+
+          .mail-reader {
+            min-height: 100%;
+            padding: 24px;
+            border: 1px solid ${palette.border};
+            border-radius: 8px;
+            background: ${palette.background};
+            color: ${palette.text};
+            overflow-wrap: anywhere;
+          }
+
           body {
             margin: 0;
-            padding: 16px;
+            padding: 0;
             font-family: inherit;
             line-height: inherit;
             color: inherit;
+            background: transparent;
           }
-          
-          img { 
-            max-width: 100%; 
-            height: auto; 
+
+          img {
+            max-width: 100%;
+            height: auto;
             border-radius: 4px;
+            vertical-align: middle;
           }
-          
-          table { 
-            border-collapse: collapse; 
-            width: 100%; 
+
+          table {
+            border-collapse: collapse;
+            max-width: 100%;
             margin: 8px 0;
           }
-          
-          td, th { 
-            padding: 8px; 
-            border: 1px solid #e0e0e0; 
+
+          td, th {
+            padding: 8px;
+            border-color: ${palette.border};
             text-align: left;
           }
-          
+
           th {
-            background-color: #f5f5f5;
+            background-color: ${palette.surface};
             font-weight: 600;
           }
-          
-          a { 
-            color: #0066cc; 
-            text-decoration: none;
+
+          a {
+            color: ${palette.link};
+            text-decoration-thickness: 1px;
+            text-underline-offset: 2px;
           }
-          
+
           a:hover {
             text-decoration: underline;
           }
-          
-          pre { 
-            white-space: pre-wrap; 
-            background: #f8f9fa;
+
+          small,
+          .muted {
+            color: ${palette.muted};
+          }
+
+          pre {
+            white-space: pre-wrap;
+            background: ${palette.codeBg};
+            color: ${palette.text};
             padding: 12px;
+            border: 1px solid ${palette.border};
             border-radius: 4px;
             overflow-x: auto;
           }
-          
+
           code {
-            background: #f1f3f4;
+            background: ${palette.codeBg};
+            color: ${palette.text};
             padding: 2px 4px;
             border-radius: 3px;
             font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
           }
-          
+
           blockquote {
             margin: 16px 0;
             padding: 12px 16px;
-            border-left: 4px solid #e0e0e0;
-            background: #f8f9fa;
+            border-left: 4px solid ${palette.border};
+            background: ${palette.surface};
             font-style: italic;
           }
-          
+
           h1, h2, h3, h4, h5, h6 {
             margin: 16px 0 8px 0;
             line-height: 1.3;
           }
-          
+
           p {
             margin: 8px 0;
           }
-          
+
           ul, ol {
             margin: 8px 0;
             padding-left: 24px;
           }
-          
+
           li {
             margin: 4px 0;
           }
-          
+
           hr {
             border: none;
-            border-top: 1px solid #e0e0e0;
+            border-top: 1px solid ${palette.border};
             margin: 16px 0;
           }
-          
-          /* 暗色主题适配 */
-          @media (prefers-color-scheme: dark) {
-            :host {
-              color: #e0e0e0;
-            }
-            
-            table td, table th {
-              border-color: #404040;
-            }
-            
-            th {
-              background-color: #2a2a2a;
-            }
-            
-            pre {
-              background: #1e1e1e;
-              color: #e0e0e0;
-            }
-            
-            code {
-              background: #2a2a2a;
-              color: #e0e0e0;
-            }
-            
-            blockquote {
-              background: #1e1e1e;
-              border-left-color: #404040;
-            }
-            
-            hr {
-              border-top-color: #404040;
-            }
+
+          .mail-reader-high-contrast,
+          .mail-reader-high-contrast * {
+            color: #000 !important;
+            background-color: #fff !important;
+            border-color: #000 !important;
+            text-shadow: none !important;
           }
         </style>
       `
-      
-      shadowRoot.innerHTML = styles + props.htmlContent
+
+      shadowRoot.innerHTML = `${styles}<article class="mail-reader mail-reader-${palette.mode}">${props.htmlContent}</article>`
+      requestAnimationFrame(() => improveReadableColors(shadowRoot as ShadowRoot))
     }
   } catch (error) {
     console.error('Failed to render Shadow DOM, falling back to v-html:', error)
@@ -183,11 +304,7 @@ function renderShadowDOM() {
 }
 
 onMounted(() => {
-  console.log('ShadowHtmlComponent mounted with content:', props.htmlContent?.substring(0, 100))
-
-  // 如果没有内容或内容为空，使用fallback
   if (!props.htmlContent || props.htmlContent.trim() === '') {
-    console.log('No content, using fallback')
     useFallback.value = true
     return
   }
@@ -204,7 +321,7 @@ onUnmounted(() => {
   shadowRoot = null
 })
 
-watch(() => props.htmlContent, () => {
+watch(() => [props.htmlContent, props.displayMode], () => {
   renderShadowDOM()
 }, { flush: 'post' })
 </script>
@@ -216,11 +333,27 @@ watch(() => props.htmlContent, () => {
 }
 
 .html-fallback {
-  padding: 16px;
+  padding: 24px;
+  border: 1px solid var(--n-border-color);
+  border-radius: 8px;
+  background: #fff;
+  color: #1f2937;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  line-height: 1.6;
-  color: var(--n-text-color);
-  word-wrap: break-word;
+  font-size: 15px;
+  line-height: 1.72;
+  overflow-wrap: anywhere;
+}
+
+.html-fallback--dark {
+  background: #101827;
+  color: #e8eef7;
+  border-color: #334155;
+}
+
+.html-fallback--high-contrast {
+  background: #fff;
+  color: #000;
+  border-color: #000;
 }
 
 .html-fallback img {
@@ -231,34 +364,29 @@ watch(() => props.htmlContent, () => {
 
 .html-fallback table {
   border-collapse: collapse;
-  width: 100%;
+  max-width: 100%;
   margin: 8px 0;
 }
 
 .html-fallback td,
 .html-fallback th {
   padding: 8px;
-  border: 1px solid var(--n-border-color);
+  border: 1px solid currentColor;
   text-align: left;
 }
 
-.html-fallback th {
-  background-color: var(--n-card-color);
-  font-weight: 600;
-}
-
 .html-fallback a {
-  color: var(--n-primary-color);
-  text-decoration: none;
+  color: #0b63ce;
+  text-underline-offset: 2px;
 }
 
-.html-fallback a:hover {
-  text-decoration: underline;
+.html-fallback--dark a {
+  color: #8cc8ff;
 }
 
 .html-fallback pre {
   white-space: pre-wrap;
-  background: var(--n-code-color);
+  background: rgba(127, 127, 127, 0.12);
   padding: 12px;
   border-radius: 4px;
   overflow-x: auto;
@@ -267,8 +395,8 @@ watch(() => props.htmlContent, () => {
 .html-fallback blockquote {
   margin: 16px 0;
   padding: 12px 16px;
-  border-left: 4px solid var(--n-border-color);
-  background: var(--n-card-color);
+  border-left: 4px solid currentColor;
+  background: rgba(127, 127, 127, 0.1);
   font-style: italic;
 }
 </style>
