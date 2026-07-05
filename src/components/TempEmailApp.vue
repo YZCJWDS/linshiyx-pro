@@ -261,7 +261,7 @@ const message = useMessage()
 // 背景图片状态
 const backgroundLoaded = ref(false)
 const backgroundError = ref(false)
-const appBackgroundUrl = '/image/hero-bg.webp'
+const appBackgroundUrl = '/image/bg-posts.webp'
 
 // 界面状态管理
 const showAvatarPreview = ref(false)
@@ -486,7 +486,7 @@ onUnmounted(() => {
   left: 0;
   width: 100%;
   height: 100%;
-  background-image: url('/image/hero-bg.webp');
+  background-image: url('/image/bg-posts.webp');
   background-size: cover;
   background-position: center right;
   background-repeat: no-repeat;
@@ -637,7 +637,7 @@ onUnmounted(() => {
 }
 
 [data-theme="dark"] .app-background {
-  background-image: url('/image/frost-hero.webp');
+  background-image: url('/image/bg-posts.webp');
   background-position: center right;
   filter: saturate(0.98) contrast(1.05) brightness(0.84);
 }
@@ -923,7 +923,7 @@ onUnmounted(() => {
     radial-gradient(88% 56% at 50% -8%, rgba(143, 216, 255, 0.16), transparent 68%),
     radial-gradient(70% 60% at 92% 18%, rgba(186, 197, 255, 0.1), transparent 72%),
     linear-gradient(145deg, rgba(14, 25, 42, 0.5), rgba(5, 10, 21, 0.54) 48%, rgba(2, 5, 12, 0.64)),
-    url('/image/frost-hero.webp') center right / cover no-repeat,
+    url('/image/bg-posts.webp') center right / cover no-repeat,
     var(--app-workspace);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.08) inset,
