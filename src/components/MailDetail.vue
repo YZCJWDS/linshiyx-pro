@@ -801,8 +801,8 @@ function handleIframeLoad(event: Event) {
   --detail-item-hover: rgba(79, 143, 199, 0.1);
   --detail-border: rgba(88, 112, 130, 0.18);
   --detail-shadow: var(--shadow-soft);
-  --detail-stage: #eef3f4;
-  --detail-stage-soft: rgba(238, 243, 244, 0.72);
+  --detail-stage: #eef3f2;
+  --detail-stage-soft: rgba(246, 249, 248, 0.78);
   --reader-paper-shadow: var(--shadow-mid);
 }
 
@@ -814,8 +814,8 @@ function handleIframeLoad(event: Event) {
   --detail-item-hover: rgba(114, 184, 232, 0.12);
   --detail-border: rgba(150, 177, 196, 0.15);
   --detail-shadow: var(--shadow-soft);
-  --detail-stage: #0b121d;
-  --detail-stage-soft: rgba(11, 18, 29, 0.78);
+  --detail-stage: #0a111a;
+  --detail-stage-soft: rgba(16, 26, 38, 0.84);
   --reader-paper-shadow: var(--shadow-mid);
 }
 
@@ -846,7 +846,9 @@ function handleIframeLoad(event: Event) {
   border: 0;
   border-bottom: 1px solid var(--detail-border);
   border-radius: 0;
-  background: var(--detail-panel-strong);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.2), transparent 70%),
+    var(--detail-panel-strong);
   box-shadow: none;
 }
 
@@ -1049,16 +1051,15 @@ function handleIframeLoad(event: Event) {
   flex: 1;
   min-height: 0;
   background:
-    linear-gradient(rgba(63, 159, 211, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(63, 159, 211, 0.035) 1px, transparent 1px),
+    radial-gradient(70% 46% at 50% 0%, rgba(255, 255, 255, 0.54), transparent 72%),
+    radial-gradient(62% 56% at 92% 12%, rgba(56, 194, 177, 0.08), transparent 70%),
     linear-gradient(180deg, var(--detail-stage-soft), var(--detail-stage)),
     var(--detail-stage);
-  background-size: 38px 38px, 38px 38px, auto, auto;
 }
 
 .rendered-content {
   min-height: 100%;
-  padding: 24px min(4vw, 34px);
+  padding: 28px min(4.5vw, 42px);
   --reader-shell: transparent;
   --reader-paper: #ffffff;
   --reader-text: #1f2937;
@@ -1079,7 +1080,9 @@ function handleIframeLoad(event: Event) {
   border: 1px solid var(--reader-border);
   border-radius: var(--radius-panel);
   background: var(--reader-paper);
-  box-shadow: var(--reader-paper-shadow);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.72) inset,
+    var(--reader-paper-shadow);
 }
 
 .text-content {
@@ -1100,7 +1103,9 @@ function handleIframeLoad(event: Event) {
   font-family: inherit;
   font-size: 15px;
   background: var(--reader-paper);
-  box-shadow: var(--reader-paper-shadow);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.72) inset,
+    var(--reader-paper-shadow);
 }
 
 .shadow-content {
@@ -1108,7 +1113,7 @@ function handleIframeLoad(event: Event) {
   max-width: 960px;
   min-height: 100%;
   margin: 0 auto;
-  filter: drop-shadow(0 18px 30px rgba(33, 55, 76, 0.1));
+  filter: drop-shadow(0 22px 34px rgba(33, 55, 76, 0.12));
 }
 
 [data-theme="dark"] .shadow-content {
@@ -1181,7 +1186,9 @@ function handleIframeLoad(event: Event) {
 }
 
 [data-theme="dark"] .mail-header {
-  background: var(--detail-panel-strong);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent 70%),
+    var(--detail-panel-strong);
 }
 
 [data-theme="dark"] .attachments-section {
@@ -1199,11 +1206,10 @@ function handleIframeLoad(event: Event) {
 
 [data-theme="dark"] .mail-body-content {
   background:
-    linear-gradient(rgba(123, 210, 246, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(123, 210, 246, 0.04) 1px, transparent 1px),
+    radial-gradient(70% 46% at 50% 0%, rgba(123, 210, 246, 0.08), transparent 72%),
+    radial-gradient(62% 56% at 92% 12%, rgba(100, 214, 193, 0.06), transparent 70%),
     linear-gradient(180deg, var(--detail-stage-soft), var(--detail-stage)),
     var(--detail-stage);
-  background-size: 38px 38px, 38px 38px, auto, auto;
 }
 
 [data-theme="dark"] .attachments-header {

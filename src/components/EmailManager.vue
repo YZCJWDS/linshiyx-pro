@@ -425,7 +425,7 @@ function getLastMailTime(address: EmailAddress): string {
   padding: 12px;
   --manager-panel: rgba(255, 255, 255, 0.2);
   --manager-panel-strong: rgba(255, 255, 255, 0.42);
-  --manager-item: rgba(255, 255, 255, 0.58);
+  --manager-item: linear-gradient(180deg, rgba(255, 255, 255, 0.68), rgba(248, 252, 251, 0.52));
   --manager-item-hover: rgba(56, 194, 177, 0.11);
   --manager-item-selected: linear-gradient(90deg, rgba(56, 194, 177, 0.2), rgba(255, 255, 255, 0.76));
   --manager-border: rgba(88, 112, 130, 0.18);
@@ -436,7 +436,7 @@ function getLastMailTime(address: EmailAddress): string {
 [data-theme="dark"] .email-manager {
   --manager-panel: rgba(10, 19, 29, 0.24);
   --manager-panel-strong: rgba(15, 27, 40, 0.44);
-  --manager-item: rgba(15, 28, 41, 0.62);
+  --manager-item: linear-gradient(180deg, rgba(19, 34, 49, 0.72), rgba(13, 24, 36, 0.62));
   --manager-item-hover: rgba(100, 214, 193, 0.12);
   --manager-item-selected: linear-gradient(90deg, rgba(100, 214, 193, 0.2), rgba(15, 28, 41, 0.78));
   --manager-border: rgba(150, 177, 196, 0.15);
@@ -525,9 +525,11 @@ function getLastMailTime(address: EmailAddress): string {
 
 .email-item:hover {
   border-color: rgba(56, 194, 177, 0.42);
-  background: var(--manager-item-hover);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(247, 252, 251, 0.58)),
+    var(--manager-item-hover);
   box-shadow: var(--manager-shadow-hover);
-  transform: translateY(-2px);
+  transform: translateY(-1px);
 }
 
 .email-item--selected {
@@ -650,8 +652,10 @@ function getLastMailTime(address: EmailAddress): string {
 }
 
 [data-theme="dark"] .email-item:hover {
-  background: var(--manager-item-hover);
-  box-shadow: var(--manager-shadow);
+  background:
+    linear-gradient(180deg, rgba(21, 38, 55, 0.76), rgba(13, 24, 36, 0.66)),
+    var(--manager-item-hover);
+  box-shadow: var(--manager-shadow-hover);
 }
 
 .quick-actions {

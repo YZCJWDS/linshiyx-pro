@@ -535,22 +535,21 @@ onUnmounted(() => {
 
 .app-content::before {
   background:
-    radial-gradient(78% 58% at 18% 4%, rgba(63, 159, 211, 0.16), transparent 62%),
-    radial-gradient(64% 54% at 88% 18%, rgba(56, 194, 177, 0.12), transparent 66%),
-    radial-gradient(72% 72% at 50% 110%, rgba(255, 255, 255, 0.24), transparent 64%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.2), transparent 36%);
-  opacity: 0.92;
+    radial-gradient(74% 54% at 20% 2%, rgba(255, 255, 255, 0.34), transparent 58%),
+    radial-gradient(68% 54% at 86% 18%, rgba(56, 194, 177, 0.12), transparent 68%),
+    radial-gradient(62% 56% at 8% 92%, rgba(63, 159, 211, 0.1), transparent 70%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.22), transparent 42%);
+  opacity: 0.86;
   z-index: 0;
 }
 
 .app-content::after {
   background-image:
-    linear-gradient(rgba(63, 159, 211, 0.055) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(63, 159, 211, 0.055) 1px, transparent 1px),
+    radial-gradient(100% 72% at 50% 0%, transparent 46%, rgba(38, 58, 76, 0.08) 100%),
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.18'/%3E%3C/svg%3E");
-  background-size: 44px 44px, 44px 44px, 140px 140px;
+  background-size: auto, 160px 160px;
   background-position: center;
-  opacity: 0.42;
+  opacity: 0.26;
   z-index: 0;
   -webkit-mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.34));
   mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.34));
@@ -623,19 +622,19 @@ onUnmounted(() => {
 
 [data-theme="dark"] .app-content::before {
   background:
-    radial-gradient(82% 58% at 17% 2%, rgba(123, 210, 246, 0.16), transparent 62%),
-    radial-gradient(64% 54% at 88% 18%, rgba(100, 214, 193, 0.14), transparent 66%),
-    radial-gradient(80% 68% at 50% 112%, rgba(45, 108, 132, 0.16), transparent 68%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 42%);
+    radial-gradient(78% 54% at 18% 0%, rgba(123, 210, 246, 0.13), transparent 62%),
+    radial-gradient(62% 52% at 88% 18%, rgba(100, 214, 193, 0.11), transparent 68%),
+    radial-gradient(80% 68% at 50% 112%, rgba(45, 108, 132, 0.14), transparent 68%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 46%);
   opacity: 1;
 }
 
 [data-theme="dark"] .app-content::after {
   background-image:
-    linear-gradient(rgba(123, 210, 246, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(123, 210, 246, 0.06) 1px, transparent 1px),
+    radial-gradient(100% 78% at 50% 0%, transparent 44%, rgba(0, 0, 0, 0.28) 100%),
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.22'/%3E%3C/svg%3E");
-  opacity: 0.46;
+  background-size: auto, 160px 160px;
+  opacity: 0.3;
 }
 
 /* 深色模式下的头部样式 */
@@ -845,26 +844,47 @@ onUnmounted(() => {
   height: 100%;
   min-height: 0;
   overflow: hidden;
+  position: relative;
   border: 1px solid var(--app-border-strong);
   border-radius: var(--radius-shell);
   background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.68), rgba(237, 246, 248, 0.42)),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.74), rgba(238, 247, 248, 0.48) 44%, rgba(225, 238, 241, 0.38)),
     var(--app-workspace);
   backdrop-filter: blur(24px) saturate(1.06);
   box-shadow:
     var(--app-shadow),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    inset 0 -1px 0 rgba(88, 112, 130, 0.08),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.24);
+}
+
+.three-column-layout::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.24), transparent 22%),
+    radial-gradient(80% 48% at 50% 0%, rgba(255, 255, 255, 0.22), transparent 70%);
+  opacity: 0.74;
+  z-index: 0;
 }
 
 [data-theme="dark"] .three-column-layout {
   background:
-    linear-gradient(145deg, rgba(18, 31, 45, 0.86), rgba(8, 15, 24, 0.68)),
+    linear-gradient(145deg, rgba(20, 35, 50, 0.88), rgba(9, 16, 26, 0.74) 48%, rgba(6, 11, 18, 0.8)),
     var(--app-workspace);
   box-shadow:
     var(--app-shadow),
     inset 0 1px 0 rgba(255, 255, 255, 0.08),
     inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+[data-theme="dark"] .three-column-layout::after {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 28%),
+    radial-gradient(88% 50% at 52% 0%, rgba(123, 210, 246, 0.08), transparent 72%);
+  opacity: 0.88;
 }
 
 .column {
@@ -878,6 +898,7 @@ onUnmounted(() => {
   min-height: 0;
   min-width: 0;
   position: relative;
+  z-index: 1;
 }
 
 .column:first-child {
@@ -895,11 +916,11 @@ onUnmounted(() => {
   background: linear-gradient(
     180deg,
     transparent,
-    rgba(88, 112, 130, 0.2) 18%,
-    rgba(88, 112, 130, 0.12) 52%,
+    rgba(88, 112, 130, 0.14) 18%,
+    rgba(88, 112, 130, 0.08) 52%,
     transparent
   );
-  opacity: 0.85;
+  opacity: 0.7;
   z-index: 1;
 }
 
@@ -965,7 +986,8 @@ onUnmounted(() => {
 .mail-detail-column {
   min-width: 0;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.2), transparent 42%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.24), transparent 38%),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.2), transparent 20%),
     var(--app-detail);
 }
 

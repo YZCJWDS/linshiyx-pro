@@ -372,7 +372,7 @@ watch(() => emailStore.selectedAddress, () => {
   flex-direction: column;
   --mail-panel: rgba(255, 255, 255, 0.24);
   --mail-panel-strong: rgba(255, 255, 255, 0.46);
-  --mail-item: rgba(255, 255, 255, 0.6);
+  --mail-item: linear-gradient(180deg, rgba(255, 255, 255, 0.68), rgba(248, 252, 251, 0.52));
   --mail-item-hover: rgba(79, 143, 199, 0.1);
   --mail-item-selected: linear-gradient(90deg, rgba(79, 143, 199, 0.2), rgba(255, 255, 255, 0.78));
   --mail-border: rgba(88, 112, 130, 0.18);
@@ -383,7 +383,7 @@ watch(() => emailStore.selectedAddress, () => {
 [data-theme="dark"] .mail-list {
   --mail-panel: rgba(10, 19, 29, 0.26);
   --mail-panel-strong: rgba(15, 27, 40, 0.46);
-  --mail-item: rgba(15, 28, 41, 0.64);
+  --mail-item: linear-gradient(180deg, rgba(19, 34, 49, 0.74), rgba(13, 24, 36, 0.64));
   --mail-item-hover: rgba(114, 184, 232, 0.12);
   --mail-item-selected: linear-gradient(90deg, rgba(114, 184, 232, 0.22), rgba(15, 28, 41, 0.78));
   --mail-border: rgba(150, 177, 196, 0.15);
@@ -496,9 +496,11 @@ watch(() => emailStore.selectedAddress, () => {
 
 .mail-item:hover {
   border-color: rgba(79, 143, 199, 0.44);
-  background: var(--mail-item-hover);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(246, 251, 252, 0.58)),
+    var(--mail-item-hover);
   box-shadow: var(--mail-shadow-hover);
-  transform: translateY(-2px);
+  transform: translateY(-1px);
 }
 
 .mail-item--selected {
@@ -657,8 +659,10 @@ watch(() => emailStore.selectedAddress, () => {
 }
 
 [data-theme="dark"] .mail-item:hover {
-  background: var(--mail-item-hover);
-  box-shadow: var(--mail-shadow);
+  background:
+    linear-gradient(180deg, rgba(21, 38, 55, 0.78), rgba(13, 24, 36, 0.68)),
+    var(--mail-item-hover);
+  box-shadow: var(--mail-shadow-hover);
 }
 
 .mail-count-info {
