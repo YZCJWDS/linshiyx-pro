@@ -11,6 +11,12 @@
 
     <!-- 内容层 -->
     <div class="app-content">
+      <canvas
+        ref="frostParticleCanvas"
+        class="frost-particle-layer"
+        aria-hidden="true"
+        data-frost-particles
+      ></canvas>
     <!-- Header -->
     <header class="app-header">
       <div class="header-content">
@@ -248,6 +254,7 @@ import {
 } from '@vicons/ionicons5'
 import { useEmailStore, useUiStore, useAuthStore } from '@/stores'
 import { useKeyboard, commonShortcuts } from '@/composables/useKeyboard'
+import { useFrostParticles } from '@/composables/useFrostParticles'
 import EmailManager from './EmailManager.vue'
 import MailList from './MailList.vue'
 import MailDetail from './MailDetail.vue'
@@ -261,6 +268,7 @@ const message = useMessage()
 // 背景图片状态
 const backgroundLoaded = ref(false)
 const backgroundError = ref(false)
+const frostParticleCanvas = ref<HTMLCanvasElement | null>(null)
 const appBackgroundUrl = '/image/bg-posts.webp'
 
 // 界面状态管理
@@ -326,6 +334,8 @@ const isDark = computed(() => uiStore.theme === 'dark')
 const isRefreshing = computed(() => 
   emailStore.loading.addresses || emailStore.loading.mails
 )
+
+useFrostParticles(frostParticleCanvas, isDark)
 
 async function refreshAll() {
   try {
@@ -525,6 +535,35 @@ onUnmounted(() => {
 }
 
 /* 内容层 */
+.frost-particle-layer {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0;
+  mix-blend-mode: screen;
+  transition: opacity 0.35s ease;
+  contain: strict;
+  -webkit-mask-image: radial-gradient(86% 76% at 52% 52%, rgba(0, 0, 0, 0.52) 0%, rgba(0, 0, 0, 0.78) 48%, rgba(0, 0, 0, 1) 100%);
+  mask-image: radial-gradient(86% 76% at 52% 52%, rgba(0, 0, 0, 0.52) 0%, rgba(0, 0, 0, 0.78) 48%, rgba(0, 0, 0, 1) 100%);
+}
+
+[data-theme="dark"] .frost-particle-layer {
+  opacity: 0.9;
+}
+
+.frost-particle-layer[hidden] {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .frost-particle-layer {
+    display: none;
+  }
+}
+
 .app-content {
   position: relative;
   height: 100vh;
@@ -654,25 +693,13 @@ onUnmounted(() => {
 
 [data-theme="dark"] .app-content::after {
   background-image:
-    radial-gradient(circle at 9% 16%, rgba(236, 249, 255, 0.78) 0 1px, transparent 1.8px),
-    radial-gradient(circle at 24% 72%, rgba(185, 221, 255, 0.52) 0 1px, transparent 2px),
-    radial-gradient(circle at 54% 22%, rgba(255, 255, 255, 0.58) 0 1px, transparent 2px),
-    radial-gradient(circle at 78% 68%, rgba(202, 229, 255, 0.48) 0 1px, transparent 2px),
-    radial-gradient(circle at 91% 18%, rgba(255, 255, 255, 0.64) 0 1px, transparent 2px),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260' viewBox='0 0 260 260'%3E%3Cg fill='none' stroke='%23cdefff' stroke-opacity='.34' stroke-width='1.2' stroke-linecap='round'%3E%3Cpath d='M42 52h26M55 39v26M46 43l18 18M64 43L46 61'/%3E%3Cpath d='M198 46h30M213 31v30M202 35l22 22M224 35l-22 22'/%3E%3Cpath d='M70 202h34M87 185v34M75 190l24 24M99 190l-24 24'/%3E%3Cpath d='M206 188h22M217 177v22M210 181l14 14M224 181l-14 14'/%3E%3C/g%3E%3C/svg%3E"),
     radial-gradient(100% 78% at 50% 0%, transparent 42%, rgba(0, 0, 0, 0.24) 100%),
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.2'/%3E%3C/svg%3E");
   background-size:
     auto,
-    auto,
-    auto,
-    auto,
-    auto,
-    260px 260px,
-    auto,
     160px 160px;
-  opacity: 0.34;
-  mix-blend-mode: screen;
+  opacity: 0.24;
+  mix-blend-mode: normal;
 }
 
 /* 深色模式下的头部样式 */
