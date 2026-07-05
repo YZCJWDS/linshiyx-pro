@@ -304,7 +304,7 @@ export function sanitizeHtml(html: string): string {
   // Remove dangerous attributes
   sanitized = sanitized.replace(/\s*on\w+\s*=\s*["'][^"']*["']/gi, '')
   sanitized = sanitized.replace(/\s*javascript\s*:/gi, '')
-  sanitized = sanitized.replace(/\s*data\s*:/gi, '')
+  sanitized = sanitized.replace(/\s+(src|href)\s*=\s*(['"])\s*data:(?!image\/)[^'"]*\2/gi, '')
 
   return sanitized
 }
