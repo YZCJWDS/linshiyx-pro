@@ -90,16 +90,16 @@
 
 /* Dark Theme Variables */
 [data-theme="dark"] {
-  --primary-color: #7bd2f6;
-  --primary-color-hover: #9fe3ff;
-  --primary-color-pressed: #4eb7e5;
-  --primary-color-suppl: rgba(123, 210, 246, 0.18);
-  --accent-cyan: #64d6c1;
-  --accent-blue: #7bd2f6;
-  --success-color: #64d6c1;
-  --success-color-hover: #7be6d1;
-  --success-color-pressed: #38bba6;
-  --success-color-suppl: rgba(100, 214, 193, 0.16);
+  --primary-color: #8fd8ff;
+  --primary-color-hover: #b8eaff;
+  --primary-color-pressed: #5fbdf2;
+  --primary-color-suppl: rgba(143, 216, 255, 0.2);
+  --accent-cyan: #a7e7ff;
+  --accent-blue: #8fd8ff;
+  --success-color: #9edcff;
+  --success-color-hover: #c1ebff;
+  --success-color-pressed: #6ac7f4;
+  --success-color-suppl: rgba(158, 220, 255, 0.16);
 
   /* Text Colors */
   --text-color: rgba(237, 247, 255, 0.94);
@@ -108,10 +108,10 @@
   --text-color-disabled: rgba(178, 202, 224, 0.36);
   
   /* Background Colors */
-  --body-color: #07111f;
-  --card-color: #101c2c;
-  --modal-color: #101c2c;
-  --popover-color: #101c2c;
+  --body-color: #050913;
+  --card-color: #0f1b2c;
+  --modal-color: #0f1b2c;
+  --popover-color: #0f1b2c;
   
   /* Border Colors */
   --border-color: rgba(148, 178, 205, 0.18);

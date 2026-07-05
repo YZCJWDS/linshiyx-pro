@@ -381,12 +381,12 @@ watch(() => emailStore.selectedAddress, () => {
 }
 
 [data-theme="dark"] .mail-list {
-  --mail-panel: rgba(5, 10, 16, 0.28);
-  --mail-panel-strong: rgba(8, 16, 26, 0.56);
-  --mail-item: linear-gradient(180deg, rgba(24, 40, 56, 0.94), rgba(13, 25, 38, 0.88));
-  --mail-item-hover: rgba(114, 184, 232, 0.14);
-  --mail-item-selected: linear-gradient(100deg, rgba(95, 178, 224, 0.26), rgba(19, 36, 52, 0.96) 58%, rgba(12, 23, 35, 0.94));
-  --mail-border: rgba(172, 202, 220, 0.16);
+  --mail-panel: rgba(5, 10, 20, 0.26);
+  --mail-panel-strong: rgba(9, 18, 32, 0.54);
+  --mail-item: linear-gradient(180deg, rgba(20, 36, 58, 0.9), rgba(10, 20, 36, 0.86));
+  --mail-item-hover: rgba(143, 216, 255, 0.13);
+  --mail-item-selected: linear-gradient(100deg, rgba(143, 216, 255, 0.24), rgba(18, 34, 55, 0.94) 58%, rgba(12, 22, 40, 0.9));
+  --mail-border: rgba(196, 226, 248, 0.17);
   --mail-shadow: 0 1px 0 rgba(255, 255, 255, 0.055) inset, 0 1px 2px rgba(0, 0, 0, 0.34), 0 12px 28px rgba(0, 0, 0, 0.26);
   --mail-shadow-hover: 0 1px 0 rgba(255, 255, 255, 0.075) inset, 0 3px 8px rgba(0, 0, 0, 0.42), 0 22px 52px rgba(0, 0, 0, 0.36);
 }
@@ -662,7 +662,7 @@ watch(() => emailStore.selectedAddress, () => {
 
 [data-theme="dark"] .mail-item:hover {
   background:
-    linear-gradient(180deg, rgba(28, 47, 65, 0.98), rgba(14, 27, 40, 0.92)),
+    linear-gradient(180deg, rgba(28, 48, 74, 0.94), rgba(12, 24, 42, 0.9)),
     var(--mail-item-hover);
   box-shadow: var(--mail-shadow-hover);
 }

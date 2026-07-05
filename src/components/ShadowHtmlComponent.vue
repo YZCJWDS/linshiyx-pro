@@ -48,13 +48,13 @@ function getReaderPalette(mode = resolvedDisplayMode.value) {
   if (mode === 'dark') {
     return {
       mode,
-      background: '#111d2b',
-      surface: '#162033',
+      background: '#101c31',
+      surface: '#16243b',
       text: '#e8eef7',
       muted: '#b8c4d4',
-      link: '#8cc8ff',
-      border: '#334155',
-      codeBg: '#172235',
+      link: '#9fdcff',
+      border: '#354a66',
+      codeBg: '#16243b',
       shadow: '0 1px 0 rgba(255, 255, 255, 0.055) inset, 0 2px 6px rgba(0, 0, 0, 0.44), 0 28px 68px rgba(0, 0, 0, 0.46)'
     }
   }
@@ -351,9 +351,9 @@ watch(() => [props.htmlContent, props.displayMode], () => {
 }
 
 .html-fallback--dark {
-  background: #111d2b;
+  background: #101c31;
   color: #e8eef7;
-  border-color: #334155;
+  border-color: #354a66;
   box-shadow: var(--shadow-mid);
 }
 

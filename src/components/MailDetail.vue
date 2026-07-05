@@ -546,12 +546,12 @@ const sanitizedHtmlContent = computed(() => {
   const mode = effectiveMailDisplayMode.value
   const isDarkReader = mode === 'dark'
   const isHighContrast = mode === 'high-contrast'
-  const readerBackground = isHighContrast ? '#ffffff' : isDarkReader ? '#111d2b' : '#ffffff'
+  const readerBackground = isHighContrast ? '#ffffff' : isDarkReader ? '#101c31' : '#ffffff'
   const readerText = isHighContrast ? '#000000' : isDarkReader ? '#e8eef7' : '#1f2937'
   const readerMuted = isHighContrast ? '#000000' : isDarkReader ? '#b8c4d4' : '#4b5563'
-  const readerLink = isHighContrast ? '#0000ee' : isDarkReader ? '#8cc8ff' : '#0b63ce'
-  const readerBorder = isHighContrast ? '#000000' : isDarkReader ? '#334155' : '#d8dee8'
-  const readerCodeBg = isHighContrast ? '#ffffff' : isDarkReader ? '#172235' : '#f5f7fa'
+  const readerLink = isHighContrast ? '#0000ee' : isDarkReader ? '#9fdcff' : '#0b63ce'
+  const readerBorder = isHighContrast ? '#000000' : isDarkReader ? '#354a66' : '#d8dee8'
+  const readerCodeBg = isHighContrast ? '#ffffff' : isDarkReader ? '#16243b' : '#f5f7fa'
 
   const styles = `
     <style>
@@ -807,15 +807,15 @@ function handleIframeLoad(event: Event) {
 }
 
 [data-theme="dark"] .mail-detail {
-  --detail-panel: rgba(7, 14, 22, 0.42);
-  --detail-panel-strong: rgba(16, 29, 42, 0.76);
-  --detail-chip: rgba(24, 41, 57, 0.84);
-  --detail-item: rgba(19, 35, 50, 0.86);
-  --detail-item-hover: rgba(114, 184, 232, 0.14);
-  --detail-border: rgba(172, 202, 220, 0.16);
+  --detail-panel: rgba(7, 13, 25, 0.42);
+  --detail-panel-strong: rgba(15, 28, 47, 0.74);
+  --detail-chip: rgba(22, 39, 62, 0.82);
+  --detail-item: rgba(18, 34, 55, 0.84);
+  --detail-item-hover: rgba(143, 216, 255, 0.13);
+  --detail-border: rgba(196, 226, 248, 0.17);
   --detail-shadow: 0 1px 0 rgba(255, 255, 255, 0.055) inset, 0 1px 2px rgba(0, 0, 0, 0.34), 0 16px 40px rgba(0, 0, 0, 0.32);
-  --detail-stage: #071019;
-  --detail-stage-soft: rgba(10, 19, 29, 0.96);
+  --detail-stage: #060d1a;
+  --detail-stage-soft: rgba(9, 18, 32, 0.94);
   --reader-paper-shadow: 0 1px 0 rgba(255, 255, 255, 0.055) inset, 0 2px 6px rgba(0, 0, 0, 0.44), 0 28px 68px rgba(0, 0, 0, 0.46);
 }
 
@@ -1133,9 +1133,9 @@ function handleIframeLoad(event: Event) {
 
 .mail-display-auto.system-dark {
   --reader-shell: transparent;
-  --reader-paper: #111d2b;
+  --reader-paper: #101c31;
   --reader-text: #e8eef7;
-  --reader-border: rgba(148, 190, 225, 0.24);
+  --reader-border: rgba(171, 214, 245, 0.24);
 }
 
 /* 明亮模式 - 强制明亮显示 */
@@ -1149,9 +1149,9 @@ function handleIframeLoad(event: Event) {
 /* 深色模式 - 强制深色显示 */
 .mail-display-dark {
   --reader-shell: transparent;
-  --reader-paper: #111d2b;
+  --reader-paper: #101c31;
   --reader-text: #e8eef7;
-  --reader-border: rgba(148, 190, 225, 0.24);
+  --reader-border: rgba(171, 214, 245, 0.24);
 }
 
 /* 高对比度模式 - 最大化可读性 */
@@ -1209,8 +1209,8 @@ function handleIframeLoad(event: Event) {
 
 [data-theme="dark"] .mail-body-content {
   background:
-    radial-gradient(70% 46% at 50% 0%, rgba(123, 210, 246, 0.08), transparent 72%),
-    radial-gradient(62% 56% at 92% 12%, rgba(100, 214, 193, 0.06), transparent 70%),
+    radial-gradient(70% 46% at 50% 0%, rgba(143, 216, 255, 0.08), transparent 72%),
+    radial-gradient(62% 56% at 92% 12%, rgba(196, 204, 255, 0.055), transparent 70%),
     linear-gradient(180deg, var(--detail-stage-soft), var(--detail-stage)),
     var(--detail-stage);
   box-shadow:
@@ -1219,7 +1219,7 @@ function handleIframeLoad(event: Event) {
 }
 
 [data-theme="dark"] .attachments-header {
-  background: rgba(114, 184, 232, 0.12);
+  background: rgba(143, 216, 255, 0.12);
 }
 
 [data-theme="dark"] .attachment-item {

@@ -463,20 +463,20 @@ onUnmounted(() => {
 }
 
 [data-theme="dark"] .temp-email-app {
-  --app-panel: rgba(13, 23, 32, 0.74);
-  --app-panel-strong: rgba(17, 30, 42, 0.9);
-  --app-panel-soft: rgba(10, 18, 28, 0.82);
-  --app-workspace: rgba(4, 8, 13, 0.78);
-  --app-column: linear-gradient(180deg, rgba(18, 31, 43, 0.94), rgba(9, 17, 27, 0.9));
-  --app-column-detail: linear-gradient(180deg, rgba(20, 33, 43, 0.98), rgba(10, 17, 27, 0.94));
-  --app-detail: rgba(14, 24, 35, 0.92);
-  --app-border: rgba(172, 202, 220, 0.16);
-  --app-border-strong: rgba(172, 202, 220, 0.22);
-  --app-separator: rgba(150, 177, 196, 0.14);
+  --app-panel: rgba(10, 18, 31, 0.58);
+  --app-panel-strong: rgba(15, 27, 44, 0.74);
+  --app-panel-soft: rgba(8, 15, 28, 0.66);
+  --app-workspace: rgba(5, 10, 20, 0.46);
+  --app-column: linear-gradient(180deg, rgba(17, 30, 48, 0.74), rgba(7, 14, 28, 0.72));
+  --app-column-detail: linear-gradient(180deg, rgba(20, 33, 52, 0.78), rgba(8, 15, 29, 0.74));
+  --app-detail: rgba(11, 21, 36, 0.76);
+  --app-border: rgba(185, 221, 244, 0.18);
+  --app-border-strong: rgba(210, 236, 255, 0.28);
+  --app-separator: rgba(186, 220, 245, 0.16);
   --app-shadow: var(--shadow-floating);
   --app-shadow-soft: var(--shadow-soft);
   --app-column-shadow: 0 1px 0 rgba(255, 255, 255, 0.07) inset, 0 1px 2px rgba(0, 0, 0, 0.34), 0 18px 44px rgba(0, 0, 0, 0.34);
-  --app-accent-soft: rgba(100, 214, 193, 0.14);
+  --app-accent-soft: rgba(143, 216, 255, 0.14);
 }
 
 /* 背景图片层 - 参考VSCode背景插件方法 */
@@ -574,18 +574,26 @@ onUnmounted(() => {
 /* 深色模式下的背景调整 */
 [data-theme="dark"] .app-background::after {
   background:
-    radial-gradient(56% 44% at 22% 2%, rgba(123, 210, 246, 0.15), transparent 64%),
-    radial-gradient(46% 42% at 88% 22%, rgba(100, 214, 193, 0.13), transparent 68%),
-    radial-gradient(86% 72% at 50% 108%, rgba(0, 0, 0, 0.44), transparent 72%),
+    radial-gradient(48% 42% at 72% 14%, rgba(205, 236, 255, 0.2), transparent 66%),
+    radial-gradient(42% 36% at 91% 34%, rgba(184, 205, 255, 0.14), transparent 70%),
+    radial-gradient(64% 54% at 22% 4%, rgba(98, 175, 229, 0.16), transparent 66%),
+    radial-gradient(86% 72% at 50% 108%, rgba(0, 0, 0, 0.5), transparent 72%),
+    linear-gradient(
+      90deg,
+      rgba(3, 7, 14, 0.86) 0%,
+      rgba(5, 10, 20, 0.74) 42%,
+      rgba(7, 14, 26, 0.42) 68%,
+      rgba(4, 8, 16, 0.46) 100%
+    ),
     linear-gradient(
       135deg,
-      rgba(4, 7, 11, 0.9) 0%,
-      rgba(7, 13, 20, 0.84) 38%,
-      rgba(9, 17, 24, 0.72) 66%,
-      rgba(3, 6, 10, 0.9) 100%
+      rgba(5, 10, 20, 0.62) 0%,
+      rgba(9, 18, 34, 0.48) 38%,
+      rgba(13, 24, 42, 0.3) 66%,
+      rgba(4, 8, 16, 0.58) 100%
     ),
-    linear-gradient(180deg, rgba(33, 79, 75, 0.1), rgba(0, 0, 0, 0.12));
-  backdrop-filter: blur(2.5px);
+    linear-gradient(180deg, rgba(22, 39, 68, 0.12), rgba(0, 0, 0, 0.16));
+  backdrop-filter: blur(0.8px);
 }
 
 /* 背景图片加载状态 */
@@ -629,24 +637,42 @@ onUnmounted(() => {
 }
 
 [data-theme="dark"] .app-background {
-  filter: saturate(0.9) contrast(1.08) brightness(0.58);
+  background-image: url('/image/frost-hero.webp');
+  background-position: center right;
+  filter: saturate(0.98) contrast(1.05) brightness(0.84);
 }
 
 [data-theme="dark"] .app-content::before {
   background:
-    radial-gradient(58% 42% at 18% 0%, rgba(123, 210, 246, 0.16), transparent 64%),
-    radial-gradient(50% 44% at 86% 18%, rgba(100, 214, 193, 0.12), transparent 68%),
-    radial-gradient(80% 72% at 50% 112%, rgba(0, 0, 0, 0.32), transparent 66%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 46%);
+    radial-gradient(46% 34% at 18% 0%, rgba(143, 216, 255, 0.2), transparent 64%),
+    radial-gradient(42% 38% at 82% 16%, rgba(194, 206, 255, 0.13), transparent 70%),
+    radial-gradient(60% 52% at 72% 78%, rgba(93, 142, 216, 0.12), transparent 72%),
+    radial-gradient(80% 72% at 50% 112%, rgba(0, 0, 0, 0.28), transparent 66%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 46%);
   opacity: 1;
 }
 
 [data-theme="dark"] .app-content::after {
   background-image:
-    radial-gradient(100% 78% at 50% 0%, transparent 44%, rgba(0, 0, 0, 0.28) 100%),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.22'/%3E%3C/svg%3E");
-  background-size: auto, 160px 160px;
-  opacity: 0.3;
+    radial-gradient(circle at 9% 16%, rgba(236, 249, 255, 0.78) 0 1px, transparent 1.8px),
+    radial-gradient(circle at 24% 72%, rgba(185, 221, 255, 0.52) 0 1px, transparent 2px),
+    radial-gradient(circle at 54% 22%, rgba(255, 255, 255, 0.58) 0 1px, transparent 2px),
+    radial-gradient(circle at 78% 68%, rgba(202, 229, 255, 0.48) 0 1px, transparent 2px),
+    radial-gradient(circle at 91% 18%, rgba(255, 255, 255, 0.64) 0 1px, transparent 2px),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260' viewBox='0 0 260 260'%3E%3Cg fill='none' stroke='%23cdefff' stroke-opacity='.34' stroke-width='1.2' stroke-linecap='round'%3E%3Cpath d='M42 52h26M55 39v26M46 43l18 18M64 43L46 61'/%3E%3Cpath d='M198 46h30M213 31v30M202 35l22 22M224 35l-22 22'/%3E%3Cpath d='M70 202h34M87 185v34M75 190l24 24M99 190l-24 24'/%3E%3Cpath d='M206 188h22M217 177v22M210 181l14 14M224 181l-14 14'/%3E%3C/g%3E%3C/svg%3E"),
+    radial-gradient(100% 78% at 50% 0%, transparent 42%, rgba(0, 0, 0, 0.24) 100%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.2'/%3E%3C/svg%3E");
+  background-size:
+    auto,
+    auto,
+    auto,
+    auto,
+    auto,
+    260px 260px,
+    auto,
+    160px 160px;
+  opacity: 0.34;
+  mix-blend-mode: screen;
 }
 
 /* 深色模式下的头部样式 */
@@ -894,8 +920,10 @@ onUnmounted(() => {
 
 [data-theme="dark"] .three-column-layout {
   background:
-    radial-gradient(92% 58% at 50% -8%, rgba(74, 126, 150, 0.16), transparent 68%),
-    linear-gradient(145deg, rgba(17, 29, 40, 0.76), rgba(6, 11, 18, 0.78) 48%, rgba(2, 5, 9, 0.86)),
+    radial-gradient(88% 56% at 50% -8%, rgba(143, 216, 255, 0.16), transparent 68%),
+    radial-gradient(70% 60% at 92% 18%, rgba(186, 197, 255, 0.1), transparent 72%),
+    linear-gradient(145deg, rgba(14, 25, 42, 0.5), rgba(5, 10, 21, 0.54) 48%, rgba(2, 5, 12, 0.64)),
+    url('/image/frost-hero.webp') center right / cover no-repeat,
     var(--app-workspace);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.08) inset,
@@ -908,9 +936,10 @@ onUnmounted(() => {
 [data-theme="dark"] .three-column-layout::after {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.07), transparent 26%),
-    radial-gradient(88% 50% at 52% 0%, rgba(123, 210, 246, 0.09), transparent 72%),
-    radial-gradient(98% 58% at 50% 108%, rgba(0, 0, 0, 0.22), transparent 72%);
-  opacity: 0.88;
+    radial-gradient(88% 50% at 52% 0%, rgba(143, 216, 255, 0.1), transparent 72%),
+    radial-gradient(64% 46% at 88% 12%, rgba(199, 208, 255, 0.07), transparent 74%),
+    radial-gradient(98% 58% at 50% 108%, rgba(0, 0, 0, 0.2), transparent 72%);
+  opacity: 0.84;
 }
 
 .column {
@@ -953,12 +982,14 @@ onUnmounted(() => {
 [data-theme="dark"] .column {
   background: var(--app-column);
   box-shadow: var(--app-column-shadow);
+  backdrop-filter: blur(18px) saturate(1.08);
 }
 
 [data-theme="dark"] .column::before {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 24%),
-    radial-gradient(88% 38% at 50% 0%, rgba(123, 210, 246, 0.08), transparent 74%);
+    radial-gradient(88% 38% at 50% 0%, rgba(143, 216, 255, 0.08), transparent 74%),
+    radial-gradient(68% 42% at 88% 18%, rgba(197, 205, 255, 0.04), transparent 76%);
 }
 
 .column-header {
@@ -979,7 +1010,7 @@ onUnmounted(() => {
 [data-theme="dark"] .column-header {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent 84%),
-    rgba(13, 24, 36, 0.64);
+    rgba(12, 22, 38, 0.62);
 }
 
 .column-title {
@@ -1025,7 +1056,7 @@ onUnmounted(() => {
 [data-theme="dark"] .mail-detail-column .column-header {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.055), transparent 84%),
-    rgba(15, 27, 40, 0.72);
+    rgba(14, 25, 42, 0.7);
 }
 
 .global-loading {
