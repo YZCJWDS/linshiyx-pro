@@ -546,12 +546,12 @@ onUnmounted(() => {
   mix-blend-mode: screen;
   transition: opacity 0.35s ease;
   contain: strict;
-  -webkit-mask-image: radial-gradient(86% 76% at 52% 52%, rgba(0, 0, 0, 0.52) 0%, rgba(0, 0, 0, 0.78) 48%, rgba(0, 0, 0, 1) 100%);
-  mask-image: radial-gradient(86% 76% at 52% 52%, rgba(0, 0, 0, 0.52) 0%, rgba(0, 0, 0, 0.78) 48%, rgba(0, 0, 0, 1) 100%);
+  -webkit-mask-image: radial-gradient(86% 76% at 52% 52%, rgba(0, 0, 0, 0.44) 0%, rgba(0, 0, 0, 0.72) 50%, rgba(0, 0, 0, 0.96) 100%);
+  mask-image: radial-gradient(86% 76% at 52% 52%, rgba(0, 0, 0, 0.44) 0%, rgba(0, 0, 0, 0.72) 50%, rgba(0, 0, 0, 0.96) 100%);
 }
 
 [data-theme="dark"] .frost-particle-layer {
-  opacity: 0.9;
+  opacity: 0.82;
 }
 
 .frost-particle-layer[hidden] {

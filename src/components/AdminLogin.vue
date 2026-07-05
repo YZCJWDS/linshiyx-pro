@@ -7,6 +7,13 @@
       <div class="bg-overlay"></div>
     </div>
 
+    <canvas
+      ref="loginParticleCanvas"
+      class="login-particle-layer"
+      aria-hidden="true"
+      data-frost-particles
+    ></canvas>
+
     <n-button
       class="theme-toggle"
       quaternary
@@ -104,11 +111,15 @@ import {
 } from '@vicons/ionicons5'
 import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores'
+import { useFrostParticles } from '@/composables/useFrostParticles'
 
 const authStore = useAuthStore()
 const uiStore = useUiStore()
 const message = useMessage()
 const isDark = computed(() => uiStore.theme === 'dark')
+const loginParticleCanvas = ref<HTMLCanvasElement | null>(null)
+
+useFrostParticles(loginParticleCanvas, isDark)
 
 // Form state
 const formRef = ref<FormInst | null>(null)
@@ -189,6 +200,35 @@ async function handleLogin() {
   width: 100%;
   height: 100%;
   z-index: 1;
+}
+
+.login-particle-layer {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0;
+  mix-blend-mode: screen;
+  transition: opacity 0.35s ease;
+  contain: strict;
+  -webkit-mask-image: linear-gradient(90deg, rgba(0, 0, 0, 0.78), rgba(0, 0, 0, 0.94));
+  mask-image: linear-gradient(90deg, rgba(0, 0, 0, 0.78), rgba(0, 0, 0, 0.94));
+}
+
+[data-theme="dark"] .login-particle-layer {
+  opacity: 0.72;
+}
+
+.login-particle-layer[hidden] {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-particle-layer {
+    display: none;
+  }
 }
 
 .bg-image {
