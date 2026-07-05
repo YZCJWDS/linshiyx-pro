@@ -48,14 +48,14 @@ function getReaderPalette(mode = resolvedDisplayMode.value) {
   if (mode === 'dark') {
     return {
       mode,
-      background: '#101827',
+      background: '#111d2b',
       surface: '#162033',
       text: '#e8eef7',
       muted: '#b8c4d4',
       link: '#8cc8ff',
       border: '#334155',
       codeBg: '#172235',
-      shadow: '0 22px 58px rgba(0, 0, 0, 0.34)'
+      shadow: '0 1px 0 rgba(255, 255, 255, 0.055) inset, 0 2px 6px rgba(0, 0, 0, 0.44), 0 28px 68px rgba(0, 0, 0, 0.46)'
     }
   }
 
@@ -68,7 +68,7 @@ function getReaderPalette(mode = resolvedDisplayMode.value) {
     link: '#0b63ce',
     border: '#d8dee8',
     codeBg: '#f5f7fa',
-    shadow: '0 18px 48px rgba(33, 55, 76, 0.14)'
+    shadow: '0 1px 0 rgba(255, 255, 255, 0.82) inset, 0 2px 5px rgba(33, 55, 76, 0.12), 0 26px 58px rgba(33, 55, 76, 0.18)'
   }
 }
 
@@ -351,7 +351,7 @@ watch(() => [props.htmlContent, props.displayMode], () => {
 }
 
 .html-fallback--dark {
-  background: #101827;
+  background: #111d2b;
   color: #e8eef7;
   border-color: #334155;
   box-shadow: var(--shadow-mid);

@@ -446,30 +446,36 @@ onUnmounted(() => {
   position: relative;
   overflow: hidden;
   color: var(--n-text-color);
-  --app-panel: rgba(255, 255, 255, 0.62);
-  --app-panel-strong: rgba(255, 255, 255, 0.78);
-  --app-panel-soft: rgba(244, 248, 249, 0.72);
-  --app-workspace: rgba(255, 255, 255, 0.56);
-  --app-detail: rgba(255, 255, 255, 0.7);
+  --app-panel: rgba(250, 253, 252, 0.72);
+  --app-panel-strong: rgba(255, 255, 255, 0.86);
+  --app-panel-soft: rgba(244, 249, 248, 0.78);
+  --app-workspace: rgba(232, 242, 242, 0.62);
+  --app-column: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(244, 250, 249, 0.68));
+  --app-column-detail: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(246, 251, 250, 0.74));
+  --app-detail: rgba(255, 255, 255, 0.78);
   --app-border: rgba(88, 112, 130, 0.2);
   --app-border-strong: rgba(255, 255, 255, 0.58);
   --app-separator: rgba(88, 112, 130, 0.18);
   --app-shadow: var(--shadow-floating);
   --app-shadow-soft: var(--shadow-soft);
+  --app-column-shadow: 0 1px 0 rgba(255, 255, 255, 0.72) inset, 0 1px 2px rgba(33, 55, 76, 0.08), 0 16px 38px rgba(33, 55, 76, 0.11);
   --app-accent-soft: rgba(56, 194, 177, 0.13);
 }
 
 [data-theme="dark"] .temp-email-app {
-  --app-panel: rgba(10, 19, 29, 0.58);
-  --app-panel-strong: rgba(15, 27, 40, 0.78);
-  --app-panel-soft: rgba(9, 17, 27, 0.7);
-  --app-workspace: rgba(8, 15, 24, 0.8);
-  --app-detail: rgba(13, 24, 36, 0.84);
-  --app-border: rgba(150, 177, 196, 0.16);
-  --app-border-strong: rgba(150, 177, 196, 0.22);
+  --app-panel: rgba(13, 23, 32, 0.74);
+  --app-panel-strong: rgba(17, 30, 42, 0.9);
+  --app-panel-soft: rgba(10, 18, 28, 0.82);
+  --app-workspace: rgba(4, 8, 13, 0.78);
+  --app-column: linear-gradient(180deg, rgba(18, 31, 43, 0.94), rgba(9, 17, 27, 0.9));
+  --app-column-detail: linear-gradient(180deg, rgba(20, 33, 43, 0.98), rgba(10, 17, 27, 0.94));
+  --app-detail: rgba(14, 24, 35, 0.92);
+  --app-border: rgba(172, 202, 220, 0.16);
+  --app-border-strong: rgba(172, 202, 220, 0.22);
   --app-separator: rgba(150, 177, 196, 0.14);
   --app-shadow: var(--shadow-floating);
   --app-shadow-soft: var(--shadow-soft);
+  --app-column-shadow: 0 1px 0 rgba(255, 255, 255, 0.07) inset, 0 1px 2px rgba(0, 0, 0, 0.34), 0 18px 44px rgba(0, 0, 0, 0.34);
   --app-accent-soft: rgba(100, 214, 193, 0.14);
 }
 
@@ -487,7 +493,7 @@ onUnmounted(() => {
   background-attachment: fixed;
   z-index: -2;
   transform: scale(1.03); /* 轻微缩放避免边缘 */
-  filter: saturate(0.9) contrast(0.96) brightness(1.02);
+  filter: saturate(0.94) contrast(1.02) brightness(1.02);
 }
 
 /* 背景遮罩层 - 提供更好的可读性 */
@@ -499,12 +505,15 @@ onUnmounted(() => {
   width: 100%;
   height: 100%;
   background:
+    radial-gradient(62% 52% at 18% 6%, rgba(255, 255, 255, 0.5), transparent 66%),
+    radial-gradient(48% 46% at 88% 20%, rgba(56, 194, 177, 0.16), transparent 68%),
+    radial-gradient(70% 68% at 50% 106%, rgba(40, 72, 96, 0.16), transparent 72%),
     linear-gradient(
       135deg,
-      rgba(247, 249, 249, 0.94) 0%,
-      rgba(238, 245, 247, 0.82) 36%,
-      rgba(230, 240, 243, 0.62) 66%,
-      rgba(246, 248, 246, 0.84) 100%
+      rgba(247, 250, 249, 0.92) 0%,
+      rgba(231, 240, 241, 0.78) 36%,
+      rgba(219, 233, 236, 0.58) 66%,
+      rgba(246, 248, 246, 0.86) 100%
     ),
     linear-gradient(
       180deg,
@@ -535,11 +544,11 @@ onUnmounted(() => {
 
 .app-content::before {
   background:
-    radial-gradient(74% 54% at 20% 2%, rgba(255, 255, 255, 0.34), transparent 58%),
-    radial-gradient(68% 54% at 86% 18%, rgba(56, 194, 177, 0.12), transparent 68%),
-    radial-gradient(62% 56% at 8% 92%, rgba(63, 159, 211, 0.1), transparent 70%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.22), transparent 42%);
-  opacity: 0.86;
+    radial-gradient(54% 38% at 24% 0%, rgba(255, 255, 255, 0.44), transparent 64%),
+    radial-gradient(54% 50% at 82% 18%, rgba(56, 194, 177, 0.12), transparent 70%),
+    radial-gradient(60% 52% at 8% 94%, rgba(63, 159, 211, 0.12), transparent 72%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.24), transparent 44%);
+  opacity: 0.9;
   z-index: 0;
 }
 
@@ -565,12 +574,15 @@ onUnmounted(() => {
 /* 深色模式下的背景调整 */
 [data-theme="dark"] .app-background::after {
   background:
+    radial-gradient(56% 44% at 22% 2%, rgba(123, 210, 246, 0.15), transparent 64%),
+    radial-gradient(46% 42% at 88% 22%, rgba(100, 214, 193, 0.13), transparent 68%),
+    radial-gradient(86% 72% at 50% 108%, rgba(0, 0, 0, 0.44), transparent 72%),
     linear-gradient(
       135deg,
-      rgba(5, 10, 16, 0.9) 0%,
-      rgba(8, 15, 24, 0.82) 38%,
-      rgba(10, 20, 28, 0.68) 66%,
-      rgba(5, 10, 16, 0.88) 100%
+      rgba(4, 7, 11, 0.9) 0%,
+      rgba(7, 13, 20, 0.84) 38%,
+      rgba(9, 17, 24, 0.72) 66%,
+      rgba(3, 6, 10, 0.9) 100%
     ),
     linear-gradient(180deg, rgba(33, 79, 75, 0.1), rgba(0, 0, 0, 0.12));
   backdrop-filter: blur(2.5px);
@@ -617,15 +629,15 @@ onUnmounted(() => {
 }
 
 [data-theme="dark"] .app-background {
-  filter: saturate(0.86) contrast(1.02) brightness(0.68);
+  filter: saturate(0.9) contrast(1.08) brightness(0.58);
 }
 
 [data-theme="dark"] .app-content::before {
   background:
-    radial-gradient(78% 54% at 18% 0%, rgba(123, 210, 246, 0.13), transparent 62%),
-    radial-gradient(62% 52% at 88% 18%, rgba(100, 214, 193, 0.11), transparent 68%),
-    radial-gradient(80% 68% at 50% 112%, rgba(45, 108, 132, 0.14), transparent 68%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 46%);
+    radial-gradient(58% 42% at 18% 0%, rgba(123, 210, 246, 0.16), transparent 64%),
+    radial-gradient(50% 44% at 86% 18%, rgba(100, 214, 193, 0.12), transparent 68%),
+    radial-gradient(80% 72% at 50% 112%, rgba(0, 0, 0, 0.32), transparent 66%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 46%);
   opacity: 1;
 }
 
@@ -654,9 +666,13 @@ onUnmounted(() => {
   margin: 0 auto;
   border: 1px solid var(--app-border-strong);
   border-radius: var(--radius-panel);
-  background: var(--app-panel-strong);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.2), transparent 70%),
+    var(--app-panel-strong);
   backdrop-filter: blur(22px) saturate(1.08);
-  box-shadow: var(--app-shadow-soft);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.62) inset,
+    var(--app-shadow-soft);
 }
 
 .header-left {
@@ -831,7 +847,7 @@ onUnmounted(() => {
 .app-main {
   flex: 1;
   overflow: hidden;
-  padding: 12px 18px 18px;
+  padding: 12px 18px 20px;
   max-width: 1600px;
   margin: 0 auto;
   width: 100%;
@@ -840,20 +856,25 @@ onUnmounted(() => {
 .three-column-layout {
   display: grid;
   grid-template-columns: 300px minmax(340px, 400px) minmax(460px, 1fr);
-  gap: 0;
+  gap: 10px;
   height: 100%;
   min-height: 0;
   overflow: hidden;
   position: relative;
+  isolation: isolate;
+  padding: 10px;
   border: 1px solid var(--app-border-strong);
-  border-radius: var(--radius-shell);
+  border-radius: 24px;
   background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.74), rgba(238, 247, 248, 0.48) 44%, rgba(225, 238, 241, 0.38)),
+    radial-gradient(92% 58% at 50% -8%, rgba(255, 255, 255, 0.62), transparent 68%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.62), rgba(224, 238, 239, 0.44) 48%, rgba(204, 222, 226, 0.32)),
     var(--app-workspace);
-  backdrop-filter: blur(24px) saturate(1.06);
+  backdrop-filter: blur(26px) saturate(1.1);
   box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.7) inset,
+    0 22px 48px rgba(33, 55, 76, 0.14),
+    0 60px 120px rgba(33, 55, 76, 0.16),
     var(--app-shadow),
-    inset 0 1px 0 rgba(255, 255, 255, 0.7),
     inset 0 -1px 0 rgba(88, 112, 130, 0.08),
     inset 0 0 0 1px rgba(255, 255, 255, 0.24);
 }
@@ -864,36 +885,41 @@ onUnmounted(() => {
   inset: 0;
   pointer-events: none;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.24), transparent 22%),
-    radial-gradient(80% 48% at 50% 0%, rgba(255, 255, 255, 0.22), transparent 70%);
-  opacity: 0.74;
+    linear-gradient(180deg, rgba(255, 255, 255, 0.28), transparent 20%),
+    radial-gradient(82% 50% at 50% 0%, rgba(255, 255, 255, 0.18), transparent 70%),
+    radial-gradient(96% 58% at 50% 108%, rgba(45, 72, 96, 0.12), transparent 72%);
+  opacity: 0.78;
   z-index: 0;
 }
 
 [data-theme="dark"] .three-column-layout {
   background:
-    linear-gradient(145deg, rgba(20, 35, 50, 0.88), rgba(9, 16, 26, 0.74) 48%, rgba(6, 11, 18, 0.8)),
+    radial-gradient(92% 58% at 50% -8%, rgba(74, 126, 150, 0.16), transparent 68%),
+    linear-gradient(145deg, rgba(17, 29, 40, 0.76), rgba(6, 11, 18, 0.78) 48%, rgba(2, 5, 9, 0.86)),
     var(--app-workspace);
   box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.08) inset,
+    0 30px 70px rgba(0, 0, 0, 0.52),
+    0 78px 150px rgba(0, 0, 0, 0.36),
     var(--app-shadow),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
     inset 0 0 0 1px rgba(255, 255, 255, 0.04);
 }
 
 [data-theme="dark"] .three-column-layout::after {
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 28%),
-    radial-gradient(88% 50% at 52% 0%, rgba(123, 210, 246, 0.08), transparent 72%);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), transparent 26%),
+    radial-gradient(88% 50% at 52% 0%, rgba(123, 210, 246, 0.09), transparent 72%),
+    radial-gradient(98% 58% at 50% 108%, rgba(0, 0, 0, 0.22), transparent 72%);
   opacity: 0.88;
 }
 
 .column {
   display: flex;
   flex-direction: column;
-  background: transparent;
-  border-radius: 0;
-  border: 0;
-  box-shadow: none;
+  background: var(--app-column);
+  border-radius: 16px;
+  border: 1px solid var(--app-border);
+  box-shadow: var(--app-column-shadow);
   overflow: hidden;
   min-height: 0;
   min-width: 0;
@@ -909,54 +935,51 @@ onUnmounted(() => {
 .column::before {
   content: '';
   position: absolute;
-  top: 18px;
-  bottom: 18px;
-  left: 0;
-  width: 1px;
-  background: linear-gradient(
-    180deg,
-    transparent,
-    rgba(88, 112, 130, 0.14) 18%,
-    rgba(88, 112, 130, 0.08) 52%,
-    transparent
-  );
-  opacity: 0.7;
-  z-index: 1;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.24), transparent 24%),
+    radial-gradient(80% 36% at 50% 0%, rgba(255, 255, 255, 0.18), transparent 72%);
+  opacity: 0.8;
+  z-index: 0;
 }
 
 .column:first-child::before {
-  content: none;
+  content: '';
 }
 
 /* 深色模式下的列样式 */
 [data-theme="dark"] .column {
-  background: transparent;
-  box-shadow: none;
+  background: var(--app-column);
+  box-shadow: var(--app-column-shadow);
 }
 
 [data-theme="dark"] .column::before {
-  background: linear-gradient(
-    180deg,
-    transparent,
-    rgba(150, 177, 196, 0.2) 18%,
-    rgba(150, 177, 196, 0.1) 52%,
-    transparent
-  );
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 24%),
+    radial-gradient(88% 38% at 50% 0%, rgba(123, 210, 246, 0.08), transparent 74%);
 }
 
 .column-header {
+  position: relative;
+  z-index: 1;
   flex-shrink: 0;
   min-height: 52px;
   padding: 13px 16px;
   border-bottom: 1px solid var(--app-border);
-  background: rgba(255, 255, 255, 0.34);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.26), transparent 84%),
+    rgba(255, 255, 255, 0.38);
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
 [data-theme="dark"] .column-header {
-  background: rgba(13, 24, 36, 0.52);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent 84%),
+    rgba(13, 24, 36, 0.64);
 }
 
 .column-title {
@@ -969,6 +992,8 @@ onUnmounted(() => {
 }
 
 .column-content {
+  position: relative;
+  z-index: 1;
   flex: 1;
   overflow: hidden;
   display: flex;
@@ -985,18 +1010,22 @@ onUnmounted(() => {
 
 .mail-detail-column {
   min-width: 0;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.24), transparent 38%),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.2), transparent 20%),
-    var(--app-detail);
+  background: var(--app-column-detail);
+  box-shadow:
+    var(--app-column-shadow),
+    0 0 0 1px rgba(63, 159, 211, 0.06);
 }
 
 .mail-detail-column .column-header {
-  background: rgba(255, 255, 255, 0.5);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.3), transparent 84%),
+    rgba(255, 255, 255, 0.54);
 }
 
 [data-theme="dark"] .mail-detail-column .column-header {
-  background: rgba(15, 27, 40, 0.66);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), transparent 84%),
+    rgba(15, 27, 40, 0.72);
 }
 
 .global-loading {
@@ -1076,8 +1105,8 @@ onUnmounted(() => {
   }
 
   .column {
-    border-left: 0;
-    border-top: 1px solid var(--app-separator);
+    border-left: 1px solid var(--app-border);
+    border-top: 1px solid var(--app-border);
   }
 
   .column:first-child {

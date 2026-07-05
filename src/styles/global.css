@@ -45,9 +45,9 @@
   --divider-color: #e0e0e6;
   
   /* Box Shadow */
-  --box-shadow-1: 0 1px 2px rgba(33, 55, 76, 0.06), 0 10px 24px rgba(33, 55, 76, 0.1);
-  --box-shadow-2: 0 2px 6px rgba(33, 55, 76, 0.08), 0 18px 42px rgba(33, 55, 76, 0.14);
-  --box-shadow-3: 0 3px 10px rgba(33, 55, 76, 0.1), 0 34px 88px rgba(33, 55, 76, 0.2);
+  --box-shadow-1: 0 1px 1px rgba(33, 55, 76, 0.08), 0 8px 22px rgba(33, 55, 76, 0.1), 0 20px 52px rgba(33, 55, 76, 0.08);
+  --box-shadow-2: 0 2px 4px rgba(33, 55, 76, 0.1), 0 18px 44px rgba(33, 55, 76, 0.16), 0 36px 90px rgba(33, 55, 76, 0.1);
+  --box-shadow-3: 0 3px 8px rgba(33, 55, 76, 0.14), 0 30px 78px rgba(33, 55, 76, 0.22), 0 70px 140px rgba(33, 55, 76, 0.14);
   --shadow-soft: var(--box-shadow-1);
   --shadow-mid: var(--box-shadow-2);
   --shadow-floating: var(--box-shadow-3);
@@ -116,9 +116,9 @@
   /* Border Colors */
   --border-color: rgba(148, 178, 205, 0.18);
   --divider-color: rgba(148, 178, 205, 0.16);
-  --box-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.22), 0 12px 30px rgba(0, 0, 0, 0.28);
-  --box-shadow-2: 0 2px 8px rgba(0, 0, 0, 0.26), 0 24px 56px rgba(0, 0, 0, 0.36);
-  --box-shadow-3: 0 4px 16px rgba(0, 0, 0, 0.3), 0 38px 100px rgba(0, 0, 0, 0.48);
+  --box-shadow-1: 0 1px 1px rgba(0, 0, 0, 0.34), 0 10px 26px rgba(0, 0, 0, 0.32), 0 24px 60px rgba(0, 0, 0, 0.22);
+  --box-shadow-2: 0 2px 5px rgba(0, 0, 0, 0.38), 0 22px 58px rgba(0, 0, 0, 0.42), 0 46px 110px rgba(0, 0, 0, 0.28);
+  --box-shadow-3: 0 3px 8px rgba(0, 0, 0, 0.42), 0 34px 92px rgba(0, 0, 0, 0.56), 0 78px 160px rgba(0, 0, 0, 0.36);
 }
 
 /* Global Reset */
