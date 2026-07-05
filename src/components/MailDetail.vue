@@ -274,7 +274,7 @@ import {
   Trash as DeleteIcon,
   Attach as AttachIcon
 } from '@vicons/ionicons5'
-import { useEmailStore, useSettingsStore } from '@/stores'
+import { useEmailStore, useSettingsStore, useUiStore } from '@/stores'
 import { formatDate, formatMailDetailTime, copyToClipboard, extractTextFromHtml } from '@/utils/helpers'
 import { testDecoding } from '@/utils/mimeParser'
 import type { EmailAttachment } from '@/types'
@@ -282,6 +282,7 @@ import ShadowHtmlComponent from './ShadowHtmlComponent.vue'
 
 const emailStore = useEmailStore()
 const settingsStore = useSettingsStore()
+const uiStore = useUiStore()
 const message = useMessage()
 
 // Local state
@@ -289,10 +290,10 @@ const viewMode = ref<'rendered' | 'source'>('rendered')
 
 // 邮件显示模式选项
 const mailDisplayOptions = [
-  { label: '🌟 自动适配', value: 'auto' },
-  { label: '☀️ 明亮模式', value: 'light' },
-  { label: '🌙 深色模式', value: 'dark' },
-  { label: '🔆 高对比度', value: 'high-contrast' }
+  { label: '跟随全局', value: 'auto' },
+  { label: '明亮阅读', value: 'light' },
+  { label: '深色阅读', value: 'dark' },
+  { label: '高对比度', value: 'high-contrast' }
 ]
 
 // 解码邮件主题
@@ -512,7 +513,7 @@ const mailContentClasses = computed(() => {
   classes.push(`mail-display-${settingsStore.mailDisplayMode}`)
 
   // 根据系统主题添加类
-  if (settingsStore.isDark) {
+  if (uiStore.theme === 'dark') {
     classes.push('system-dark')
   }
 
@@ -523,7 +524,7 @@ const effectiveMailDisplayMode = computed<'light' | 'dark' | 'high-contrast'>(()
   if (settingsStore.mailDisplayMode === 'high-contrast') return 'high-contrast'
   if (settingsStore.mailDisplayMode === 'dark') return 'dark'
   if (settingsStore.mailDisplayMode === 'light') return 'light'
-  return settingsStore.isDark ? 'dark' : 'light'
+  return uiStore.theme === 'dark' ? 'dark' : 'light'
 })
 
 const sanitizedHtmlContent = computed(() => {
@@ -799,10 +800,10 @@ function handleIframeLoad(event: Event) {
   --detail-item: rgba(255, 255, 255, 0.68);
   --detail-item-hover: rgba(79, 143, 199, 0.1);
   --detail-border: rgba(88, 112, 130, 0.18);
-  --detail-shadow: 0 14px 34px rgba(33, 55, 76, 0.12);
+  --detail-shadow: var(--shadow-soft);
   --detail-stage: #eef3f4;
   --detail-stage-soft: rgba(238, 243, 244, 0.72);
-  --reader-paper-shadow: 0 18px 46px rgba(33, 55, 76, 0.14);
+  --reader-paper-shadow: var(--shadow-mid);
 }
 
 [data-theme="dark"] .mail-detail {
@@ -812,10 +813,10 @@ function handleIframeLoad(event: Event) {
   --detail-item: rgba(15, 28, 41, 0.7);
   --detail-item-hover: rgba(114, 184, 232, 0.12);
   --detail-border: rgba(150, 177, 196, 0.15);
-  --detail-shadow: 0 14px 34px rgba(0, 0, 0, 0.28);
+  --detail-shadow: var(--shadow-soft);
   --detail-stage: #0b121d;
   --detail-stage-soft: rgba(11, 18, 29, 0.78);
-  --reader-paper-shadow: 0 18px 48px rgba(0, 0, 0, 0.36);
+  --reader-paper-shadow: var(--shadow-mid);
 }
 
 .empty-state {
@@ -880,7 +881,7 @@ function handleIframeLoad(event: Event) {
   font-size: 12px;
   padding: 7px 9px;
   border: 1px solid var(--detail-border);
-  border-radius: 6px;
+  border-radius: 10px;
   background: var(--detail-chip);
 }
 
@@ -914,7 +915,7 @@ function handleIframeLoad(event: Event) {
   flex-shrink: 0;
   padding: 3px;
   border: 1px solid var(--detail-border);
-  border-radius: 6px;
+  border-radius: 12px;
   background: var(--detail-chip);
 }
 
@@ -922,7 +923,7 @@ function handleIframeLoad(event: Event) {
   flex-shrink: 0;
   margin: 12px 16px 0;
   border: 1px solid var(--detail-border);
-  border-radius: 8px;
+  border-radius: var(--radius-card);
   overflow: hidden;
   background: var(--detail-panel);
 }
@@ -957,7 +958,7 @@ function handleIframeLoad(event: Event) {
   min-height: 54px;
   padding: 8px 8px 8px 10px;
   border: 1px solid transparent;
-  border-radius: 6px;
+  border-radius: 10px;
   background: var(--detail-item);
   transition:
     background-color 0.16s ease,
@@ -1048,8 +1049,11 @@ function handleIframeLoad(event: Event) {
   flex: 1;
   min-height: 0;
   background:
+    linear-gradient(rgba(63, 159, 211, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(63, 159, 211, 0.035) 1px, transparent 1px),
     linear-gradient(180deg, var(--detail-stage-soft), var(--detail-stage)),
     var(--detail-stage);
+  background-size: 38px 38px, 38px 38px, auto, auto;
 }
 
 .rendered-content {
@@ -1073,7 +1077,7 @@ function handleIframeLoad(event: Event) {
   display: block;
   margin: 0 auto;
   border: 1px solid var(--reader-border);
-  border-radius: 8px;
+  border-radius: var(--radius-panel);
   background: var(--reader-paper);
   box-shadow: var(--reader-paper-shadow);
 }
@@ -1087,7 +1091,7 @@ function handleIframeLoad(event: Event) {
   margin: 0 auto;
   padding: 28px;
   border: 1px solid var(--reader-border);
-  border-radius: 8px;
+  border-radius: var(--radius-panel);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   word-break: normal;
@@ -1163,7 +1167,7 @@ function handleIframeLoad(event: Event) {
   margin: 0 auto;
   padding: 24px;
   border: 1px solid var(--detail-border);
-  border-radius: 8px;
+  border-radius: var(--radius-panel);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   word-break: normal;
@@ -1195,8 +1199,11 @@ function handleIframeLoad(event: Event) {
 
 [data-theme="dark"] .mail-body-content {
   background:
+    linear-gradient(rgba(123, 210, 246, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(123, 210, 246, 0.04) 1px, transparent 1px),
     linear-gradient(180deg, var(--detail-stage-soft), var(--detail-stage)),
     var(--detail-stage);
+  background-size: 38px 38px, 38px 38px, auto, auto;
 }
 
 [data-theme="dark"] .attachments-header {

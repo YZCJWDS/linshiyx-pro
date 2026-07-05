@@ -40,7 +40,8 @@ function getReaderPalette(mode = resolvedDisplayMode.value) {
       muted: '#000000',
       link: '#0000ee',
       border: '#000000',
-      codeBg: '#ffffff'
+      codeBg: '#ffffff',
+      shadow: 'none'
     }
   }
 
@@ -53,7 +54,8 @@ function getReaderPalette(mode = resolvedDisplayMode.value) {
       muted: '#b8c4d4',
       link: '#8cc8ff',
       border: '#334155',
-      codeBg: '#172235'
+      codeBg: '#172235',
+      shadow: '0 22px 58px rgba(0, 0, 0, 0.34)'
     }
   }
 
@@ -65,7 +67,8 @@ function getReaderPalette(mode = resolvedDisplayMode.value) {
     muted: '#4b5563',
     link: '#0b63ce',
     border: '#d8dee8',
-    codeBg: '#f5f7fa'
+    codeBg: '#f5f7fa',
+    shadow: '0 18px 48px rgba(33, 55, 76, 0.14)'
   }
 }
 
@@ -178,12 +181,13 @@ function renderShadowDOM() {
 
           .mail-reader {
             min-height: 100%;
-            padding: 24px;
+            padding: 32px;
             border: 1px solid ${palette.border};
-            border-radius: 8px;
+            border-radius: 18px;
             background: ${palette.background};
             color: ${palette.text};
             overflow-wrap: anywhere;
+            box-shadow: ${palette.shadow};
           }
 
           body {
@@ -290,6 +294,7 @@ function renderShadowDOM() {
             background-color: #fff !important;
             border-color: #000 !important;
             text-shadow: none !important;
+            box-shadow: none !important;
           }
         </style>
       `
@@ -333,27 +338,30 @@ watch(() => [props.htmlContent, props.displayMode], () => {
 }
 
 .html-fallback {
-  padding: 24px;
+  padding: 32px;
   border: 1px solid var(--n-border-color);
-  border-radius: 8px;
+  border-radius: var(--radius-panel);
   background: #fff;
   color: #1f2937;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 15px;
   line-height: 1.72;
   overflow-wrap: anywhere;
+  box-shadow: var(--shadow-mid);
 }
 
 .html-fallback--dark {
   background: #101827;
   color: #e8eef7;
   border-color: #334155;
+  box-shadow: var(--shadow-mid);
 }
 
 .html-fallback--high-contrast {
   background: #fff;
   color: #000;
   border-color: #000;
+  box-shadow: none;
 }
 
 .html-fallback img {

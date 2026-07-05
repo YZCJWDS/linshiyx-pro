@@ -75,6 +75,7 @@ export const useSettingsStore = defineStore('settings', () => {
     useSideMargin.value = true
     useUTCDate.value = false
     isDark.value = false
+    mailDisplayMode.value = 'auto'
     
     saveSettings()
     console.log('✅ Settings reset to defaults')

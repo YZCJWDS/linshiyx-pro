@@ -426,10 +426,11 @@ function getLastMailTime(address: EmailAddress): string {
   --manager-panel: rgba(255, 255, 255, 0.2);
   --manager-panel-strong: rgba(255, 255, 255, 0.42);
   --manager-item: rgba(255, 255, 255, 0.58);
-  --manager-item-hover: rgba(56, 168, 157, 0.11);
-  --manager-item-selected: linear-gradient(90deg, rgba(56, 168, 157, 0.18), rgba(255, 255, 255, 0.76));
+  --manager-item-hover: rgba(56, 194, 177, 0.11);
+  --manager-item-selected: linear-gradient(90deg, rgba(56, 194, 177, 0.2), rgba(255, 255, 255, 0.76));
   --manager-border: rgba(88, 112, 130, 0.18);
-  --manager-shadow: 0 10px 26px rgba(33, 55, 76, 0.1);
+  --manager-shadow: var(--shadow-soft);
+  --manager-shadow-hover: var(--shadow-mid);
 }
 
 [data-theme="dark"] .email-manager {
@@ -439,7 +440,8 @@ function getLastMailTime(address: EmailAddress): string {
   --manager-item-hover: rgba(100, 214, 193, 0.12);
   --manager-item-selected: linear-gradient(90deg, rgba(100, 214, 193, 0.2), rgba(15, 28, 41, 0.78));
   --manager-border: rgba(150, 177, 196, 0.15);
-  --manager-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
+  --manager-shadow: var(--shadow-soft);
+  --manager-shadow-hover: var(--shadow-mid);
 }
 
 .manager-header {
@@ -508,27 +510,34 @@ function getLastMailTime(address: EmailAddress): string {
   gap: 10px;
   min-height: 74px;
   padding: 11px 10px 11px 13px;
-  border-radius: 8px;
+  border-radius: var(--radius-card);
   border: 1px solid var(--manager-border);
   background: var(--manager-item);
   cursor: pointer;
   transition:
     background-color 0.16s ease,
     border-color 0.16s ease,
-    box-shadow 0.16s ease;
+    box-shadow 0.16s ease,
+    transform 0.16s ease;
   position: relative;
+  will-change: transform;
 }
 
 .email-item:hover {
-  border-color: rgba(56, 168, 157, 0.42);
+  border-color: rgba(56, 194, 177, 0.42);
   background: var(--manager-item-hover);
-  box-shadow: var(--manager-shadow);
+  box-shadow: var(--manager-shadow-hover);
+  transform: translateY(-2px);
 }
 
 .email-item--selected {
   border-color: var(--n-primary-color) !important;
   background: var(--manager-item-selected) !important;
-  box-shadow: inset 3px 0 0 var(--n-primary-color), var(--manager-shadow);
+  box-shadow:
+    inset 3px 0 0 var(--n-primary-color),
+    0 0 0 1px rgba(63, 159, 211, 0.12),
+    var(--manager-shadow-hover);
+  transform: translateY(-1px);
 }
 
 .email-item--selected::before {
@@ -538,7 +547,10 @@ function getLastMailTime(address: EmailAddress): string {
 /* 深色模式下的选中效果 */
 [data-theme="dark"] .email-item--selected {
   background: var(--manager-item-selected) !important;
-  box-shadow: inset 3px 0 0 var(--n-primary-color), var(--manager-shadow);
+  box-shadow:
+    inset 3px 0 0 var(--n-primary-color),
+    0 0 0 1px rgba(123, 210, 246, 0.12),
+    var(--manager-shadow-hover);
 }
 
 .email-item-content {

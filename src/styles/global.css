@@ -1,10 +1,12 @@
 /* Global CSS Variables */
 :root {
   /* Colors */
-  --primary-color: #4f8fc7;
-  --primary-color-hover: #67a9d6;
-  --primary-color-pressed: #367bb8;
-  --primary-color-suppl: rgba(79, 143, 199, 0.14);
+  --primary-color: #3f9fd3;
+  --primary-color-hover: #5eb9de;
+  --primary-color-pressed: #2385b8;
+  --primary-color-suppl: rgba(63, 159, 211, 0.14);
+  --accent-cyan: #38c2b1;
+  --accent-blue: #3f9fd3;
   
   --info-color: #2080f0;
   --info-color-hover: #4098fc;
@@ -43,9 +45,12 @@
   --divider-color: #e0e0e6;
   
   /* Box Shadow */
-  --box-shadow-1: 0 1px 2px -2px rgba(0, 0, 0, 0.08), 0 3px 6px 0 rgba(0, 0, 0, 0.06), 0 5px 12px 4px rgba(0, 0, 0, 0.04);
-  --box-shadow-2: 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 9px 28px 8px rgba(0, 0, 0, 0.05);
-  --box-shadow-3: 0 6px 16px -9px rgba(0, 0, 0, 0.08), 0 9px 28px 0 rgba(0, 0, 0, 0.05), 0 12px 48px 16px rgba(0, 0, 0, 0.03);
+  --box-shadow-1: 0 10px 28px rgba(33, 55, 76, 0.1);
+  --box-shadow-2: 0 18px 48px rgba(33, 55, 76, 0.14);
+  --box-shadow-3: 0 30px 86px rgba(33, 55, 76, 0.18);
+  --shadow-soft: var(--box-shadow-1);
+  --shadow-mid: var(--box-shadow-2);
+  --shadow-floating: var(--box-shadow-3);
   
   /* Spacing */
   --space-xs: 4px;
@@ -55,9 +60,13 @@
   --space-xl: 32px;
   
   /* Border Radius */
-  --border-radius-sm: 3px;
-  --border-radius-md: 6px;
-  --border-radius-lg: 10px;
+  --border-radius-sm: 8px;
+  --border-radius-md: 14px;
+  --border-radius-lg: 18px;
+  --border-radius-xl: 22px;
+  --radius-card: 14px;
+  --radius-panel: 18px;
+  --radius-shell: 22px;
   
   /* Font Sizes */
   --font-size-xs: 12px;
@@ -81,10 +90,12 @@
 
 /* Dark Theme Variables */
 [data-theme="dark"] {
-  --primary-color: #72b8e8;
-  --primary-color-hover: #8ac9f5;
-  --primary-color-pressed: #4f9ed4;
-  --primary-color-suppl: rgba(114, 184, 232, 0.18);
+  --primary-color: #7bd2f6;
+  --primary-color-hover: #9fe3ff;
+  --primary-color-pressed: #4eb7e5;
+  --primary-color-suppl: rgba(123, 210, 246, 0.18);
+  --accent-cyan: #64d6c1;
+  --accent-blue: #7bd2f6;
   --success-color: #64d6c1;
   --success-color-hover: #7be6d1;
   --success-color-pressed: #38bba6;
@@ -105,6 +116,9 @@
   /* Border Colors */
   --border-color: rgba(148, 178, 205, 0.18);
   --divider-color: rgba(148, 178, 205, 0.16);
+  --box-shadow-1: 0 12px 34px rgba(0, 0, 0, 0.28);
+  --box-shadow-2: 0 22px 58px rgba(0, 0, 0, 0.34);
+  --box-shadow-3: 0 34px 96px rgba(0, 0, 0, 0.44);
 }
 
 /* Global Reset */

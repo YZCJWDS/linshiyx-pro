@@ -46,17 +46,17 @@ const isDark = computed(() => uiStore.theme === 'dark')
 
 const themeOverrides = computed<GlobalThemeOverrides>(() => ({
   common: {
-    primaryColor: isDark.value ? '#72b8e8' : '#4f8fc7',
-    primaryColorHover: isDark.value ? '#8ac9f5' : '#67a9d6',
-    primaryColorPressed: isDark.value ? '#4f9ed4' : '#367bb8',
-    primaryColorSuppl: isDark.value ? 'rgba(114, 184, 232, 0.18)' : 'rgba(79, 143, 199, 0.14)',
-    infoColor: isDark.value ? '#72b8e8' : '#4f8fc7',
-    infoColorHover: isDark.value ? '#8ac9f5' : '#67a9d6',
-    infoColorPressed: isDark.value ? '#4f9ed4' : '#367bb8',
+    primaryColor: isDark.value ? '#7bd2f6' : '#3f9fd3',
+    primaryColorHover: isDark.value ? '#9fe3ff' : '#5eb9de',
+    primaryColorPressed: isDark.value ? '#4eb7e5' : '#2385b8',
+    primaryColorSuppl: isDark.value ? 'rgba(123, 210, 246, 0.18)' : 'rgba(63, 159, 211, 0.14)',
+    infoColor: isDark.value ? '#7bd2f6' : '#3f9fd3',
+    infoColorHover: isDark.value ? '#9fe3ff' : '#5eb9de',
+    infoColorPressed: isDark.value ? '#4eb7e5' : '#2385b8',
     successColor: isDark.value ? '#64d6c1' : '#38a89d',
     successColorHover: isDark.value ? '#7be6d1' : '#4db9ad',
     successColorPressed: isDark.value ? '#38bba6' : '#2c8f86',
-    borderRadius: '6px',
+    borderRadius: '8px',
     borderColor: isDark.value ? 'rgba(148, 178, 205, 0.18)' : 'rgba(116, 146, 174, 0.24)',
     dividerColor: isDark.value ? 'rgba(148, 178, 205, 0.16)' : 'rgba(116, 146, 174, 0.2)',
     bodyColor: isDark.value ? '#07111f' : '#eef6fb',
@@ -66,18 +66,18 @@ const themeOverrides = computed<GlobalThemeOverrides>(() => ({
     textColorBase: isDark.value ? '#edf7ff' : '#172235'
   },
   Button: {
-    borderRadiusMedium: '6px',
-    borderRadiusLarge: '6px'
+    borderRadiusMedium: '8px',
+    borderRadiusLarge: '10px'
   },
   Input: {
-    borderRadius: '6px',
+    borderRadius: '10px',
     colorFocus: isDark.value ? 'rgba(16, 30, 48, 0.96)' : '#ffffff'
   },
   Card: {
-    borderRadius: '8px'
+    borderRadius: '14px'
   },
   Modal: {
-    borderRadius: '8px'
+    borderRadius: '18px'
   },
   Tag: {
     borderRadius: '4px'

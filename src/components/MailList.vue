@@ -376,7 +376,8 @@ watch(() => emailStore.selectedAddress, () => {
   --mail-item-hover: rgba(79, 143, 199, 0.1);
   --mail-item-selected: linear-gradient(90deg, rgba(79, 143, 199, 0.2), rgba(255, 255, 255, 0.78));
   --mail-border: rgba(88, 112, 130, 0.18);
-  --mail-shadow: 0 10px 28px rgba(33, 55, 76, 0.12);
+  --mail-shadow: var(--shadow-soft);
+  --mail-shadow-hover: var(--shadow-mid);
 }
 
 [data-theme="dark"] .mail-list {
@@ -386,7 +387,8 @@ watch(() => emailStore.selectedAddress, () => {
   --mail-item-hover: rgba(114, 184, 232, 0.12);
   --mail-item-selected: linear-gradient(90deg, rgba(114, 184, 232, 0.22), rgba(15, 28, 41, 0.78));
   --mail-border: rgba(150, 177, 196, 0.15);
-  --mail-shadow: 0 10px 28px rgba(0, 0, 0, 0.24);
+  --mail-shadow: var(--shadow-soft);
+  --mail-shadow-hover: var(--shadow-mid);
 }
 
 .empty-state {
@@ -479,27 +481,34 @@ watch(() => emailStore.selectedAddress, () => {
   gap: 10px;
   min-height: 114px;
   padding: 12px 10px 12px 14px;
-  border-radius: 8px;
+  border-radius: var(--radius-card);
   border: 1px solid var(--mail-border);
   background: var(--mail-item);
   cursor: pointer;
   transition:
     background-color 0.16s ease,
     border-color 0.16s ease,
-    box-shadow 0.16s ease;
+    box-shadow 0.16s ease,
+    transform 0.16s ease;
   position: relative;
+  will-change: transform;
 }
 
 .mail-item:hover {
   border-color: rgba(79, 143, 199, 0.44);
   background: var(--mail-item-hover);
-  box-shadow: var(--mail-shadow);
+  box-shadow: var(--mail-shadow-hover);
+  transform: translateY(-2px);
 }
 
 .mail-item--selected {
   border-color: var(--n-primary-color) !important;
   background: var(--mail-item-selected) !important;
-  box-shadow: inset 3px 0 0 var(--n-primary-color), var(--mail-shadow);
+  box-shadow:
+    inset 3px 0 0 var(--n-primary-color),
+    0 0 0 1px rgba(63, 159, 211, 0.12),
+    var(--mail-shadow-hover);
+  transform: translateY(-1px);
 }
 
 .mail-item--selected::before {
@@ -509,7 +518,10 @@ watch(() => emailStore.selectedAddress, () => {
 /* 深色模式下的选中效果 */
 [data-theme="dark"] .mail-item--selected {
   background: var(--mail-item-selected) !important;
-  box-shadow: inset 3px 0 0 var(--n-primary-color), var(--mail-shadow);
+  box-shadow:
+    inset 3px 0 0 var(--n-primary-color),
+    0 0 0 1px rgba(123, 210, 246, 0.12),
+    var(--mail-shadow-hover);
 }
 
 .mail-item--unread {
@@ -524,8 +536,16 @@ watch(() => emailStore.selectedAddress, () => {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--n-primary-color);
-  box-shadow: 0 0 0 3px var(--n-primary-color-suppl);
+  background: radial-gradient(circle, #ffffff 0 16%, var(--n-primary-color) 30% 100%);
+  box-shadow:
+    0 0 0 3px var(--n-primary-color-suppl),
+    0 0 18px rgba(63, 159, 211, 0.46);
+}
+
+[data-theme="dark"] .mail-item--unread::after {
+  box-shadow:
+    0 0 0 3px var(--n-primary-color-suppl),
+    0 0 18px rgba(123, 210, 246, 0.5);
 }
 
 .mail-item--unread .mail-subject {

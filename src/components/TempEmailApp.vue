@@ -451,12 +451,12 @@ onUnmounted(() => {
   --app-panel-soft: rgba(244, 248, 249, 0.72);
   --app-workspace: rgba(255, 255, 255, 0.56);
   --app-detail: rgba(255, 255, 255, 0.7);
-  --app-border: rgba(88, 112, 130, 0.22);
+  --app-border: rgba(88, 112, 130, 0.2);
   --app-border-strong: rgba(255, 255, 255, 0.58);
   --app-separator: rgba(88, 112, 130, 0.18);
-  --app-shadow: 0 24px 72px rgba(33, 55, 76, 0.18);
-  --app-shadow-soft: 0 10px 30px rgba(33, 55, 76, 0.12);
-  --app-accent-soft: rgba(56, 168, 157, 0.13);
+  --app-shadow: var(--shadow-floating);
+  --app-shadow-soft: var(--shadow-soft);
+  --app-accent-soft: rgba(56, 194, 177, 0.13);
 }
 
 [data-theme="dark"] .temp-email-app {
@@ -465,11 +465,11 @@ onUnmounted(() => {
   --app-panel-soft: rgba(9, 17, 27, 0.7);
   --app-workspace: rgba(8, 15, 24, 0.8);
   --app-detail: rgba(13, 24, 36, 0.84);
-  --app-border: rgba(150, 177, 196, 0.18);
+  --app-border: rgba(150, 177, 196, 0.16);
   --app-border-strong: rgba(150, 177, 196, 0.22);
-  --app-separator: rgba(150, 177, 196, 0.15);
-  --app-shadow: 0 28px 76px rgba(0, 0, 0, 0.4);
-  --app-shadow-soft: 0 12px 32px rgba(0, 0, 0, 0.28);
+  --app-separator: rgba(150, 177, 196, 0.14);
+  --app-shadow: var(--shadow-floating);
+  --app-shadow-soft: var(--shadow-soft);
   --app-accent-soft: rgba(100, 214, 193, 0.14);
 }
 
@@ -522,6 +522,44 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   background: transparent;
+  z-index: 1;
+}
+
+.app-content::before,
+.app-content::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+.app-content::before {
+  background:
+    radial-gradient(78% 58% at 18% 4%, rgba(63, 159, 211, 0.16), transparent 62%),
+    radial-gradient(64% 54% at 88% 18%, rgba(56, 194, 177, 0.12), transparent 66%),
+    radial-gradient(72% 72% at 50% 110%, rgba(255, 255, 255, 0.24), transparent 64%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.2), transparent 36%);
+  opacity: 0.92;
+  z-index: 0;
+}
+
+.app-content::after {
+  background-image:
+    linear-gradient(rgba(63, 159, 211, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(63, 159, 211, 0.055) 1px, transparent 1px),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.18'/%3E%3C/svg%3E");
+  background-size: 44px 44px, 44px 44px, 140px 140px;
+  background-position: center;
+  opacity: 0.42;
+  z-index: 0;
+  -webkit-mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.34));
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.34));
+}
+
+.app-header,
+.app-main,
+.global-loading {
+  position: relative;
   z-index: 1;
 }
 
@@ -579,6 +617,27 @@ onUnmounted(() => {
   z-index: 100;
 }
 
+[data-theme="dark"] .app-background {
+  filter: saturate(0.86) contrast(1.02) brightness(0.68);
+}
+
+[data-theme="dark"] .app-content::before {
+  background:
+    radial-gradient(82% 58% at 17% 2%, rgba(123, 210, 246, 0.16), transparent 62%),
+    radial-gradient(64% 54% at 88% 18%, rgba(100, 214, 193, 0.14), transparent 66%),
+    radial-gradient(80% 68% at 50% 112%, rgba(45, 108, 132, 0.16), transparent 68%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 42%);
+  opacity: 1;
+}
+
+[data-theme="dark"] .app-content::after {
+  background-image:
+    linear-gradient(rgba(123, 210, 246, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(123, 210, 246, 0.06) 1px, transparent 1px),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.22'/%3E%3C/svg%3E");
+  opacity: 0.46;
+}
+
 /* 深色模式下的头部样式 */
 [data-theme="dark"] .app-header {
   background: transparent;
@@ -595,7 +654,7 @@ onUnmounted(() => {
   max-width: 1600px;
   margin: 0 auto;
   border: 1px solid var(--app-border-strong);
-  border-radius: 8px;
+  border-radius: var(--radius-panel);
   background: var(--app-panel-strong);
   backdrop-filter: blur(22px) saturate(1.08);
   box-shadow: var(--app-shadow-soft);
@@ -787,10 +846,25 @@ onUnmounted(() => {
   min-height: 0;
   overflow: hidden;
   border: 1px solid var(--app-border-strong);
-  border-radius: 8px;
-  background: var(--app-workspace);
+  border-radius: var(--radius-shell);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.68), rgba(237, 246, 248, 0.42)),
+    var(--app-workspace);
   backdrop-filter: blur(24px) saturate(1.06);
-  box-shadow: var(--app-shadow);
+  box-shadow:
+    var(--app-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+}
+
+[data-theme="dark"] .three-column-layout {
+  background:
+    linear-gradient(145deg, rgba(18, 31, 45, 0.86), rgba(8, 15, 24, 0.68)),
+    var(--app-workspace);
+  box-shadow:
+    var(--app-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04);
 }
 
 .column {
@@ -799,7 +873,6 @@ onUnmounted(() => {
   background: transparent;
   border-radius: 0;
   border: 0;
-  border-left: 1px solid var(--app-separator);
   box-shadow: none;
   overflow: hidden;
   min-height: 0;
@@ -813,21 +886,41 @@ onUnmounted(() => {
 
 /* 列的内部光效 */
 .column::before {
+  content: '';
+  position: absolute;
+  top: 18px;
+  bottom: 18px;
+  left: 0;
+  width: 1px;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    rgba(88, 112, 130, 0.2) 18%,
+    rgba(88, 112, 130, 0.12) 52%,
+    transparent
+  );
+  opacity: 0.85;
+  z-index: 1;
+}
+
+.column:first-child::before {
   content: none;
 }
 
 /* 深色模式下的列样式 */
 [data-theme="dark"] .column {
   background: transparent;
-  border-left-color: var(--app-separator);
   box-shadow: none;
 }
 
 [data-theme="dark"] .column::before {
-  background: linear-gradient(90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.2) 50%,
-    transparent 100%);
+  background: linear-gradient(
+    180deg,
+    transparent,
+    rgba(150, 177, 196, 0.2) 18%,
+    rgba(150, 177, 196, 0.1) 52%,
+    transparent
+  );
 }
 
 .column-header {
@@ -871,7 +964,9 @@ onUnmounted(() => {
 
 .mail-detail-column {
   min-width: 0;
-  background: var(--app-detail);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.2), transparent 42%),
+    var(--app-detail);
 }
 
 .mail-detail-column .column-header {
