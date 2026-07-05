@@ -8,6 +8,8 @@
         'background-error': backgroundError
       }"
     ></div>
+    <CosmicBackground class="app-cosmic-effects" variant="workspace" :density="1.22" />
+    <CosmicBackground class="app-cosmic-overlay" variant="workspace" :density="0.54" overlay />
 
     <!-- 内容层 -->
     <div class="app-content">
@@ -259,6 +261,7 @@ import EmailManager from './EmailManager.vue'
 import MailList from './MailList.vue'
 import MailDetail from './MailDetail.vue'
 import SendMailComposer from './SendMailComposer.vue'
+import CosmicBackground from './CosmicBackground.vue'
 
 const emailStore = useEmailStore()
 const uiStore = useUiStore()
@@ -506,6 +509,16 @@ onUnmounted(() => {
   filter: saturate(0.94) contrast(1.02) brightness(1.02);
 }
 
+.app-cosmic-effects {
+  --cosmic-z-index: 0;
+  --cosmic-opacity: 0.88;
+}
+
+.app-cosmic-overlay {
+  --cosmic-z-index: 2;
+  --cosmic-opacity: 0.34;
+}
+
 /* 背景遮罩层 - 提供更好的可读性 */
 .app-background::after {
   content: '';
@@ -633,6 +646,14 @@ onUnmounted(() => {
     ),
     linear-gradient(180deg, rgba(22, 39, 68, 0.12), rgba(0, 0, 0, 0.16));
   backdrop-filter: blur(0.8px);
+}
+
+[data-theme="dark"] .app-cosmic-effects {
+  --cosmic-opacity: 1;
+}
+
+[data-theme="dark"] .app-cosmic-overlay {
+  --cosmic-opacity: 0.5;
 }
 
 /* 背景图片加载状态 */
