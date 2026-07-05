@@ -370,23 +370,23 @@ watch(() => emailStore.selectedAddress, () => {
   height: 100%;
   display: flex;
   flex-direction: column;
-  --mail-panel: rgba(255, 255, 255, 0.7);
-  --mail-panel-strong: rgba(255, 255, 255, 0.84);
-  --mail-item: rgba(255, 255, 255, 0.78);
+  --mail-panel: rgba(255, 255, 255, 0.24);
+  --mail-panel-strong: rgba(255, 255, 255, 0.46);
+  --mail-item: rgba(255, 255, 255, 0.6);
   --mail-item-hover: rgba(79, 143, 199, 0.1);
-  --mail-item-selected: linear-gradient(90deg, rgba(79, 143, 199, 0.18), rgba(255, 255, 255, 0.88));
-  --mail-border: rgba(116, 146, 174, 0.22);
-  --mail-shadow: 0 8px 24px rgba(48, 77, 108, 0.1);
+  --mail-item-selected: linear-gradient(90deg, rgba(79, 143, 199, 0.2), rgba(255, 255, 255, 0.78));
+  --mail-border: rgba(88, 112, 130, 0.18);
+  --mail-shadow: 0 10px 28px rgba(33, 55, 76, 0.12);
 }
 
 [data-theme="dark"] .mail-list {
-  --mail-panel: rgba(11, 24, 42, 0.58);
-  --mail-panel-strong: rgba(15, 31, 52, 0.74);
-  --mail-item: rgba(12, 26, 45, 0.76);
-  --mail-item-hover: rgba(114, 184, 232, 0.13);
-  --mail-item-selected: linear-gradient(90deg, rgba(114, 184, 232, 0.22), rgba(12, 26, 45, 0.9));
-  --mail-border: rgba(148, 190, 225, 0.16);
-  --mail-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+  --mail-panel: rgba(10, 19, 29, 0.26);
+  --mail-panel-strong: rgba(15, 27, 40, 0.46);
+  --mail-item: rgba(15, 28, 41, 0.64);
+  --mail-item-hover: rgba(114, 184, 232, 0.12);
+  --mail-item-selected: linear-gradient(90deg, rgba(114, 184, 232, 0.22), rgba(15, 28, 41, 0.78));
+  --mail-border: rgba(150, 177, 196, 0.15);
+  --mail-shadow: 0 10px 28px rgba(0, 0, 0, 0.24);
 }
 
 .empty-state {
@@ -402,7 +402,7 @@ watch(() => emailStore.selectedAddress, () => {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 14px;
+  padding: 12px;
 }
 
 .mail-list-header {
@@ -410,11 +410,12 @@ watch(() => emailStore.selectedAddress, () => {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  padding: 10px 12px;
-  border: 1px solid var(--mail-border);
-  border-radius: 6px;
-  background: var(--mail-panel-strong);
-  box-shadow: var(--mail-shadow);
+  padding: 2px 2px 6px;
+  border: 0;
+  border-bottom: 1px solid var(--mail-border);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .selected-address-info {
@@ -423,6 +424,7 @@ watch(() => emailStore.selectedAddress, () => {
   gap: 8px;
   flex: 1;
   min-width: 0;
+  padding-right: 6px;
 }
 
 .address-icon {
@@ -449,6 +451,10 @@ watch(() => emailStore.selectedAddress, () => {
   flex-shrink: 0;
 }
 
+.search-section :deep(.n-input) {
+  background: var(--mail-panel-strong);
+}
+
 .mail-items-container {
   flex: 1;
   min-height: 0;
@@ -463,7 +469,7 @@ watch(() => emailStore.selectedAddress, () => {
 .mail-items {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 7px;
 }
 
 .mail-item {
@@ -471,9 +477,9 @@ watch(() => emailStore.selectedAddress, () => {
   align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
-  min-height: 112px;
+  min-height: 114px;
   padding: 12px 10px 12px 14px;
-  border-radius: 6px;
+  border-radius: 8px;
   border: 1px solid var(--mail-border);
   background: var(--mail-item);
   cursor: pointer;
@@ -485,7 +491,7 @@ watch(() => emailStore.selectedAddress, () => {
 }
 
 .mail-item:hover {
-  border-color: var(--n-primary-color);
+  border-color: rgba(79, 143, 199, 0.44);
   background: var(--mail-item-hover);
   box-shadow: var(--mail-shadow);
 }
@@ -513,8 +519,8 @@ watch(() => emailStore.selectedAddress, () => {
 .mail-item--unread::after {
   content: '';
   position: absolute;
-  top: 16px;
-  left: 6px;
+  top: 15px;
+  left: 5px;
   width: 6px;
   height: 6px;
   border-radius: 50%;
@@ -531,7 +537,7 @@ watch(() => emailStore.selectedAddress, () => {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 7px;
 }
 
 .mail-header {
@@ -539,6 +545,7 @@ watch(() => emailStore.selectedAddress, () => {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  min-width: 0;
 }
 
 .mail-from {
@@ -557,7 +564,7 @@ watch(() => emailStore.selectedAddress, () => {
 .from-text {
   font-size: 12px;
   color: var(--n-text-color-2);
-  font-weight: 500;
+  font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -572,8 +579,8 @@ watch(() => emailStore.selectedAddress, () => {
 .mail-subject {
   font-size: 14px;
   color: var(--n-text-color);
-  font-weight: 500;
-  line-height: 1.3;
+  font-weight: 600;
+  line-height: 1.35;
   word-break: break-word;
   display: -webkit-box;
   overflow: hidden;
@@ -584,7 +591,7 @@ watch(() => emailStore.selectedAddress, () => {
 .mail-preview {
   font-size: 12px;
   color: var(--n-text-color-2);
-  line-height: 1.4;
+  line-height: 1.48;
   word-break: break-word;
   display: -webkit-box;
   overflow: hidden;
@@ -621,7 +628,7 @@ watch(() => emailStore.selectedAddress, () => {
 }
 
 [data-theme="dark"] .mail-list-header {
-  background: var(--mail-panel-strong);
+  background: transparent;
 }
 
 [data-theme="dark"] .mail-item {
@@ -637,7 +644,7 @@ watch(() => emailStore.selectedAddress, () => {
 .mail-count-info {
   flex-shrink: 0;
   padding-top: 8px;
-  border-top: 1px solid var(--n-border-color);
+  border-top: 1px solid var(--mail-border);
   text-align: center;
 }
 

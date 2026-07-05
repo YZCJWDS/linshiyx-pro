@@ -421,25 +421,25 @@ function getLastMailTime(address: EmailAddress): string {
   height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 16px;
-  --manager-panel: rgba(255, 255, 255, 0.68);
-  --manager-panel-strong: rgba(255, 255, 255, 0.82);
-  --manager-item: rgba(255, 255, 255, 0.76);
-  --manager-item-hover: rgba(79, 143, 199, 0.1);
-  --manager-item-selected: linear-gradient(90deg, rgba(79, 143, 199, 0.18), rgba(255, 255, 255, 0.86));
-  --manager-border: rgba(116, 146, 174, 0.22);
-  --manager-shadow: 0 8px 24px rgba(48, 77, 108, 0.1);
+  gap: 10px;
+  padding: 12px;
+  --manager-panel: rgba(255, 255, 255, 0.2);
+  --manager-panel-strong: rgba(255, 255, 255, 0.42);
+  --manager-item: rgba(255, 255, 255, 0.58);
+  --manager-item-hover: rgba(56, 168, 157, 0.11);
+  --manager-item-selected: linear-gradient(90deg, rgba(56, 168, 157, 0.18), rgba(255, 255, 255, 0.76));
+  --manager-border: rgba(88, 112, 130, 0.18);
+  --manager-shadow: 0 10px 26px rgba(33, 55, 76, 0.1);
 }
 
 [data-theme="dark"] .email-manager {
-  --manager-panel: rgba(11, 24, 42, 0.58);
-  --manager-panel-strong: rgba(15, 31, 52, 0.72);
-  --manager-item: rgba(12, 26, 45, 0.74);
-  --manager-item-hover: rgba(114, 184, 232, 0.13);
-  --manager-item-selected: linear-gradient(90deg, rgba(114, 184, 232, 0.22), rgba(12, 26, 45, 0.9));
-  --manager-border: rgba(148, 190, 225, 0.16);
-  --manager-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+  --manager-panel: rgba(10, 19, 29, 0.24);
+  --manager-panel-strong: rgba(15, 27, 40, 0.44);
+  --manager-item: rgba(15, 28, 41, 0.62);
+  --manager-item-hover: rgba(100, 214, 193, 0.12);
+  --manager-item-selected: linear-gradient(90deg, rgba(100, 214, 193, 0.2), rgba(15, 28, 41, 0.78));
+  --manager-border: rgba(150, 177, 196, 0.15);
+  --manager-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
 }
 
 .manager-header {
@@ -448,11 +448,12 @@ function getLastMailTime(address: EmailAddress): string {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 10px 12px;
-  background: var(--manager-panel-strong);
-  border: 1px solid var(--manager-border);
-  border-radius: 6px;
-  box-shadow: var(--manager-shadow);
+  padding: 2px 2px 6px;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--manager-border);
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .header-title {
@@ -460,8 +461,9 @@ function getLastMailTime(address: EmailAddress): string {
   align-items: center;
   gap: 8px;
   font-weight: 600;
-  font-size: 16px;
+  font-size: 14px;
   color: var(--n-text-color);
+  min-width: 0;
 }
 
 .header-actions {
@@ -475,16 +477,16 @@ function getLastMailTime(address: EmailAddress): string {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  background: var(--manager-panel);
-  border: 1px solid var(--manager-border);
-  border-radius: 6px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
   overflow: hidden;
 }
 
 .email-list {
   flex: 1;
   min-height: 0;
-  padding: 8px;
+  padding: 2px 0 0;
 }
 
 .loading-spin {
@@ -496,7 +498,7 @@ function getLastMailTime(address: EmailAddress): string {
 .email-items {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 7px;
 }
 
 .email-item {
@@ -504,9 +506,9 @@ function getLastMailTime(address: EmailAddress): string {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  min-height: 72px;
-  padding: 11px 10px 11px 12px;
-  border-radius: 6px;
+  min-height: 74px;
+  padding: 11px 10px 11px 13px;
+  border-radius: 8px;
   border: 1px solid var(--manager-border);
   background: var(--manager-item);
   cursor: pointer;
@@ -518,7 +520,7 @@ function getLastMailTime(address: EmailAddress): string {
 }
 
 .email-item:hover {
-  border-color: var(--n-primary-color);
+  border-color: rgba(56, 168, 157, 0.42);
   background: var(--manager-item-hover);
   box-shadow: var(--manager-shadow);
 }
@@ -548,7 +550,7 @@ function getLastMailTime(address: EmailAddress): string {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 4px;
+  margin-bottom: 5px;
   position: relative;
 }
 
@@ -575,7 +577,7 @@ function getLastMailTime(address: EmailAddress): string {
 }
 
 .address-text {
-  font-weight: 500;
+  font-weight: 600;
   color: var(--n-text-color);
   font-size: 13px;
   overflow: hidden;
@@ -594,6 +596,10 @@ function getLastMailTime(address: EmailAddress): string {
   font-size: 12px;
   color: var(--n-text-color-2);
   font-weight: 500;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .email-date {
@@ -619,11 +625,11 @@ function getLastMailTime(address: EmailAddress): string {
 }
 
 [data-theme="dark"] .manager-header {
-  background: var(--manager-panel-strong);
+  background: transparent;
 }
 
 [data-theme="dark"] .email-list-section {
-  background: var(--manager-panel);
+  background: transparent;
 }
 
 [data-theme="dark"] .email-item {

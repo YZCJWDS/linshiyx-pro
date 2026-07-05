@@ -446,25 +446,31 @@ onUnmounted(() => {
   position: relative;
   overflow: hidden;
   color: var(--n-text-color);
-  --app-panel: rgba(248, 252, 255, 0.74);
-  --app-panel-strong: rgba(255, 255, 255, 0.86);
-  --app-panel-soft: rgba(239, 247, 252, 0.64);
-  --app-border: rgba(116, 146, 174, 0.24);
-  --app-border-strong: rgba(255, 255, 255, 0.62);
-  --app-shadow: 0 18px 48px rgba(48, 77, 108, 0.16);
-  --app-shadow-soft: 0 8px 24px rgba(48, 77, 108, 0.1);
-  --app-accent-soft: rgba(79, 143, 199, 0.14);
+  --app-panel: rgba(255, 255, 255, 0.62);
+  --app-panel-strong: rgba(255, 255, 255, 0.78);
+  --app-panel-soft: rgba(244, 248, 249, 0.72);
+  --app-workspace: rgba(255, 255, 255, 0.56);
+  --app-detail: rgba(255, 255, 255, 0.7);
+  --app-border: rgba(88, 112, 130, 0.22);
+  --app-border-strong: rgba(255, 255, 255, 0.58);
+  --app-separator: rgba(88, 112, 130, 0.18);
+  --app-shadow: 0 24px 72px rgba(33, 55, 76, 0.18);
+  --app-shadow-soft: 0 10px 30px rgba(33, 55, 76, 0.12);
+  --app-accent-soft: rgba(56, 168, 157, 0.13);
 }
 
 [data-theme="dark"] .temp-email-app {
-  --app-panel: rgba(11, 24, 42, 0.76);
-  --app-panel-strong: rgba(15, 31, 52, 0.86);
-  --app-panel-soft: rgba(8, 19, 34, 0.66);
-  --app-border: rgba(148, 190, 225, 0.18);
-  --app-border-strong: rgba(148, 190, 225, 0.26);
-  --app-shadow: 0 22px 56px rgba(0, 0, 0, 0.34);
-  --app-shadow-soft: 0 10px 28px rgba(0, 0, 0, 0.24);
-  --app-accent-soft: rgba(114, 184, 232, 0.16);
+  --app-panel: rgba(10, 19, 29, 0.58);
+  --app-panel-strong: rgba(15, 27, 40, 0.78);
+  --app-panel-soft: rgba(9, 17, 27, 0.7);
+  --app-workspace: rgba(8, 15, 24, 0.8);
+  --app-detail: rgba(13, 24, 36, 0.84);
+  --app-border: rgba(150, 177, 196, 0.18);
+  --app-border-strong: rgba(150, 177, 196, 0.22);
+  --app-separator: rgba(150, 177, 196, 0.15);
+  --app-shadow: 0 28px 76px rgba(0, 0, 0, 0.4);
+  --app-shadow-soft: 0 12px 32px rgba(0, 0, 0, 0.28);
+  --app-accent-soft: rgba(100, 214, 193, 0.14);
 }
 
 /* 背景图片层 - 参考VSCode背景插件方法 */
@@ -481,7 +487,7 @@ onUnmounted(() => {
   background-attachment: fixed;
   z-index: -2;
   transform: scale(1.03); /* 轻微缩放避免边缘 */
-  filter: saturate(0.96) contrast(0.98);
+  filter: saturate(0.9) contrast(0.96) brightness(1.02);
 }
 
 /* 背景遮罩层 - 提供更好的可读性 */
@@ -495,17 +501,17 @@ onUnmounted(() => {
   background:
     linear-gradient(
       135deg,
-      rgba(241, 248, 253, 0.88) 0%,
-      rgba(241, 248, 253, 0.74) 34%,
-      rgba(241, 248, 253, 0.56) 60%,
-      rgba(241, 248, 253, 0.78) 100%
+      rgba(247, 249, 249, 0.94) 0%,
+      rgba(238, 245, 247, 0.82) 36%,
+      rgba(230, 240, 243, 0.62) 66%,
+      rgba(246, 248, 246, 0.84) 100%
     ),
     linear-gradient(
       180deg,
-      rgba(255, 255, 255, 0.1) 0%,
-      rgba(195, 220, 239, 0.16) 100%
+      rgba(255, 255, 255, 0.28) 0%,
+      rgba(180, 207, 205, 0.16) 100%
     );
-  backdrop-filter: blur(1px);
+  backdrop-filter: blur(2px);
   z-index: -1;
 }
 
@@ -524,13 +530,13 @@ onUnmounted(() => {
   background:
     linear-gradient(
       135deg,
-      rgba(7, 17, 31, 0.88) 0%,
-      rgba(7, 17, 31, 0.78) 34%,
-      rgba(7, 17, 31, 0.58) 58%,
-      rgba(7, 17, 31, 0.82) 100%
+      rgba(5, 10, 16, 0.9) 0%,
+      rgba(8, 15, 24, 0.82) 38%,
+      rgba(10, 20, 28, 0.68) 66%,
+      rgba(5, 10, 16, 0.88) 100%
     ),
-    radial-gradient(circle at 76% 16%, rgba(88, 158, 212, 0.12), transparent 32%);
-  backdrop-filter: blur(1.5px);
+    linear-gradient(180deg, rgba(33, 79, 75, 0.1), rgba(0, 0, 0, 0.12));
+  backdrop-filter: blur(2.5px);
 }
 
 /* 背景图片加载状态 */
@@ -565,29 +571,34 @@ onUnmounted(() => {
 
 .app-header {
   flex-shrink: 0;
-  height: 60px;
-  border-bottom: 1px solid var(--app-border);
-  background: var(--app-panel-strong);
-  backdrop-filter: blur(18px) saturate(1.14);
-  box-shadow: var(--app-shadow-soft);
+  height: 76px;
+  padding: 12px 18px 0;
+  border-bottom: 0;
+  background: transparent;
+  box-shadow: none;
   z-index: 100;
 }
 
 /* 深色模式下的头部样式 */
 [data-theme="dark"] .app-header {
-  background: rgba(8, 19, 34, 0.82);
-  border-bottom: 1px solid var(--app-border);
-  box-shadow: var(--app-shadow-soft);
+  background: transparent;
+  border-bottom: 0;
+  box-shadow: none;
 }
 
 .header-content {
-  height: 100%;
+  height: 52px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 24px;
-  max-width: 1400px;
+  padding: 0 16px 0 18px;
+  max-width: 1600px;
   margin: 0 auto;
+  border: 1px solid var(--app-border-strong);
+  border-radius: 8px;
+  background: var(--app-panel-strong);
+  backdrop-filter: blur(22px) saturate(1.08);
+  box-shadow: var(--app-shadow-soft);
 }
 
 .header-left {
@@ -599,10 +610,11 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 600;
   color: var(--n-text-color);
   margin: 0;
+  letter-spacing: 0;
 }
 
 .title-icon {
@@ -761,7 +773,7 @@ onUnmounted(() => {
 .app-main {
   flex: 1;
   overflow: hidden;
-  padding: 12px 8px;
+  padding: 12px 18px 18px;
   max-width: 1600px;
   margin: 0 auto;
   width: 100%;
@@ -769,49 +781,46 @@ onUnmounted(() => {
 
 .three-column-layout {
   display: grid;
-  grid-template-columns: 280px 350px 1fr;
-  gap: 12px;
+  grid-template-columns: 300px minmax(340px, 400px) minmax(460px, 1fr);
+  gap: 0;
   height: 100%;
   min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--app-border-strong);
+  border-radius: 8px;
+  background: var(--app-workspace);
+  backdrop-filter: blur(24px) saturate(1.06);
+  box-shadow: var(--app-shadow);
 }
 
 .column {
   display: flex;
   flex-direction: column;
-  background: var(--app-panel);
-  backdrop-filter: blur(18px) saturate(1.08);
-  border-radius: 8px;
-  border: 1px solid var(--app-border-strong);
-  box-shadow:
-    var(--app-shadow),
-    inset 0 1px 0 rgba(255, 255, 255, 0.42);
+  background: transparent;
+  border-radius: 0;
+  border: 0;
+  border-left: 1px solid var(--app-separator);
+  box-shadow: none;
   overflow: hidden;
   min-height: 0;
+  min-width: 0;
   position: relative;
+}
+
+.column:first-child {
+  border-left: 0;
 }
 
 /* 列的内部光效 */
 .column::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.6) 50%,
-    transparent 100%);
-  z-index: 1;
+  content: none;
 }
 
 /* 深色模式下的列样式 */
 [data-theme="dark"] .column {
-  background: var(--app-panel);
-  border: 1px solid var(--app-border-strong);
-  box-shadow:
-    var(--app-shadow),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  background: transparent;
+  border-left-color: var(--app-separator);
+  box-shadow: none;
 }
 
 [data-theme="dark"] .column::before {
@@ -823,24 +832,26 @@ onUnmounted(() => {
 
 .column-header {
   flex-shrink: 0;
-  padding: 14px 18px;
+  min-height: 52px;
+  padding: 13px 16px;
   border-bottom: 1px solid var(--app-border);
-  background: var(--app-panel-strong);
+  background: rgba(255, 255, 255, 0.34);
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
 [data-theme="dark"] .column-header {
-  background: rgba(15, 31, 52, 0.82);
+  background: rgba(13, 24, 36, 0.52);
 }
 
 .column-title {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--n-text-color);
   margin: 0;
   line-height: 1.2;
+  letter-spacing: 0;
 }
 
 .column-content {
@@ -851,15 +862,24 @@ onUnmounted(() => {
 }
 
 .email-manager-column {
-  min-width: 280px;
+  min-width: 0;
 }
 
 .mail-list-column {
-  min-width: 350px;
+  min-width: 0;
 }
 
 .mail-detail-column {
-  min-width: 400px;
+  min-width: 0;
+  background: var(--app-detail);
+}
+
+.mail-detail-column .column-header {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+[data-theme="dark"] .mail-detail-column .column-header {
+  background: rgba(15, 27, 40, 0.66);
 }
 
 .global-loading {
@@ -882,19 +902,17 @@ onUnmounted(() => {
 /* Responsive Design */
 @media (max-width: 1200px) {
   .three-column-layout {
-    grid-template-columns: 260px 320px 1fr;
-    gap: 10px;
+    grid-template-columns: 280px minmax(310px, 360px) minmax(420px, 1fr);
   }
 
   .app-main {
-    padding: 12px;
+    padding: 10px 14px 14px;
   }
 }
 
 @media (max-width: 1024px) {
   .three-column-layout {
-    grid-template-columns: 240px 280px 1fr;
-    gap: 8px;
+    grid-template-columns: 240px minmax(280px, 320px) minmax(360px, 1fr);
   }
 
   .column {
@@ -903,12 +921,18 @@ onUnmounted(() => {
 }
 
 @media (max-width: 768px) {
+  .app-header {
+    height: 68px;
+    padding: 8px 10px 0;
+  }
+
   .header-content {
-    padding: 0 16px;
+    height: 50px;
+    padding: 0 10px 0 12px;
   }
 
   .app-title {
-    font-size: 18px;
+    font-size: 16px;
   }
 
   /* 移动端头像样式 */
@@ -923,16 +947,29 @@ onUnmounted(() => {
   }
 
   .app-main {
-    padding: 8px;
+    overflow-y: auto;
+    padding: 8px 10px 12px;
   }
 
   .three-column-layout {
-    grid-template-columns: 180px 220px 1fr;
-    gap: 6px;
+    grid-template-columns: 1fr;
+    grid-auto-rows: auto;
+    height: auto;
+    min-height: 100%;
+  }
+
+  .column {
+    border-left: 0;
+    border-top: 1px solid var(--app-separator);
+  }
+
+  .column:first-child {
+    border-top: 0;
   }
 
   .column-header {
-    padding: 8px 12px;
+    min-height: 46px;
+    padding: 10px 12px;
   }
 
   .column-title {
@@ -944,25 +981,15 @@ onUnmounted(() => {
 @media (max-width: 640px) {
   .three-column-layout {
     grid-template-columns: 1fr;
-    grid-template-rows: auto auto 1fr;
-    position: relative;
+    grid-template-rows: auto auto auto;
   }
 
   .column {
-    min-height: 300px;
+    min-height: 260px;
   }
 
   .mail-detail-column {
-    min-height: 400px;
-  }
-
-  /* 添加标签页切换功能 */
-  .column:not(.active-column) {
-    display: none;
-  }
-
-  .column.active-column {
-    display: flex;
+    min-height: 520px;
   }
 }
 </style>

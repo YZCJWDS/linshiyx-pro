@@ -793,23 +793,29 @@ function handleIframeLoad(event: Event) {
   height: 100%;
   display: flex;
   flex-direction: column;
-  --detail-panel: rgba(255, 255, 255, 0.7);
-  --detail-panel-strong: rgba(255, 255, 255, 0.84);
-  --detail-item: rgba(255, 255, 255, 0.76);
+  --detail-panel: rgba(255, 255, 255, 0.34);
+  --detail-panel-strong: rgba(255, 255, 255, 0.58);
+  --detail-chip: rgba(255, 255, 255, 0.56);
+  --detail-item: rgba(255, 255, 255, 0.68);
   --detail-item-hover: rgba(79, 143, 199, 0.1);
-  --detail-border: rgba(116, 146, 174, 0.22);
-  --detail-shadow: 0 8px 24px rgba(48, 77, 108, 0.1);
-  --detail-content-bg: rgba(255, 255, 255, 0.76);
+  --detail-border: rgba(88, 112, 130, 0.18);
+  --detail-shadow: 0 14px 34px rgba(33, 55, 76, 0.12);
+  --detail-stage: #eef3f4;
+  --detail-stage-soft: rgba(238, 243, 244, 0.72);
+  --reader-paper-shadow: 0 18px 46px rgba(33, 55, 76, 0.14);
 }
 
 [data-theme="dark"] .mail-detail {
-  --detail-panel: rgba(11, 24, 42, 0.58);
-  --detail-panel-strong: rgba(15, 31, 52, 0.74);
-  --detail-item: rgba(12, 26, 45, 0.78);
-  --detail-item-hover: rgba(114, 184, 232, 0.13);
-  --detail-border: rgba(148, 190, 225, 0.16);
-  --detail-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
-  --detail-content-bg: rgba(9, 22, 39, 0.72);
+  --detail-panel: rgba(10, 19, 29, 0.3);
+  --detail-panel-strong: rgba(15, 27, 40, 0.56);
+  --detail-chip: rgba(19, 35, 51, 0.68);
+  --detail-item: rgba(15, 28, 41, 0.7);
+  --detail-item-hover: rgba(114, 184, 232, 0.12);
+  --detail-border: rgba(150, 177, 196, 0.15);
+  --detail-shadow: 0 14px 34px rgba(0, 0, 0, 0.28);
+  --detail-stage: #0b121d;
+  --detail-stage-soft: rgba(11, 18, 29, 0.78);
+  --reader-paper-shadow: 0 18px 48px rgba(0, 0, 0, 0.36);
 }
 
 .empty-state {
@@ -824,8 +830,9 @@ function handleIframeLoad(event: Event) {
   height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 14px;
+  gap: 0;
+  padding: 0;
+  background: var(--detail-panel);
 }
 
 .mail-header {
@@ -834,11 +841,12 @@ function handleIframeLoad(event: Event) {
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  padding: 14px;
-  border: 1px solid var(--detail-border);
-  border-radius: 6px;
+  padding: 18px 20px;
+  border: 0;
+  border-bottom: 1px solid var(--detail-border);
+  border-radius: 0;
   background: var(--detail-panel-strong);
-  box-shadow: var(--detail-shadow);
+  box-shadow: none;
 }
 
 .mail-header-main {
@@ -847,18 +855,19 @@ function handleIframeLoad(event: Event) {
 }
 
 .mail-subject {
-  font-size: 17px;
+  font-size: 19px;
   font-weight: 600;
   color: var(--n-text-color);
-  margin: 0 0 10px 0;
-  line-height: 1.3;
+  margin: 0 0 12px 0;
+  line-height: 1.35;
   word-break: break-word;
+  letter-spacing: 0;
 }
 
 .mail-meta-info {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 6px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
 }
 
 .mail-from,
@@ -869,6 +878,14 @@ function handleIframeLoad(event: Event) {
   gap: 8px;
   min-width: 0;
   font-size: 12px;
+  padding: 7px 9px;
+  border: 1px solid var(--detail-border);
+  border-radius: 6px;
+  background: var(--detail-chip);
+}
+
+.mail-date {
+  grid-column: 1 / -1;
 }
 
 .meta-icon {
@@ -879,7 +896,7 @@ function handleIframeLoad(event: Event) {
 .meta-label {
   font-weight: 500;
   color: var(--n-text-color-2);
-  min-width: 44px;
+  min-width: 48px;
 }
 
 .meta-value {
@@ -895,16 +912,17 @@ function handleIframeLoad(event: Event) {
   align-items: center;
   gap: 6px;
   flex-shrink: 0;
-  padding: 2px;
+  padding: 3px;
   border: 1px solid var(--detail-border);
   border-radius: 6px;
-  background: var(--detail-panel);
+  background: var(--detail-chip);
 }
 
 .attachments-section {
   flex-shrink: 0;
+  margin: 12px 16px 0;
   border: 1px solid var(--detail-border);
-  border-radius: 6px;
+  border-radius: 8px;
   overflow: hidden;
   background: var(--detail-panel);
 }
@@ -994,10 +1012,10 @@ function handleIframeLoad(event: Event) {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--detail-border);
-  border-radius: 6px;
+  border: 0;
+  border-radius: 0;
   overflow: hidden;
-  background: var(--detail-panel);
+  background: transparent;
 }
 
 .mail-body-header {
@@ -1007,7 +1025,7 @@ function handleIframeLoad(event: Event) {
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 12px;
-  padding: 10px 12px;
+  padding: 10px 16px;
   background: var(--detail-panel-strong);
   border-bottom: 1px solid var(--detail-border);
 }
@@ -1016,6 +1034,7 @@ function handleIframeLoad(event: Event) {
   font-weight: 500;
   color: var(--n-text-color);
   flex-shrink: 0;
+  font-size: 13px;
 }
 
 .view-options {
@@ -1028,13 +1047,15 @@ function handleIframeLoad(event: Event) {
 .mail-body-content {
   flex: 1;
   min-height: 0;
-  background: linear-gradient(180deg, rgba(79, 143, 199, 0.06), rgba(255, 255, 255, 0.04));
+  background:
+    linear-gradient(180deg, var(--detail-stage-soft), var(--detail-stage)),
+    var(--detail-stage);
 }
 
 .rendered-content {
   min-height: 100%;
-  padding: 18px;
-  --reader-shell: #f4f7fb;
+  padding: 24px min(4vw, 34px);
+  --reader-shell: transparent;
   --reader-paper: #ffffff;
   --reader-text: #1f2937;
   --reader-border: rgba(116, 146, 174, 0.28);
@@ -1047,10 +1068,14 @@ function handleIframeLoad(event: Event) {
 
 .html-iframe {
   width: 100%;
-  min-height: 520px;
+  max-width: 960px;
+  min-height: 560px;
+  display: block;
+  margin: 0 auto;
   border: 1px solid var(--reader-border);
   border-radius: 8px;
   background: var(--reader-paper);
+  box-shadow: var(--reader-paper-shadow);
 }
 
 .text-content {
@@ -1060,7 +1085,7 @@ function handleIframeLoad(event: Event) {
 .text-display {
   max-width: 920px;
   margin: 0 auto;
-  padding: 24px;
+  padding: 28px;
   border: 1px solid var(--reader-border);
   border-radius: 8px;
   white-space: pre-wrap;
@@ -1071,10 +1096,19 @@ function handleIframeLoad(event: Event) {
   font-family: inherit;
   font-size: 15px;
   background: var(--reader-paper);
+  box-shadow: var(--reader-paper-shadow);
 }
 
 .shadow-content {
-  height: 100%;
+  display: block;
+  max-width: 960px;
+  min-height: 100%;
+  margin: 0 auto;
+  filter: drop-shadow(0 18px 30px rgba(33, 55, 76, 0.1));
+}
+
+[data-theme="dark"] .shadow-content {
+  filter: drop-shadow(0 18px 34px rgba(0, 0, 0, 0.32));
 }
 
 /* 🎨 邮件显示模式样式 */
@@ -1086,12 +1120,15 @@ function handleIframeLoad(event: Event) {
 }
 
 .mail-display-auto.system-dark {
-  /* 深色模式下强制覆盖邮件内的颜色 */
+  --reader-shell: transparent;
+  --reader-paper: #101827;
+  --reader-text: #e8eef7;
+  --reader-border: rgba(148, 190, 225, 0.24);
 }
 
 /* 明亮模式 - 强制明亮显示 */
 .mail-display-light {
-  --reader-shell: #f4f7fb;
+  --reader-shell: transparent;
   --reader-paper: #ffffff;
   --reader-text: #1f2937;
   --reader-border: rgba(116, 146, 174, 0.28);
@@ -1099,7 +1136,7 @@ function handleIframeLoad(event: Event) {
 
 /* 深色模式 - 强制深色显示 */
 .mail-display-dark {
-  --reader-shell: #08111f;
+  --reader-shell: transparent;
   --reader-paper: #101827;
   --reader-text: #e8eef7;
   --reader-border: rgba(148, 190, 225, 0.24);
@@ -1107,7 +1144,7 @@ function handleIframeLoad(event: Event) {
 
 /* 高对比度模式 - 最大化可读性 */
 .mail-display-high-contrast {
-  --reader-shell: #ffffff;
+  --reader-shell: transparent;
   --reader-paper: #ffffff;
   --reader-text: #000000;
   --reader-border: #000000;
@@ -1117,14 +1154,14 @@ function handleIframeLoad(event: Event) {
 /* iframe 特殊处理 */
 .source-content {
   height: 100%;
-  padding: 18px;
-  background: var(--reader-shell, #f4f7fb);
+  padding: 24px min(4vw, 34px);
+  background: var(--detail-stage);
 }
 
 .source-code {
   max-width: 1040px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 24px;
   border: 1px solid var(--detail-border);
   border-radius: 8px;
   white-space: pre-wrap;
@@ -1135,13 +1172,20 @@ function handleIframeLoad(event: Event) {
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-size: 12.5px;
   background: var(--detail-panel-strong);
+  box-shadow: var(--reader-paper-shadow);
   tab-size: 2;
 }
 
-[data-theme="dark"] .mail-header,
-[data-theme="dark"] .attachments-section,
-[data-theme="dark"] .mail-body {
+[data-theme="dark"] .mail-header {
+  background: var(--detail-panel-strong);
+}
+
+[data-theme="dark"] .attachments-section {
   background: var(--detail-panel);
+}
+
+[data-theme="dark"] .mail-body {
+  background: transparent;
 }
 
 [data-theme="dark"] .mail-actions,
@@ -1150,7 +1194,9 @@ function handleIframeLoad(event: Event) {
 }
 
 [data-theme="dark"] .mail-body-content {
-  background: var(--detail-content-bg);
+  background:
+    linear-gradient(180deg, var(--detail-stage-soft), var(--detail-stage)),
+    var(--detail-stage);
 }
 
 [data-theme="dark"] .attachments-header {
@@ -1170,16 +1216,22 @@ function handleIframeLoad(event: Event) {
 }
 
 /* Responsive adjustments */
-@media (max-width: 1024px) {
-  .mail-content {
-    padding: 12px;
-    gap: 12px;
+@media (max-width: 1200px) {
+  .mail-meta-info {
+    grid-template-columns: minmax(0, 1fr);
   }
 
+  .mail-date {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 1024px) {
   .mail-header {
     flex-direction: column;
     align-items: stretch;
-    gap: 12px;
+    gap: 14px;
+    padding: 16px;
   }
 
   .mail-actions {
@@ -1212,12 +1264,18 @@ function handleIframeLoad(event: Event) {
     padding: 10px 12px;
   }
 
+  .rendered-content,
   .text-content {
-    padding: 12px;
+    padding: 14px;
   }
 
   .source-content {
-    padding: 12px;
+    padding: 14px;
+  }
+
+  .text-display,
+  .source-code {
+    padding: 18px;
   }
 }
 </style>
