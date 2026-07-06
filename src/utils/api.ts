@@ -304,8 +304,9 @@ export const mailApi = {
 
         console.log('Final JWT to use:', addressJwt ? '***' : 'none')
 
-        // 如果还是没有JWT，尝试为这个地址获取用户JWT
-        if (!addressJwt) {
+        // Admin mail listing uses x-admin-auth; do not bind user JWT on each refresh.
+        const shouldBindAddressJwt = false
+        if (shouldBindAddressJwt && !addressJwt) {
           console.error('❌ No JWT available! Trying to get user JWT for address...')
           console.log('Available localStorage keys:', Object.keys(localStorage))
 

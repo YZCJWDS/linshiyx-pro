@@ -222,15 +222,19 @@
               <!-- iframe模式：直接显示 message 内容 -->
               <iframe
                 v-else-if="settingsStore.useIframeShowMail"
+                :key="emailStore.selectedMail?.id"
                 :srcdoc="sanitizedHtmlContent"
                 class="html-iframe"
                 sandbox="allow-same-origin"
+                referrerpolicy="no-referrer"
+                loading="lazy"
                 @load="handleIframeLoad"
               />
 
               <!-- 安全渲染模式：使用 ShadowHtmlComponent -->
               <ShadowHtmlComponent
                 v-else
+                :key="emailStore.selectedMail?.id"
                 :html-content="sanitizedHtmlContent"
                 :display-mode="effectiveMailDisplayMode"
                 class="shadow-content"
@@ -536,11 +540,17 @@ const sanitizedHtmlContent = computed(() => {
 
   // Remove script tags and their content
   html = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+  html = html.replace(/<(iframe|object|embed|video|audio|source|track|link)\b[\s\S]*?<\/\1>/gi, '')
+  html = html.replace(/<(?:iframe|object|embed|video|audio|source|track|link)\b[^>]*>/gi, '')
+  html = html.replace(/@import\s+(?:url\()?['"]?https?:\/\/[\s\S]*?;?/gi, '')
 
   // Remove dangerous attributes
   html = html.replace(/\s*on\w+\s*=\s*["'][^"']*["']/gi, '')
   html = html.replace(/\s*javascript\s*:/gi, '')
   html = html.replace(/\s+(src|href)\s*=\s*(['"])\s*data:(?!image\/)[^'"]*\2/gi, '')
+  html = html.replace(/\s+srcset\s*=\s*(['"])[\s\S]*?\1/gi, '')
+  html = html.replace(/\s+(?:src|background)\s*=\s*(['"])\s*https?:\/\/[\s\S]*?\1/gi, ' data-remote-blocked="true"')
+  html = html.replace(/url\(\s*(['"]?)https?:\/\/[\s\S]*?\1\s*\)/gi, 'none')
 
   // Add base styles for better rendering
   const mode = effectiveMailDisplayMode.value

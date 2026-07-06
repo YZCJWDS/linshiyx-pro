@@ -27,6 +27,7 @@ const props = defineProps<Props>()
 const shadowHost = ref<HTMLElement>()
 const useFallback = ref(false)
 let shadowRoot: ShadowRoot | null = null
+let readabilityFrame = 0
 
 const resolvedDisplayMode = computed<ReaderDisplayMode>(() => props.displayMode || 'light')
 
@@ -149,6 +150,11 @@ function renderShadowDOM() {
   if (!shadowHost.value || useFallback.value) return
 
   try {
+    if (readabilityFrame) {
+      window.cancelAnimationFrame(readabilityFrame)
+      readabilityFrame = 0
+    }
+
     if (!shadowRoot) {
       try {
         shadowRoot = shadowHost.value.attachShadow({ mode: 'closed' })
@@ -300,7 +306,12 @@ function renderShadowDOM() {
       `
 
       shadowRoot.innerHTML = `${styles}<article class="mail-reader mail-reader-${palette.mode}">${props.htmlContent}</article>`
-      requestAnimationFrame(() => improveReadableColors(shadowRoot as ShadowRoot))
+      readabilityFrame = requestAnimationFrame(() => {
+        readabilityFrame = 0
+        if (shadowRoot) {
+          improveReadableColors(shadowRoot)
+        }
+      })
     }
   } catch (error) {
     console.error('Failed to render Shadow DOM, falling back to v-html:', error)
@@ -320,6 +331,11 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  if (readabilityFrame) {
+    window.cancelAnimationFrame(readabilityFrame)
+    readabilityFrame = 0
+  }
+
   if (shadowRoot) {
     shadowRoot.innerHTML = ''
   }

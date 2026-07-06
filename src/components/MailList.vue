@@ -302,7 +302,7 @@ function isUnread(mail: EmailMessage): boolean {
 }
 
 function hasAttachments(mail: EmailMessage): boolean {
-  return mail.attachments && mail.attachments.length > 0
+  return Boolean(mail.attachments && mail.attachments.length > 0)
 }
 
 function getAttachmentCount(mail: EmailMessage): string {

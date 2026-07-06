@@ -12,10 +12,36 @@ export function generateRandomString(length = 8): string {
   return result
 }
 
+function parseDateValue(value: string | Date | null | undefined): Date | null {
+  if (!value) return null
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value
+  }
+
+  const raw = String(value).trim()
+  if (!raw) return null
+
+  const normalized = raw.includes('T') ? raw : raw.replace(' ', 'T')
+  const hasTimezone = /(?:z|[+-]\d{2}:?\d{2})$/i.test(normalized) || /\b(?:GMT|UTC)\b/i.test(raw)
+  const candidates = hasTimezone
+    ? [raw, normalized]
+    : [`${normalized}Z`, `${raw} UTC`, raw, normalized]
+
+  for (const candidate of candidates) {
+    const date = new Date(candidate)
+    if (!Number.isNaN(date.getTime())) {
+      return date
+    }
+  }
+
+  return null
+}
+
 // Format date for display
 export function formatDate(dateString: string, useUTC = false): string {
-  const date = new Date(dateString)
-  
+  const date = parseDateValue(dateString)
+  if (!date) return dateString || ''
+
   if (useUTC) {
     return date.toUTCString()
   }
@@ -35,19 +61,17 @@ export function formatRelativeTime(dateString: string, useUTCDate = false): stri
 
   try {
     // 参考示例前端的处理方法：在时间字符串后添加 " UTC"
-    const utcTimeString = `${dateString} UTC`
+    const date = parseDateValue(dateString)
+    if (!date) return dateString
 
     // 如果设置使用UTC时间，直接返回UTC时间字符串
     if (useUTCDate) {
-      return utcTimeString
+      return date.toUTCString()
     }
 
     // 创建Date对象，会自动转换为本地时间
-    const date = new Date(utcTimeString)
-
     // 检查日期是否有效
     if (isNaN(date.getTime())) {
-      console.warn('Invalid date string:', dateString)
       // 尝试直接解析原始字符串
       const fallbackDate = new Date(dateString)
       if (!isNaN(fallbackDate.getTime())) {
@@ -77,7 +101,6 @@ function formatClassicTime(date: Date): string {
   const diffInDays = Math.floor(diffInHours / 24)
 
   // 调试信息
-  console.log(`Time debug - China time: ${chinaDate.toLocaleString()}, Now: ${now.toLocaleString()}, Diff: ${diffInDays} days`)
 
   // 处理未来时间
   if (diffInMs < 0) {
@@ -130,15 +153,10 @@ export function formatMailDetailTime(dateString: string): string {
 
   try {
     // 参考示例前端的处理方法：在时间字符串后添加 " UTC"
-    const utcTimeString = `${dateString} UTC`
-    const date = new Date(utcTimeString)
+    const date = parseDateValue(dateString)
+    if (!date) return dateString
 
     // 检查日期是否有效
-    if (isNaN(date.getTime())) {
-      console.warn('Invalid date string:', dateString)
-      return dateString
-    }
-
     // 强制使用中国时区显示完整日期时间
     const chinaDate = new Date(date.toLocaleString("en-US", {timeZone: "Asia/Shanghai"}))
 

@@ -453,7 +453,10 @@ export const useEmailStore = defineStore('email', () => {
   }
   const selectedAddressMails = computed(() => {
     if (!selectedAddress.value) return []
-    return mails.value.filter(mail => mail.address === selectedAddress.value?.address)
+    const address = selectedAddress.value.address
+    return mails.value.filter(mail => {
+      return mail.address === address || mail.to_mail === address || mail.to_mail?.includes(`<${address}>`)
+    })
   })
 
   // Actions
