@@ -36,7 +36,7 @@ export default defineConfig(({ mode }) => {
       include: ['axios', 'vue', 'naive-ui', '@vicons/ionicons5']
     },
     server: {
-      port: 3000,
+      port: env.PORT ? Number(env.PORT) : 3000,
       host: true,
       proxy: {
         '/api': {

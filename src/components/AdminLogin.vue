@@ -5,7 +5,7 @@
       <div class="bg-image bg-left"></div>
       <div class="bg-image bg-right"></div>
       <div class="bg-overlay"></div>
-      <CosmicBackground class="login-cosmic-effects" variant="login" :density="0.92" />
+      <CosmicBackground class="login-cosmic-effects" variant="login" :density="1.45" />
     </div>
 
     <n-button
@@ -247,7 +247,7 @@ async function handleLogin() {
 
 .login-cosmic-effects {
   --cosmic-z-index: 3;
-  --cosmic-opacity: 0.9;
+  --cosmic-opacity: 1;
 }
 
 .login-container {

@@ -8,7 +8,7 @@
         'background-error': backgroundError
       }"
     ></div>
-    <CosmicBackground class="app-cosmic-effects" variant="workspace" :density="0.72" />
+    <CosmicBackground class="app-cosmic-effects" variant="workspace" :density="1.05" />
 
     <!-- 内容层 -->
     <div class="app-content">
@@ -146,6 +146,9 @@
       description="Loading..."
     />
     </div> <!-- 关闭 app-content -->
+
+    <!-- 前景星尘层：浮在 UI 之上，只画粒子（screen 混合），让星尘在工作区也清晰可见 -->
+    <CosmicBackground class="app-cosmic-overlay" variant="workspace" :density="0.92" :overlay="true" />
 
     <!-- 头像预览弹窗 -->
     <n-modal
@@ -451,9 +454,9 @@ onUnmounted(() => {
   --app-panel: rgba(250, 253, 252, 0.72);
   --app-panel-strong: rgba(255, 255, 255, 0.86);
   --app-panel-soft: rgba(244, 249, 248, 0.78);
-  --app-workspace: rgba(232, 242, 242, 0.62);
-  --app-column: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(244, 250, 249, 0.68));
-  --app-column-detail: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(246, 251, 250, 0.74));
+  --app-workspace: rgba(232, 242, 242, 0.1);
+  --app-column: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(244, 250, 249, 0.74));
+  --app-column-detail: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(246, 251, 250, 0.8));
   --app-detail: rgba(255, 255, 255, 0.78);
   --app-border: rgba(88, 112, 130, 0.2);
   --app-border-strong: rgba(255, 255, 255, 0.58);
@@ -468,16 +471,20 @@ onUnmounted(() => {
   --app-panel: rgba(10, 18, 31, 0.58);
   --app-panel-strong: rgba(15, 27, 44, 0.74);
   --app-panel-soft: rgba(8, 15, 28, 0.66);
-  --app-workspace: rgba(5, 10, 20, 0.46);
-  --app-column: linear-gradient(180deg, rgba(17, 30, 48, 0.74), rgba(7, 14, 28, 0.72));
-  --app-column-detail: linear-gradient(180deg, rgba(20, 33, 52, 0.78), rgba(8, 15, 29, 0.74));
-  --app-detail: rgba(11, 21, 36, 0.76);
+  --app-workspace: rgba(5, 10, 20, 0.14);
+  --app-column: linear-gradient(158deg, rgba(20, 34, 55, 0.68) 0%, rgba(12, 22, 40, 0.66) 52%, rgba(8, 15, 30, 0.7) 100%);
+  --app-column-detail: linear-gradient(158deg, rgba(24, 40, 63, 0.72) 0%, rgba(13, 24, 43, 0.68) 52%, rgba(9, 17, 32, 0.72) 100%);
+  --app-detail: rgba(11, 21, 36, 0.78);
   --app-border: rgba(185, 221, 244, 0.18);
   --app-border-strong: rgba(210, 236, 255, 0.28);
   --app-separator: rgba(186, 220, 245, 0.16);
   --app-shadow: var(--shadow-floating);
   --app-shadow-soft: var(--shadow-soft);
-  --app-column-shadow: 0 1px 0 rgba(255, 255, 255, 0.07) inset, 0 1px 2px rgba(0, 0, 0, 0.34), 0 18px 44px rgba(0, 0, 0, 0.34);
+  --app-column-shadow:
+    0 1px 0 rgba(190, 226, 255, 0.1) inset,
+    0 0 0 1px rgba(120, 170, 220, 0.06) inset,
+    0 2px 6px rgba(0, 0, 0, 0.4),
+    0 22px 54px rgba(0, 0, 0, 0.44);
   --app-accent-soft: rgba(143, 216, 255, 0.14);
 }
 
@@ -495,17 +502,17 @@ onUnmounted(() => {
   background-attachment: fixed;
   z-index: -2;
   transform: scale(1.03); /* 轻微缩放避免边缘 */
-  filter: saturate(0.94) contrast(1.02) brightness(1.02);
+  filter: saturate(1.02) contrast(1.04) brightness(1.03);
 }
 
 .app-cosmic-effects {
   --cosmic-z-index: 0;
-  --cosmic-opacity: 0.88;
+  --cosmic-opacity: 1;
 }
 
 .app-cosmic-overlay {
-  --cosmic-z-index: 2;
-  --cosmic-opacity: 0.34;
+  --cosmic-z-index: 5;
+  --cosmic-opacity: 0.9;
 }
 
 /* 背景遮罩层 - 提供更好的可读性 */
@@ -517,22 +524,15 @@ onUnmounted(() => {
   width: 100%;
   height: 100%;
   background:
-    radial-gradient(62% 52% at 18% 6%, rgba(255, 255, 255, 0.5), transparent 66%),
-    radial-gradient(48% 46% at 88% 20%, rgba(56, 194, 177, 0.16), transparent 68%),
-    radial-gradient(70% 68% at 50% 106%, rgba(40, 72, 96, 0.16), transparent 72%),
+    radial-gradient(58% 48% at 16% 4%, rgba(255, 255, 255, 0.24), transparent 66%),
+    radial-gradient(52% 48% at 88% 92%, rgba(40, 72, 96, 0.1), transparent 72%),
     linear-gradient(
       135deg,
-      rgba(247, 250, 249, 0.92) 0%,
-      rgba(231, 240, 241, 0.78) 36%,
-      rgba(219, 233, 236, 0.58) 66%,
-      rgba(246, 248, 246, 0.86) 100%
-    ),
-    linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.28) 0%,
-      rgba(180, 207, 205, 0.16) 100%
+      rgba(244, 249, 250, 0.28) 0%,
+      rgba(231, 240, 241, 0.1) 42%,
+      rgba(219, 233, 236, 0.06) 70%,
+      rgba(244, 248, 248, 0.22) 100%
     );
-  backdrop-filter: blur(2px);
   z-index: -1;
 }
 
@@ -556,11 +556,10 @@ onUnmounted(() => {
 
 .app-content::before {
   background:
-    radial-gradient(54% 38% at 24% 0%, rgba(255, 255, 255, 0.44), transparent 64%),
-    radial-gradient(54% 50% at 82% 18%, rgba(56, 194, 177, 0.12), transparent 70%),
-    radial-gradient(60% 52% at 8% 94%, rgba(63, 159, 211, 0.12), transparent 72%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.24), transparent 44%);
-  opacity: 0.9;
+    radial-gradient(54% 38% at 24% 0%, rgba(255, 255, 255, 0.14), transparent 64%),
+    radial-gradient(54% 50% at 82% 18%, rgba(56, 194, 177, 0.06), transparent 72%),
+    radial-gradient(60% 52% at 8% 94%, rgba(63, 159, 211, 0.06), transparent 74%);
+  opacity: 0.55;
   z-index: 0;
 }
 
@@ -586,26 +585,15 @@ onUnmounted(() => {
 /* 深色模式下的背景调整 */
 [data-theme="dark"] .app-background::after {
   background:
-    radial-gradient(48% 42% at 72% 14%, rgba(205, 236, 255, 0.2), transparent 66%),
-    radial-gradient(42% 36% at 91% 34%, rgba(184, 205, 255, 0.14), transparent 70%),
-    radial-gradient(64% 54% at 22% 4%, rgba(98, 175, 229, 0.16), transparent 66%),
-    radial-gradient(86% 72% at 50% 108%, rgba(0, 0, 0, 0.5), transparent 72%),
-    linear-gradient(
-      90deg,
-      rgba(3, 7, 14, 0.86) 0%,
-      rgba(5, 10, 20, 0.74) 42%,
-      rgba(7, 14, 26, 0.42) 68%,
-      rgba(4, 8, 16, 0.46) 100%
-    ),
-    linear-gradient(
-      135deg,
-      rgba(5, 10, 20, 0.62) 0%,
-      rgba(9, 18, 34, 0.48) 38%,
-      rgba(13, 24, 42, 0.3) 66%,
-      rgba(4, 8, 16, 0.58) 100%
-    ),
-    linear-gradient(180deg, rgba(22, 39, 68, 0.12), rgba(0, 0, 0, 0.16));
-  backdrop-filter: blur(0.8px);
+    /* 冷暖光晕：制造景深，非平铺 */
+    radial-gradient(46% 40% at 76% 12%, rgba(150, 205, 255, 0.16), transparent 60%),
+    radial-gradient(40% 34% at 14% 30%, rgba(120, 165, 255, 0.1), transparent 62%),
+    /* 四角暗角(vignette)：电影感，去塑料 */
+    radial-gradient(120% 120% at 50% 50%, transparent 42%, rgba(2, 5, 12, 0.62) 100%),
+    /* 底部加重：让内容区更聚焦 */
+    radial-gradient(90% 60% at 50% 112%, rgba(0, 0, 0, 0.5), transparent 70%),
+    /* 极淡的整体压暗：保留背景图细节 */
+    linear-gradient(180deg, rgba(4, 9, 18, 0.28) 0%, rgba(3, 7, 15, 0.42) 100%);
 }
 
 [data-theme="dark"] .app-cosmic-effects {
@@ -896,21 +884,21 @@ onUnmounted(() => {
   overflow: hidden;
   position: relative;
   isolation: isolate;
-  padding: 10px;
+  padding: 12px;
   border: 1px solid var(--app-border-strong);
   border-radius: 24px;
   background:
-    radial-gradient(92% 58% at 50% -8%, rgba(255, 255, 255, 0.62), transparent 68%),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.62), rgba(224, 238, 239, 0.44) 48%, rgba(204, 222, 226, 0.32)),
+    radial-gradient(92% 58% at 50% -8%, rgba(255, 255, 255, 0.2), transparent 72%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(224, 238, 239, 0.06) 48%, rgba(204, 222, 226, 0.05)),
     var(--app-workspace);
-  backdrop-filter: blur(26px) saturate(1.1);
+  backdrop-filter: blur(3px) saturate(1.06);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.7) inset,
-    0 22px 48px rgba(33, 55, 76, 0.14),
-    0 60px 120px rgba(33, 55, 76, 0.16),
+    0 1px 0 rgba(255, 255, 255, 0.6) inset,
+    0 22px 48px rgba(33, 55, 76, 0.12),
+    0 60px 120px rgba(33, 55, 76, 0.14),
     var(--app-shadow),
     inset 0 -1px 0 rgba(88, 112, 130, 0.08),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.24);
+    inset 0 0 0 1px rgba(255, 255, 255, 0.22);
 }
 
 .three-column-layout::after {
@@ -928,17 +916,17 @@ onUnmounted(() => {
 
 [data-theme="dark"] .three-column-layout {
   background:
-    radial-gradient(88% 56% at 50% -8%, rgba(143, 216, 255, 0.16), transparent 68%),
-    radial-gradient(70% 60% at 92% 18%, rgba(186, 197, 255, 0.1), transparent 72%),
-    linear-gradient(145deg, rgba(14, 25, 42, 0.5), rgba(5, 10, 21, 0.54) 48%, rgba(2, 5, 12, 0.64)),
-    url('/image/bg-posts.webp') center right / cover no-repeat,
-    var(--app-workspace);
+    radial-gradient(88% 56% at 26% -12%, rgba(150, 214, 255, 0.14), transparent 62%),
+    radial-gradient(70% 60% at 96% 8%, rgba(180, 156, 255, 0.09), transparent 70%),
+    radial-gradient(80% 70% at 60% 120%, rgba(70, 132, 190, 0.08), transparent 72%),
+    linear-gradient(152deg, rgba(16, 28, 48, 0.3) 0%, rgba(9, 17, 32, 0.36) 46%, rgba(4, 9, 19, 0.46) 100%);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.08) inset,
-    0 30px 70px rgba(0, 0, 0, 0.52),
-    0 78px 150px rgba(0, 0, 0, 0.36),
+    0 1px 0 rgba(210, 236, 255, 0.09) inset,
+    0 30px 70px rgba(0, 0, 0, 0.5),
+    0 78px 150px rgba(0, 0, 0, 0.34),
     var(--app-shadow),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+    inset 0 0 0 1px rgba(150, 200, 255, 0.05),
+    inset 0 -60px 120px rgba(2, 6, 14, 0.34);
 }
 
 [data-theme="dark"] .three-column-layout::after {
@@ -962,6 +950,7 @@ onUnmounted(() => {
   min-width: 0;
   position: relative;
   z-index: 1;
+  backdrop-filter: blur(16px) saturate(1.1);
 }
 
 .column:first-child {

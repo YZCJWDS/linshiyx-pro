@@ -69,7 +69,7 @@ const pickOne = <T,>(items: T[]) => items[Math.floor(Math.random() * items.lengt
 // A pre-rendered radial glow. Drawing this via drawImage is far cheaper than
 // per-particle ctx.shadowBlur, which forces an expensive off-screen blur every
 // frame and was the main source of jank + GC churn.
-const GLOW_SPRITE_SIZE = 64
+const GLOW_SPRITE_SIZE = 96
 function buildGlowSprite(): HTMLCanvasElement {
   const sprite = document.createElement('canvas')
   sprite.width = GLOW_SPRITE_SIZE
@@ -78,9 +78,12 @@ function buildGlowSprite(): HTMLCanvasElement {
   if (sctx) {
     const half = GLOW_SPRITE_SIZE / 2
     const gradient = sctx.createRadialGradient(half, half, 0, half, half, half)
+    // 更亮的实心核 + 更宽更亮的柔和拖尾，让星尘辉光更通透、更明显
     gradient.addColorStop(0, 'rgba(255, 255, 255, 1)')
-    gradient.addColorStop(0.25, 'rgba(214, 236, 255, 0.85)')
-    gradient.addColorStop(0.55, 'rgba(150, 205, 255, 0.32)')
+    gradient.addColorStop(0.14, 'rgba(240, 249, 255, 1)')
+    gradient.addColorStop(0.32, 'rgba(190, 228, 255, 0.78)')
+    gradient.addColorStop(0.55, 'rgba(150, 206, 255, 0.4)')
+    gradient.addColorStop(0.78, 'rgba(132, 200, 255, 0.16)')
     gradient.addColorStop(1, 'rgba(126, 198, 255, 0)')
     sctx.fillStyle = gradient
     sctx.fillRect(0, 0, GLOW_SPRITE_SIZE, GLOW_SPRITE_SIZE)
@@ -108,16 +111,18 @@ const colorSets = {
 }
 
 function getParticleCount() {
-  const mobileRatio = width < 760 ? 0.62 : 1
-  const variantRatio = props.variant === 'login' ? 0.82 : 1
-  const base = Math.sqrt(width * height) / (props.variant === 'login' ? 12.4 : 11.2)
-  return Math.max(24, Math.min(96, Math.round(base * mobileRatio * variantRatio * props.density)))
+  const mobileRatio = width < 760 ? 0.68 : 1
+  const variantRatio = props.variant === 'login' ? 1.02 : 1
+  // 更小的除数 => 更多粒子；上限抬高，让星尘密度更明显
+  const base = Math.sqrt(width * height) / (props.variant === 'login' ? 8.6 : 8.2)
+  return Math.max(44, Math.min(168, Math.round(base * mobileRatio * variantRatio * props.density)))
 }
 
 function createParticle(insideViewport = false): Particle {
-  const layerScale = props.variant === 'login' ? 0.92 : 1
+  const layerScale = props.variant === 'login' ? 0.96 : 1
   const roll = Math.random()
-  const type: ParticleType = roll > 0.9 ? 'glint' : roll > 0.56 ? 'star' : roll > 0.16 ? 'dust' : 'comet'
+  // 提高亮星（star/glint）占比，减少难以察觉的 dust —— 这是“更明显”的关键
+  const type: ParticleType = roll > 0.85 ? 'glint' : roll > 0.46 ? 'star' : roll > 0.12 ? 'dust' : 'comet'
   const palette = pickOne(
     type === 'dust'
       ? [colorSets.blue, colorSets.violet, colorSets.warm]
@@ -126,12 +131,12 @@ function createParticle(insideViewport = false): Particle {
         : [colorSets.blue, colorSets.violet, colorSets.cyan, colorSets.warm]
   )
   const radius = type === 'dust'
-    ? randomBetween(0.55, 1.25) * layerScale
+    ? randomBetween(0.7, 1.5) * layerScale
     : type === 'comet'
-      ? randomBetween(0.95, 1.75) * layerScale
+      ? randomBetween(1.05, 1.95) * layerScale
       : type === 'glint'
-        ? randomBetween(1.35, 2.55) * layerScale
-        : randomBetween(0.95, 2.2) * layerScale
+        ? randomBetween(1.7, 3.1) * layerScale
+        : randomBetween(1.2, 2.6) * layerScale
 
   return {
     type,
@@ -149,10 +154,10 @@ function createParticle(insideViewport = false): Particle {
         ? randomBetween(0.035, 0.14) * layerScale
         : randomBetween(-0.025, 0.055) * layerScale,
     alpha: type === 'dust'
-      ? randomBetween(0.42, 0.72)
+      ? randomBetween(0.5, 0.82)
       : type === 'comet'
-        ? randomBetween(0.48, 0.78)
-        : randomBetween(0.54, 0.92),
+        ? randomBetween(0.58, 0.88)
+        : randomBetween(0.68, 1),
     phase: Math.random() * Math.PI * 2,
     pulseSpeed: randomBetween(0.009, 0.022),
     drift: Math.random() * Math.PI * 2,
@@ -187,14 +192,14 @@ function drawBackdrop(ctx: CanvasRenderingContext2D, time: number) {
   const mainY = height * 0.2 + Math.cos(time * 0.35) * 18
   const glow = ctx.createRadialGradient(mainX, mainY, 0, mainX, mainY, Math.min(width, height) * 0.82)
 
-  glow.addColorStop(0, 'rgba(205, 230, 255, 0.22)')
-  glow.addColorStop(0.32, 'rgba(181, 146, 255, 0.13)')
-  glow.addColorStop(0.62, 'rgba(126, 198, 255, 0.075)')
+  glow.addColorStop(0, 'rgba(210, 234, 255, 0.32)')
+  glow.addColorStop(0.32, 'rgba(181, 146, 255, 0.18)')
+  glow.addColorStop(0.62, 'rgba(126, 198, 255, 0.1)')
   glow.addColorStop(1, 'rgba(126, 198, 255, 0)')
 
   ctx.save()
   ctx.globalCompositeOperation = 'lighter'
-  ctx.globalAlpha = props.variant === 'login' ? 0.78 : 0.92
+  ctx.globalAlpha = props.variant === 'login' ? 0.92 : 1.05
   ctx.fillStyle = glow
   ctx.fillRect(0, 0, width, height)
 
@@ -299,8 +304,8 @@ function drawParticle(ctx: CanvasRenderingContext2D, particle: Particle) {
     if (particle.type === 'comet') {
       // Bright core with a cached-sprite halo instead of shadowBlur.
       if (glowSprite) {
-        const size = particle.radius * 7
-        ctx.globalAlpha = alpha * 0.6
+        const size = particle.radius * 9
+        ctx.globalAlpha = alpha * 0.72
         ctx.drawImage(glowSprite, particle.x - size / 2, particle.y - size / 2, size, size)
         ctx.globalAlpha = alpha
       }
@@ -315,9 +320,9 @@ function drawParticle(ctx: CanvasRenderingContext2D, particle: Particle) {
 
   // star / glint: sprite halo (cheap, consistent glow) + crisp core.
   if (glowSprite) {
-    const haloScale = particle.type === 'glint' ? 9 : 6
+    const haloScale = particle.type === 'glint' ? 12 : 8
     const size = particle.radius * haloScale
-    ctx.globalAlpha = alpha * (particle.type === 'glint' ? 0.82 : 0.62)
+    ctx.globalAlpha = alpha * (particle.type === 'glint' ? 0.95 : 0.78)
     ctx.drawImage(glowSprite, particle.x - size / 2, particle.y - size / 2, size, size)
     ctx.globalAlpha = alpha
   }
