@@ -52,6 +52,7 @@ let dpr = 1
 let animationFrame = 0
 let resizeFrame = 0
 let particles: Particle[] = []
+let glowSprite: HTMLCanvasElement | null = null
 let reduceMotionQuery: MediaQueryList | null = null
 let reduceMotion = false
 let resizeHandler: (() => void) | null = null
@@ -64,6 +65,28 @@ const FRAME_INTERVAL = 1000 / 30
 const randomBetween = (min: number, max: number) => min + Math.random() * (max - min)
 
 const pickOne = <T,>(items: T[]) => items[Math.floor(Math.random() * items.length)]
+
+// A pre-rendered radial glow. Drawing this via drawImage is far cheaper than
+// per-particle ctx.shadowBlur, which forces an expensive off-screen blur every
+// frame and was the main source of jank + GC churn.
+const GLOW_SPRITE_SIZE = 64
+function buildGlowSprite(): HTMLCanvasElement {
+  const sprite = document.createElement('canvas')
+  sprite.width = GLOW_SPRITE_SIZE
+  sprite.height = GLOW_SPRITE_SIZE
+  const sctx = sprite.getContext('2d')
+  if (sctx) {
+    const half = GLOW_SPRITE_SIZE / 2
+    const gradient = sctx.createRadialGradient(half, half, 0, half, half, half)
+    gradient.addColorStop(0, 'rgba(255, 255, 255, 1)')
+    gradient.addColorStop(0.25, 'rgba(214, 236, 255, 0.85)')
+    gradient.addColorStop(0.55, 'rgba(150, 205, 255, 0.32)')
+    gradient.addColorStop(1, 'rgba(126, 198, 255, 0)')
+    sctx.fillStyle = gradient
+    sctx.fillRect(0, 0, GLOW_SPRITE_SIZE, GLOW_SPRITE_SIZE)
+  }
+  return sprite
+}
 
 const colorSets = {
   blue: {
@@ -149,7 +172,7 @@ function resizeCanvas() {
   const bounds = canvas.parentElement?.getBoundingClientRect()
   width = Math.max(1, Math.floor(bounds?.width || window.innerWidth))
   height = Math.max(1, Math.floor(bounds?.height || window.innerHeight))
-  dpr = Math.min(window.devicePixelRatio || 1, width < 760 ? 1.15 : 1.35)
+  dpr = Math.min(window.devicePixelRatio || 1, width < 760 ? 1 : 1.25)
 
   canvas.width = Math.floor(width * dpr)
   canvas.height = Math.floor(height * dpr)
@@ -184,11 +207,9 @@ function drawBackdrop(ctx: CanvasRenderingContext2D, time: number) {
     gradient.addColorStop(0.8, 'rgba(205, 230, 255, 0.08)')
     gradient.addColorStop(1, 'rgba(126, 198, 255, 0)')
 
-    ctx.globalAlpha = band === 1 ? 0.78 : 0.46
+    ctx.globalAlpha = band === 1 ? 0.82 : 0.5
     ctx.strokeStyle = gradient
-    ctx.lineWidth = Math.max(24, height * (band === 1 ? 0.07 : 0.04))
-    ctx.shadowBlur = band === 1 ? 34 : 20
-    ctx.shadowColor = 'rgba(126, 198, 255, 0.46)'
+    ctx.lineWidth = Math.max(24, height * (band === 1 ? 0.08 : 0.045))
     ctx.beginPath()
     ctx.moveTo(-width * 0.08, height * (0.62 + band * 0.02) + offset)
     ctx.bezierCurveTo(
@@ -270,16 +291,21 @@ function drawParticle(ctx: CanvasRenderingContext2D, particle: Particle) {
 
     ctx.strokeStyle = gradient
     ctx.lineWidth = Math.max(particle.type === 'comet' ? 1.05 : 0.72, particle.radius * (particle.type === 'comet' ? 1.18 : 0.95))
-    ctx.shadowBlur = particle.type === 'comet' ? 12 : 7
-    ctx.shadowColor = 'rgba(126, 198, 255, 0.55)'
     ctx.beginPath()
     ctx.moveTo(particle.x - tail, particle.y - tailY)
     ctx.lineTo(particle.x, particle.y)
     ctx.stroke()
 
     if (particle.type === 'comet') {
+      // Bright core with a cached-sprite halo instead of shadowBlur.
+      if (glowSprite) {
+        const size = particle.radius * 7
+        ctx.globalAlpha = alpha * 0.6
+        ctx.drawImage(glowSprite, particle.x - size / 2, particle.y - size / 2, size, size)
+        ctx.globalAlpha = alpha
+      }
       ctx.beginPath()
-      ctx.arc(particle.x, particle.y, particle.radius * 1.45, 0, Math.PI * 2)
+      ctx.arc(particle.x, particle.y, particle.radius * 1.35, 0, Math.PI * 2)
       ctx.fill()
     }
 
@@ -287,8 +313,15 @@ function drawParticle(ctx: CanvasRenderingContext2D, particle: Particle) {
     return
   }
 
-  ctx.shadowBlur = particle.type === 'glint' ? 12 : 7
-  ctx.shadowColor = particle.color
+  // star / glint: sprite halo (cheap, consistent glow) + crisp core.
+  if (glowSprite) {
+    const haloScale = particle.type === 'glint' ? 9 : 6
+    const size = particle.radius * haloScale
+    ctx.globalAlpha = alpha * (particle.type === 'glint' ? 0.82 : 0.62)
+    ctx.drawImage(glowSprite, particle.x - size / 2, particle.y - size / 2, size, size)
+    ctx.globalAlpha = alpha
+  }
+
   ctx.beginPath()
   ctx.arc(particle.x, particle.y, particle.radius * pulse, 0, Math.PI * 2)
   ctx.fill()
@@ -361,6 +394,8 @@ onMounted(() => {
 
   context = canvas.getContext('2d', { alpha: true })
   if (!context) return
+
+  glowSprite = buildGlowSprite()
 
   reduceMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
   reduceMotion = reduceMotionQuery.matches

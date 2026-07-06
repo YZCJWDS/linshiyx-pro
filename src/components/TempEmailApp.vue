@@ -12,12 +12,6 @@
 
     <!-- 内容层 -->
     <div class="app-content">
-      <canvas
-        ref="frostParticleCanvas"
-        class="frost-particle-layer"
-        aria-hidden="true"
-        data-frost-particles
-      ></canvas>
     <!-- Header -->
     <header class="app-header">
       <div class="header-content">
@@ -255,7 +249,6 @@ import {
 } from '@vicons/ionicons5'
 import { useEmailStore, useUiStore, useAuthStore } from '@/stores'
 import { useKeyboard, commonShortcuts } from '@/composables/useKeyboard'
-import { useFrostParticles } from '@/composables/useFrostParticles'
 import EmailManager from './EmailManager.vue'
 import MailList from './MailList.vue'
 import MailDetail from './MailDetail.vue'
@@ -270,7 +263,6 @@ const message = useMessage()
 // 背景图片状态
 const backgroundLoaded = ref(false)
 const backgroundError = ref(false)
-const frostParticleCanvas = ref<HTMLCanvasElement | null>(null)
 const appBackgroundUrl = '/image/bg-posts.webp'
 
 // 界面状态管理
@@ -336,8 +328,6 @@ const isDark = computed(() => uiStore.theme === 'dark')
 const isRefreshing = computed(() => 
   emailStore.loading.addresses || emailStore.loading.mails
 )
-
-useFrostParticles(frostParticleCanvas, isDark)
 
 async function refreshAll() {
   try {
@@ -547,35 +537,6 @@ onUnmounted(() => {
 }
 
 /* 内容层 */
-.frost-particle-layer {
-  position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100vh;
-  pointer-events: none;
-  z-index: 2;
-  opacity: 0;
-  mix-blend-mode: screen;
-  transition: opacity 0.35s ease;
-  contain: strict;
-  -webkit-mask-image: radial-gradient(86% 76% at 52% 52%, rgba(0, 0, 0, 0.44) 0%, rgba(0, 0, 0, 0.72) 50%, rgba(0, 0, 0, 0.96) 100%);
-  mask-image: radial-gradient(86% 76% at 52% 52%, rgba(0, 0, 0, 0.44) 0%, rgba(0, 0, 0, 0.72) 50%, rgba(0, 0, 0, 0.96) 100%);
-}
-
-[data-theme="dark"] .frost-particle-layer {
-  opacity: 0.82;
-}
-
-.frost-particle-layer[hidden] {
-  display: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .frost-particle-layer {
-    display: none;
-  }
-}
-
 .app-content {
   position: relative;
   height: 100vh;

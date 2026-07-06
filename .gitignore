@@ -173,3 +173,7 @@ yll.png
 !public/image/bg-posts.webp
 !public/image/bg-archive.png
 !public/image/login-hero.jpg
+
+# AI assistant instruction files (keep local, don't commit)
+claude.md
+CLAUDE.md
