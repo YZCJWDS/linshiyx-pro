@@ -280,7 +280,6 @@ import {
 } from '@vicons/ionicons5'
 import { useEmailStore, useSettingsStore, useUiStore } from '@/stores'
 import { formatDate, formatMailDetailTime, copyToClipboard, extractTextFromHtml } from '@/utils/helpers'
-import { testDecoding } from '@/utils/mimeParser'
 import type { EmailAttachment } from '@/types'
 import ShadowHtmlComponent from './ShadowHtmlComponent.vue'
 
@@ -531,26 +530,80 @@ const effectiveMailDisplayMode = computed<'light' | 'dark' | 'high-contrast'>(()
   return uiStore.theme === 'dark' ? 'dark' : 'light'
 })
 
+const resourceUrlAttributes = new Set(['src', 'background', 'poster', 'data'])
+
+function upgradeHttpUrl(value: string): string {
+  return value.replace(/^http:\/\//i, 'https://')
+}
+
+function upgradeSrcset(value: string): string {
+  return value.replace(/\bhttp:\/\//gi, 'https://')
+}
+
+function upgradeStyleUrls(value: string): string {
+  return value
+    .replace(/url\(\s*(['"]?)http:\/\//gi, 'url($1https://')
+    .replace(/@import\s+(url\()?(['"]?)http:\/\//gi, '@import $1$2https://')
+}
+
+function prepareMailHtml(content: string): string {
+  const template = document.createElement('template')
+  template.innerHTML = content
+
+  template.content.querySelectorAll('script').forEach((element) => element.remove())
+
+  template.content.querySelectorAll('style').forEach((element) => {
+    element.textContent = upgradeStyleUrls(element.textContent || '')
+  })
+
+  template.content.querySelectorAll<HTMLElement>('*').forEach((element) => {
+    const tagName = element.tagName.toLowerCase()
+
+    for (const attribute of Array.from(element.attributes)) {
+      const name = attribute.name.toLowerCase()
+      const value = attribute.value.trim()
+
+      if (name.startsWith('on') || /^\s*javascript:/i.test(value)) {
+        element.removeAttribute(attribute.name)
+        continue
+      }
+
+      if ((name === 'src' || name === 'href') && /^\s*data:/i.test(value) && !/^\s*data:image\//i.test(value)) {
+        element.removeAttribute(attribute.name)
+        continue
+      }
+
+      if (name === 'srcset') {
+        element.setAttribute(attribute.name, upgradeSrcset(attribute.value))
+        continue
+      }
+
+      if (name === 'style') {
+        element.setAttribute(attribute.name, upgradeStyleUrls(attribute.value))
+        continue
+      }
+
+      const isLoadedHref = name === 'href' && tagName === 'link'
+      if (resourceUrlAttributes.has(name) || isLoadedHref) {
+        element.setAttribute(attribute.name, upgradeHttpUrl(attribute.value))
+      }
+    }
+
+    if (tagName === 'iframe') {
+      element.setAttribute('sandbox', element.getAttribute('sandbox') || 'allow-same-origin allow-popups allow-forms')
+      element.setAttribute('referrerpolicy', element.getAttribute('referrerpolicy') || 'no-referrer')
+      element.setAttribute('loading', element.getAttribute('loading') || 'lazy')
+    }
+  })
+
+  return template.innerHTML
+}
+
 const sanitizedHtmlContent = computed(() => {
   const content = getDisplayMessage()
   if (!content) return '<p>邮件内容为空</p>'
 
-  // Basic HTML sanitization - remove dangerous elements and attributes
-  let html = content
-
-  // Remove script tags and their content
-  html = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-  html = html.replace(/<(iframe|object|embed|video|audio|source|track|link)\b[\s\S]*?<\/\1>/gi, '')
-  html = html.replace(/<(?:iframe|object|embed|video|audio|source|track|link)\b[^>]*>/gi, '')
-  html = html.replace(/@import\s+(?:url\()?['"]?https?:\/\/[\s\S]*?;?/gi, '')
-
-  // Remove dangerous attributes
-  html = html.replace(/\s*on\w+\s*=\s*["'][^"']*["']/gi, '')
-  html = html.replace(/\s*javascript\s*:/gi, '')
-  html = html.replace(/\s+(src|href)\s*=\s*(['"])\s*data:(?!image\/)[^'"]*\2/gi, '')
-  html = html.replace(/\s+srcset\s*=\s*(['"])[\s\S]*?\1/gi, '')
-  html = html.replace(/\s+(?:src|background)\s*=\s*(['"])\s*https?:\/\/[\s\S]*?\1/gi, ' data-remote-blocked="true"')
-  html = html.replace(/url\(\s*(['"]?)https?:\/\/[\s\S]*?\1\s*\)/gi, 'none')
+  const html = prepareMailHtml(content)
 
   // Add base styles for better rendering
   const mode = effectiveMailDisplayMode.value
@@ -616,9 +669,6 @@ function getDisplayText(): string {
   if (!mail) return '没有选中邮件'
 
   console.log('Getting display text for mail:', mail)
-
-  // 测试解码功能
-  testDecoding()
 
   // 优先使用解析后的text字段（MIME解析器提取的纯文本）
   if (mail.text && mail.text.trim()) {
