@@ -31,6 +31,8 @@ export function useFrostParticles(canvasRef: Ref<HTMLCanvasElement | null>, enab
   let height = 0
   let dpr = 1
   let particles: GalaxyParticle[] = []
+  let lastFrameTime = 0
+  const frameInterval = 1000 / 30
 
   const shouldRun = () => {
     return Boolean(canvasRef.value && enabled.value && !document.hidden && !reduceMotionQuery?.matches)
@@ -40,7 +42,7 @@ export function useFrostParticles(canvasRef: Ref<HTMLCanvasElement | null>, enab
     const areaRatio = Math.min(1.25, Math.max(0.58, (width * height) / (1440 * 900)))
     const mobileRatio = width < 760 ? 0.52 : width < 1180 ? 0.78 : 1
     const coreRatio = navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4 ? 0.78 : 1
-    return Math.max(width < 760 ? 36 : 82, Math.round(128 * areaRatio * mobileRatio * coreRatio))
+    return Math.max(width < 760 ? 28 : 56, Math.min(86, Math.round(96 * areaRatio * mobileRatio * coreRatio)))
   }
 
   const createParticle = (insideViewport = false): GalaxyParticle => {
@@ -104,7 +106,7 @@ export function useFrostParticles(canvasRef: Ref<HTMLCanvasElement | null>, enab
 
     width = Math.max(1, window.innerWidth)
     height = Math.max(1, window.innerHeight)
-    dpr = Math.min(window.devicePixelRatio || 1, width < 760 ? 1.25 : 1.6)
+    dpr = Math.min(window.devicePixelRatio || 1, width < 760 ? 1.1 : 1.25)
 
     canvas.hidden = false
     canvas.width = Math.floor(width * dpr)
@@ -149,9 +151,14 @@ export function useFrostParticles(canvasRef: Ref<HTMLCanvasElement | null>, enab
   const drawLinks = () => {
     if (!context) return
 
-    const points = particles
-      .filter((particle) => particle.type === 'star' || particle.type === 'glint')
-      .slice(0, width < 760 ? 22 : 42)
+    const points: GalaxyParticle[] = []
+    const pointLimit = width < 760 ? 22 : 42
+    for (const particle of particles) {
+      if (particle.type === 'star' || particle.type === 'glint') {
+        points.push(particle)
+        if (points.length >= pointLimit) break
+      }
+    }
     const maxDistance = width < 760 ? 82 : 118
 
     context.save()
@@ -269,7 +276,7 @@ export function useFrostParticles(canvasRef: Ref<HTMLCanvasElement | null>, enab
     }
   }
 
-  const tick = () => {
+  const tick = (timestamp: number) => {
     if (!shouldRun()) {
       stop(true)
       return
@@ -279,13 +286,17 @@ export function useFrostParticles(canvasRef: Ref<HTMLCanvasElement | null>, enab
     const canvas = canvasRef.value
     if (canvas) canvas.dataset.particleRunning = 'true'
 
-    context.clearRect(0, 0, width, height)
-    drawGalaxyVeil()
-    particles.forEach(updateParticle)
-    drawLinks()
-    particles.forEach(drawParticle)
-    context.globalAlpha = 1
-    context.globalCompositeOperation = 'source-over'
+    if (timestamp - lastFrameTime >= frameInterval) {
+      lastFrameTime = timestamp
+      context.clearRect(0, 0, width, height)
+      drawGalaxyVeil()
+      particles.forEach(updateParticle)
+      drawLinks()
+      particles.forEach(drawParticle)
+      context.globalAlpha = 1
+      context.globalCompositeOperation = 'source-over'
+    }
+
     animationFrame = window.requestAnimationFrame(tick)
   }
 
@@ -302,6 +313,7 @@ export function useFrostParticles(canvasRef: Ref<HTMLCanvasElement | null>, enab
     if (!context) return
 
     resizeCanvas()
+    lastFrameTime = 0
     if (!animationFrame) animationFrame = window.requestAnimationFrame(tick)
   }
 

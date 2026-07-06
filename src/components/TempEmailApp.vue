@@ -8,8 +8,7 @@
         'background-error': backgroundError
       }"
     ></div>
-    <CosmicBackground class="app-cosmic-effects" variant="workspace" :density="1.22" />
-    <CosmicBackground class="app-cosmic-overlay" variant="workspace" :density="0.54" overlay />
+    <CosmicBackground class="app-cosmic-effects" variant="workspace" :density="0.72" />
 
     <!-- 内容层 -->
     <div class="app-content">

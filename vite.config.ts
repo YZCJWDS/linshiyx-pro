@@ -19,6 +19,12 @@ export default defineConfig(({ mode }) => {
       assetsDir: 'assets',
       sourcemap: false,
       minify: 'terser',
+      terserOptions: {
+        compress: {
+          drop_debugger: true,
+          pure_funcs: ['console.log', 'console.info', 'console.debug']
+        }
+      },
       rollupOptions: {
         external: [],
         output: {

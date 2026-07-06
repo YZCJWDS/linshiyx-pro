@@ -50,11 +50,16 @@ let width = 0
 let height = 0
 let dpr = 1
 let animationFrame = 0
+let resizeFrame = 0
 let particles: Particle[] = []
 let reduceMotionQuery: MediaQueryList | null = null
 let reduceMotion = false
 let resizeHandler: (() => void) | null = null
 let motionHandler: (() => void) | null = null
+let visibilityHandler: (() => void) | null = null
+let lastFrameTime = 0
+
+const FRAME_INTERVAL = 1000 / 30
 
 const randomBetween = (min: number, max: number) => min + Math.random() * (max - min)
 
@@ -83,7 +88,7 @@ function getParticleCount() {
   const mobileRatio = width < 760 ? 0.62 : 1
   const variantRatio = props.variant === 'login' ? 0.82 : 1
   const base = Math.sqrt(width * height) / (props.variant === 'login' ? 12.4 : 11.2)
-  return Math.max(28, Math.min(150, Math.round(base * mobileRatio * variantRatio * props.density)))
+  return Math.max(24, Math.min(96, Math.round(base * mobileRatio * variantRatio * props.density)))
 }
 
 function createParticle(insideViewport = false): Particle {
@@ -144,7 +149,7 @@ function resizeCanvas() {
   const bounds = canvas.parentElement?.getBoundingClientRect()
   width = Math.max(1, Math.floor(bounds?.width || window.innerWidth))
   height = Math.max(1, Math.floor(bounds?.height || window.innerHeight))
-  dpr = Math.min(window.devicePixelRatio || 1, 2)
+  dpr = Math.min(window.devicePixelRatio || 1, width < 760 ? 1.15 : 1.35)
 
   canvas.width = Math.floor(width * dpr)
   canvas.height = Math.floor(height * dpr)
@@ -213,7 +218,13 @@ function updateParticle(particle: Particle) {
 }
 
 function drawLinks(ctx: CanvasRenderingContext2D) {
-  const points = particles.filter((particle) => particle.type === 'star' || particle.type === 'glint').slice(0, 62)
+  const points: Particle[] = []
+  for (const particle of particles) {
+    if (particle.type === 'star' || particle.type === 'glint') {
+      points.push(particle)
+      if (points.length >= 38) break
+    }
+  }
   const maxDistance = width < 760 ? 82 : props.variant === 'login' ? 108 : 128
 
   ctx.save()
@@ -306,24 +317,33 @@ function renderFrame() {
   }
 
   if (!reduceMotion) {
-    particles = particles.map(updateParticle)
+    for (let index = 0; index < particles.length; index += 1) {
+      const nextParticle = updateParticle(particles[index])
+      if (nextParticle !== particles[index]) {
+        particles[index] = nextParticle
+      }
+    }
   }
 
   drawLinks(context)
   particles.forEach((particle) => drawParticle(context as CanvasRenderingContext2D, particle))
 }
 
-function tick() {
+function tick(timestamp: number) {
   animationFrame = 0
-  renderFrame()
+  if (timestamp - lastFrameTime >= FRAME_INTERVAL) {
+    lastFrameTime = timestamp
+    renderFrame()
+  }
 
-  if (!reduceMotion) {
+  if (!reduceMotion && !document.hidden) {
     animationFrame = window.requestAnimationFrame(tick)
   }
 }
 
 function startAnimation() {
-  if (!animationFrame) {
+  if (!animationFrame && !document.hidden) {
+    lastFrameTime = 0
     animationFrame = window.requestAnimationFrame(tick)
   }
 }
@@ -346,8 +366,14 @@ onMounted(() => {
   reduceMotion = reduceMotionQuery.matches
 
   resizeHandler = () => {
-    resizeCanvas()
-    renderFrame()
+    if (resizeFrame) {
+      window.cancelAnimationFrame(resizeFrame)
+    }
+    resizeFrame = window.requestAnimationFrame(() => {
+      resizeFrame = 0
+      resizeCanvas()
+      renderFrame()
+    })
   }
 
   motionHandler = () => {
@@ -362,7 +388,17 @@ onMounted(() => {
     }
   }
 
+  visibilityHandler = () => {
+    if (document.hidden) {
+      stopAnimation()
+    } else if (!reduceMotion) {
+      renderFrame()
+      startAnimation()
+    }
+  }
+
   window.addEventListener('resize', resizeHandler, { passive: true })
+  document.addEventListener('visibilitychange', visibilityHandler)
   reduceMotionQuery.addEventListener('change', motionHandler)
 
   resizeCanvas()
@@ -375,9 +411,17 @@ onMounted(() => {
 
 onUnmounted(() => {
   stopAnimation()
+  if (resizeFrame) {
+    window.cancelAnimationFrame(resizeFrame)
+    resizeFrame = 0
+  }
 
   if (resizeHandler) {
     window.removeEventListener('resize', resizeHandler)
+  }
+
+  if (visibilityHandler) {
+    document.removeEventListener('visibilitychange', visibilityHandler)
   }
 
   if (reduceMotionQuery && motionHandler) {
