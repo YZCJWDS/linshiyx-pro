@@ -13,12 +13,25 @@ export const useUiStore = defineStore('ui', () => {
   // 全屏详读弹窗开关
   const readerModalVisible = ref(false)
 
+  // 沉浸式专注阅读模式（持久化用户偏好）
+  const READER_FOCUS_KEY = 'linshiyx_reader_focus'
+  const readerFocusMode = ref<boolean>(localStorage.getItem(READER_FOCUS_KEY) === '1')
+
   function openReaderModal() {
     readerModalVisible.value = true
   }
 
   function closeReaderModal() {
     readerModalVisible.value = false
+  }
+
+  function setReaderFocusMode(value: boolean) {
+    readerFocusMode.value = value
+    localStorage.setItem(READER_FOCUS_KEY, value ? '1' : '0')
+  }
+
+  function toggleReaderFocusMode() {
+    setReaderFocusMode(!readerFocusMode.value)
   }
 
   // Notification actions
@@ -142,10 +155,13 @@ export const useUiStore = defineStore('ui', () => {
     theme,
     useUTCDate,
     readerModalVisible,
+    readerFocusMode,
 
     // Actions
     openReaderModal,
     closeReaderModal,
+    setReaderFocusMode,
+    toggleReaderFocusMode,
     showNotification,
     showSuccess,
     showError,

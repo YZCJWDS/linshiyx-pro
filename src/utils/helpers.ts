@@ -344,6 +344,42 @@ export function extractVerificationCode(text: string): string | null {
   return null
 }
 
+// 解码 RFC 2047 编码的邮件主题（=?charset?B/Q?text?=），必要时从原始邮件中提取
+export function decodeMailSubject(subject: string, raw = ''): string {
+  let result = subject || ''
+
+  // 主题为空时，尝试从原始邮件头中提取 Subject 行（支持多行折叠）
+  if (!result && raw) {
+    const subjectMatch = raw.match(/^Subject:\s*(.+?)(?=\r?\n[^\s]|\r?\n\r?\n|$)/ms)
+    if (subjectMatch) {
+      result = subjectMatch[1].replace(/\r?\n\s+/g, ' ').trim()
+    }
+  }
+
+  if (!result) return '(无主题)'
+
+  try {
+    result = result.replace(/=\?([^?]+)\?([BQ])\?([^?]+)\?=/gi, (match, _charset, encoding, encodedText) => {
+      try {
+        if (encoding.toUpperCase() === 'B') {
+          const decoded = atob(encodedText)
+          return decodeURIComponent(escape(decoded))
+        }
+        // Quoted-Printable
+        return encodedText
+          .replace(/_/g, ' ')
+          .replace(/=([0-9A-F]{2})/gi, (_m: string, hex: string) => String.fromCharCode(parseInt(hex, 16)))
+      } catch {
+        return match
+      }
+    })
+  } catch {
+    // 忽略解码异常，回退原始主题
+  }
+
+  return result || '(无主题)'
+}
+
 // 根据字符串（发件人/邮箱）稳定生成一个柔和的头像背景色
 export function stringToColor(input: string): string {
   const str = input || '?'
@@ -365,6 +401,130 @@ export function getInitial(nameOrEmail: string): string {
   const displayPart = raw.replace(/<[^>]*>/g, '').trim() || raw
   const firstChar = displayPart.replace(/^["']|["']$/g, '').charAt(0)
   return (firstChar || '?').toUpperCase()
+}
+
+// 从发件人字段（可能形如 "顾北 <3464237869@qq.com>" 或纯邮箱）中提取邮箱地址
+export function extractEmailAddress(source: string): string {
+  const raw = (source || '').trim()
+  if (!raw) return ''
+  // 优先取尖括号内的邮箱
+  const angle = raw.match(/<([^<>]+@[^<>]+)>/)
+  if (angle && angle[1]) return angle[1].trim().toLowerCase()
+  // 否则取字符串中第一个类邮箱片段
+  const bare = raw.match(/[^\s<>"']+@[^\s<>"']+\.[^\s<>"']+/)
+  if (bare && bare[0]) return bare[0].trim().toLowerCase()
+  return ''
+}
+
+// 生成发件人真实头像的候选 URL 列表（按可靠度排序，逐个降级尝试）
+// - QQ 邮箱（纯数字用户名）：QQ 官方头像
+// - 其他邮箱：Gravatar（identicon 兜底会返回默认图，这里用 404 让前端继续降级到首字母）
+export function getSenderAvatarUrls(source: string): string[] {
+  const email = extractEmailAddress(source)
+  if (!email) return []
+
+  const urls: string[] = []
+  const [localPart, domain] = email.split('@')
+
+  // QQ 邮箱：纯数字账号 -> QQ 官方头像接口
+  if (/^(qq\.com|vip\.qq\.com|foxmail\.com)$/i.test(domain) && /^\d{5,}$/.test(localPart)) {
+    urls.push(`https://q1.qlogo.cn/g?b=qq&nk=${localPart}&s=100`)
+  }
+
+  // 通用：Gravatar（d=404 表示无头像时返回 404，便于前端降级到首字母）
+  const hash = md5Hex(email)
+  urls.push(`https://www.gravatar.com/avatar/${hash}?s=100&d=404`)
+
+  return urls
+}
+
+// 轻量 MD5 实现（仅用于生成 Gravatar 邮箱哈希，非安全用途）
+function md5Hex(input: string): string {
+  function toUtf8(str: string): string {
+    return unescape(encodeURIComponent(str))
+  }
+  function rotl(x: number, c: number): number {
+    return (x << c) | (x >>> (32 - c))
+  }
+  function add(a: number, b: number): number {
+    return (a + b) & 0xffffffff
+  }
+
+  const msg = toUtf8(input)
+  const n = msg.length
+  const words: number[] = []
+  for (let i = 0; i < n; i++) {
+    words[i >> 2] |= msg.charCodeAt(i) << ((i % 4) * 8)
+  }
+  words[n >> 2] |= 0x80 << ((n % 4) * 8)
+  words[(((n + 8) >> 6) + 1) * 16 - 2] = n * 8
+
+  const K = [
+    0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee, 0xf57c0faf, 0x4787c62a, 0xa8304613, 0xfd469501,
+    0x698098d8, 0x8b44f7af, 0xffff5bb1, 0x895cd7be, 0x6b901122, 0xfd987193, 0xa679438e, 0x49b40821,
+    0xf61e2562, 0xc040b340, 0x265e5a51, 0xe9b6c7aa, 0xd62f105d, 0x02441453, 0xd8a1e681, 0xe7d3fbc8,
+    0x21e1cde6, 0xc33707d6, 0xf4d50d87, 0x455a14ed, 0xa9e3e905, 0xfcefa3f8, 0x676f02d9, 0x8d2a4c8a,
+    0xfffa3942, 0x8771f681, 0x6d9d6122, 0xfde5380c, 0xa4beea44, 0x4bdecfa9, 0xf6bb4b60, 0xbebfbc70,
+    0x289b7ec6, 0xeaa127fa, 0xd4ef3085, 0x04881d05, 0xd9d4d039, 0xe6db99e5, 0x1fa27cf8, 0xc4ac5665,
+    0xf4292244, 0x432aff97, 0xab9423a7, 0xfc93a039, 0x655b59c3, 0x8f0ccc92, 0xffeff47d, 0x85845dd1,
+    0x6fa87e4f, 0xfe2ce6e0, 0xa3014314, 0x4e0811a1, 0xf7537e82, 0xbd3af235, 0x2ad7d2bb, 0xeb86d391
+  ]
+  const S = [
+    7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22,
+    5, 9, 14, 20, 5, 9, 14, 20, 5, 9, 14, 20, 5, 9, 14, 20,
+    4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23,
+    6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21
+  ]
+
+  let a0 = 0x67452301
+  let b0 = 0xefcdab89
+  let c0 = 0x98badcfe
+  let d0 = 0x10325476
+
+  for (let i = 0; i < words.length; i += 16) {
+    let A = a0
+    let B = b0
+    let C = c0
+    let D = d0
+
+    for (let j = 0; j < 64; j++) {
+      let F: number
+      let g: number
+      if (j < 16) {
+        F = (B & C) | (~B & D)
+        g = j
+      } else if (j < 32) {
+        F = (D & B) | (~D & C)
+        g = (5 * j + 1) % 16
+      } else if (j < 48) {
+        F = B ^ C ^ D
+        g = (3 * j + 5) % 16
+      } else {
+        F = C ^ (B | ~D)
+        g = (7 * j) % 16
+      }
+      F = add(add(add(F, A), K[j]), words[i + g] || 0)
+      A = D
+      D = C
+      C = B
+      B = add(B, rotl(F, S[j]))
+    }
+
+    a0 = add(a0, A)
+    b0 = add(b0, B)
+    c0 = add(c0, C)
+    d0 = add(d0, D)
+  }
+
+  function toHex(num: number): string {
+    let hex = ''
+    for (let i = 0; i < 4; i++) {
+      hex += ((num >> (i * 8)) & 0xff).toString(16).padStart(2, '0')
+    }
+    return hex
+  }
+
+  return toHex(a0) + toHex(b0) + toHex(c0) + toHex(d0)
 }
 
 // Sanitize HTML content

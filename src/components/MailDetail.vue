@@ -20,11 +20,16 @@
     <div v-else class="mail-content">
       <!-- Mail Header -->
       <div class="mail-header">
+        <SenderAvatar
+          :source="emailStore.selectedMail.source || '?'"
+          :size="48"
+          class="mail-header-avatar"
+        />
         <div class="mail-header-main">
           <h3 class="mail-subject">
             {{ getDecodedSubject() }}
           </h3>
-          
+
           <div class="mail-meta-info">
             <div class="mail-from">
               <n-icon size="16" class="meta-icon">
@@ -279,9 +284,10 @@ import {
   Attach as AttachIcon
 } from '@vicons/ionicons5'
 import { useEmailStore, useSettingsStore, useUiStore } from '@/stores'
-import { formatDate, formatMailDetailTime, copyToClipboard, extractTextFromHtml } from '@/utils/helpers'
+import { formatMailDetailTime, copyToClipboard, extractTextFromHtml, decodeMailSubject } from '@/utils/helpers'
 import type { EmailAttachment } from '@/types'
 import ShadowHtmlComponent from './ShadowHtmlComponent.vue'
+import SenderAvatar from './SenderAvatar.vue'
 
 const emailStore = useEmailStore()
 const settingsStore = useSettingsStore()
@@ -299,91 +305,11 @@ const mailDisplayOptions = [
   { label: '高对比度', value: 'high-contrast' }
 ]
 
-// 解码邮件主题
+// 解码邮件主题（复用统一的 RFC 2047 解码工具）
 function getDecodedSubject(): string {
   const mail = emailStore.selectedMail
-  if (!mail) return '(No Subject)'
-
-  let subject = mail.subject || ''
-
-  // 调试信息
-  console.log('=== Subject Debug ===')
-  console.log('Original subject field:', mail.subject)
-  console.log('Subject length:', subject.length)
-
-  // 如果主题为空，尝试从原始邮件中提取
-  if (!subject) {
-    console.log('Trying to extract subject from raw message...')
-
-    // 尝试从 raw 字段提取
-    const rawContent = mail.raw || mail.message || ''
-    if (rawContent) {
-      console.log('Raw content available, length:', rawContent.length)
-
-      // 查找 Subject 行，支持多行折叠
-      const subjectMatch = rawContent.match(/^Subject:\s*(.+?)(?=\r?\n[^\s]|\r?\n\r?\n|$)/ms)
-      if (subjectMatch) {
-        subject = subjectMatch[1]
-          .replace(/\r?\n\s+/g, ' ') // 处理多行折叠
-          .trim()
-        console.log('Extracted subject from raw:', subject)
-      } else {
-        console.log('No Subject line found in raw message')
-        // 尝试查找所有可能的主题行
-        const allSubjectMatches = rawContent.match(/Subject:[^\r\n]*/gi)
-        console.log('All Subject lines found:', allSubjectMatches)
-      }
-    } else {
-      console.log('No raw content available')
-    }
-  }
-
-  if (!subject) {
-    console.log('No subject found, returning default')
-    return '(无主题)'
-  }
-
-  console.log('Processing subject:', subject)
-
-  // 解码 RFC 2047 编码的主题 (=?charset?encoding?encoded-text?=)
-  try {
-    const originalSubject = subject
-    subject = subject.replace(/=\?([^?]+)\?([BQ])\?([^?]+)\?=/gi, (match, charset, encoding, encodedText) => {
-      console.log('Decoding subject part:', { charset, encoding, encodedText })
-      try {
-        if (encoding.toUpperCase() === 'B') {
-          // Base64 解码
-          const decoded = atob(encodedText)
-          // 转换为 UTF-8
-          const result = decodeURIComponent(escape(decoded))
-          console.log('Base64 decoded result:', result)
-          return result
-        } else if (encoding.toUpperCase() === 'Q') {
-          // Quoted-Printable 解码
-          const result = encodedText.replace(/_/g, ' ').replace(/=([0-9A-F]{2})/gi, (_match: string, hex: string) => {
-            return String.fromCharCode(parseInt(hex, 16))
-          })
-          console.log('Quoted-Printable decoded result:', result)
-          return result
-        }
-      } catch (error) {
-        console.warn('Failed to decode subject part:', error)
-      }
-      return match
-    })
-
-    if (originalSubject !== subject) {
-      console.log('Subject decoded from:', originalSubject, 'to:', subject)
-    }
-  } catch (error) {
-    console.warn('Failed to decode subject:', error)
-  }
-
-  const finalSubject = subject || '(无主题)'
-  console.log('Final subject:', finalSubject)
-  console.log('==================')
-
-  return finalSubject
+  if (!mail) return '(无主题)'
+  return decodeMailSubject(mail.subject || '', mail.raw || mail.message || '')
 }
 
 // 解析邮件内容
@@ -395,7 +321,6 @@ function getMailContent(): string {
 
   // 如果内容包含 MIME 结构，尝试解析
   if (rawContent.includes('Content-Type:')) {
-    console.log('📧 Detected MIME content, parsing...')
     return parseEmailContent(rawContent)
   }
 
@@ -419,13 +344,10 @@ function decodeQuotedPrintable(content: string): string {
 // 解析 MIME 邮件内容
 function parseEmailContent(rawEmail: string): string {
   try {
-    console.log('🔍 Parsing email content...')
-
     // 1. 查找 Base64 编码的文本内容
     const base64Matches = rawEmail.match(/Content-Type: text\/plain[\s\S]*?Content-Transfer-Encoding: base64\s*\n\s*([A-Za-z0-9+/=\s]+)/i)
 
     if (base64Matches && base64Matches[1]) {
-      console.log('📦 Found Base64 encoded content')
       // 清理 base64 字符串（移除换行和空格）
       const base64Content = base64Matches[1].replace(/\s/g, '')
 
@@ -436,11 +358,8 @@ function parseEmailContent(rawEmail: string): string {
         const utf8Content = decodeURIComponent(escape(decodedContent))
 
         // 清理内容（移除多余的换行）
-        const cleanContent = utf8Content.replace(/\r?\n/g, '\n').trim()
-        console.log('✅ Base64 decoded successfully')
-        return cleanContent
-      } catch (decodeError) {
-        console.warn('❌ Failed to decode base64 content:', decodeError)
+        return utf8Content.replace(/\r?\n/g, '\n').trim()
+      } catch {
         return decodedContent.trim()
       }
     }
@@ -449,21 +368,15 @@ function parseEmailContent(rawEmail: string): string {
     const qpMatches = rawEmail.match(/Content-Type: text\/plain[\s\S]*?Content-Transfer-Encoding: quoted-printable\s*\n\s*([\s\S]*?)(?=\n----|\n--\w|$)/i)
 
     if (qpMatches && qpMatches[1]) {
-      console.log('📝 Found Quoted-Printable encoded content')
       try {
-        const qpContent = qpMatches[1]
-        const decodedContent = decodeQuotedPrintable(qpContent)
+        const decodedContent = decodeQuotedPrintable(qpMatches[1])
 
         // 清理内容
-        const cleanContent = decodedContent
+        return decodedContent
           .replace(/\r?\n/g, '\n')
           .replace(/\n\s*\n\s*\n/g, '\n\n') // 合并多个空行
           .trim()
-
-        console.log('✅ Quoted-Printable decoded successfully')
-        return cleanContent
-      } catch (decodeError) {
-        console.warn('❌ Failed to decode quoted-printable content:', decodeError)
+      } catch {
         return qpMatches[1].trim()
       }
     }
@@ -471,7 +384,6 @@ function parseEmailContent(rawEmail: string): string {
     // 3. 查找普通文本内容
     const textMatch = rawEmail.match(/Content-Type: text\/plain[\s\S]*?\n\n([\s\S]*?)(?=\n-----|$)/i)
     if (textMatch && textMatch[1]) {
-      console.log('📄 Found plain text content')
       return textMatch[1].trim()
     }
 
@@ -481,15 +393,12 @@ function parseEmailContent(rawEmail: string): string {
       const bodyContent = bodyMatch[1].trim()
       // 如果不是 MIME 边界，返回内容
       if (!bodyContent.startsWith('------') && !bodyContent.startsWith('This is a multi-part')) {
-        console.log('📋 Found body content')
         return bodyContent
       }
     }
 
-    console.warn('⚠️ No parseable content found')
     return '邮件内容解析失败'
-  } catch (error) {
-    console.error('❌ Error parsing email content:', error)
+  } catch {
     return '邮件内容解析出错'
   }
 }
@@ -667,17 +576,13 @@ function getDisplayText(): string {
   const mail = emailStore.selectedMail
   if (!mail) return '没有选中邮件'
 
-  console.log('Getting display text for mail:', mail)
-
   // 优先使用解析后的text字段（MIME解析器提取的纯文本）
   if (mail.text && mail.text.trim()) {
-    console.log('Using parsed mail.text:', mail.text.substring(0, 100) + '...')
     return mail.text
   }
 
   // 如果没有text字段，从content提取文本
   if (mail.content) {
-    console.log('Extracting text from mail.content')
     const extracted = extractTextFromHtml(mail.content)
     if (extracted && extracted.trim()) {
       return extracted
@@ -685,9 +590,7 @@ function getDisplayText(): string {
   }
 
   // 最后尝试其他字段
-  const fallback = mail.message || mail.body || '邮件内容为空'
-  console.log('Using fallback content:', fallback.substring(0, 100) + '...')
-  return fallback
+  return mail.message || mail.body || '邮件内容为空'
 }
 
 // 获取显示消息 - 完全按照示例前端的逻辑
@@ -695,34 +598,27 @@ function getDisplayMessage(): string {
   const mail = emailStore.selectedMail
   if (!mail) return '<p>没有选中邮件</p>'
 
-  console.log('Getting display message for mail:', mail)
-
   // 优先使用解析后的content字段（MIME解析器处理过的HTML）
   if (mail.content && mail.content.trim()) {
-    console.log('Using parsed mail.content for display:', mail.content.substring(0, 100) + '...')
     return mail.content
   }
 
   // 如果没有 content 字段，尝试 message
   if (mail.message && mail.message.trim()) {
-    console.log('Using mail.message for display')
     return mail.message
   }
 
   // 尝试body字段
   if (mail.body && mail.body.trim()) {
-    console.log('Using mail.body for display')
     return mail.body
   }
 
   // 如果有text字段，包装成HTML显示
   if (mail.text && mail.text.trim()) {
-    console.log('Wrapping mail.text in HTML')
     return `<pre style="white-space: pre-wrap; font-family: inherit; margin: 0; padding: 16px;">${mail.text}</pre>`
   }
 
   // 最后的fallback
-  console.log('Using final fallback')
   return '<p style="padding: 16px; color: #999;">邮件内容为空或无法解析</p>'
 }
 
@@ -908,6 +804,11 @@ function handleIframeLoad(event: Event) {
     linear-gradient(180deg, rgba(255, 255, 255, 0.2), transparent 70%),
     var(--detail-panel-strong);
   box-shadow: var(--detail-shadow);
+}
+
+.mail-header-avatar {
+  flex-shrink: 0;
+  margin-top: 2px;
 }
 
 .mail-header-main {
