@@ -59,6 +59,24 @@
 
         <div class="mail-actions">
           <n-button
+            v-if="!inReader"
+            size="small"
+            type="primary"
+            secondary
+            round
+            class="immersive-btn"
+            @click="openReader"
+            title="沉浸式阅读（也可双击邮件）"
+          >
+            <template #icon>
+              <n-icon>
+                <ExpandIcon />
+              </n-icon>
+            </template>
+            沉浸阅读
+          </n-button>
+
+          <n-button
             size="small"
             quaternary
             circle
@@ -281,13 +299,17 @@ import {
   Copy as CopyIcon,
   Download as DownloadIcon,
   Trash as DeleteIcon,
-  Attach as AttachIcon
+  Attach as AttachIcon,
+  ExpandOutline as ExpandIcon
 } from '@vicons/ionicons5'
 import { useEmailStore, useSettingsStore, useUiStore } from '@/stores'
 import { formatMailDetailTime, copyToClipboard, extractTextFromHtml, decodeMailSubject } from '@/utils/helpers'
 import type { EmailAttachment } from '@/types'
 import ShadowHtmlComponent from './ShadowHtmlComponent.vue'
 import SenderAvatar from './SenderAvatar.vue'
+
+// inReader: 是否渲染在沉浸式阅读弹窗内（弹窗内不再显示「沉浸阅读」入口，避免重复）
+defineProps<{ inReader?: boolean }>()
 
 const emailStore = useEmailStore()
 const settingsStore = useSettingsStore()
@@ -296,6 +318,11 @@ const message = useMessage()
 
 // Local state
 const viewMode = ref<'rendered' | 'source'>('rendered')
+
+// 打开沉浸式阅读弹窗
+function openReader() {
+  uiStore.openReaderModal()
+}
 
 // 邮件显示模式选项
 const mailDisplayOptions = [
@@ -878,6 +905,56 @@ function handleIframeLoad(event: Event) {
   border: 1px solid var(--detail-border);
   border-radius: 12px;
   background: var(--detail-chip);
+}
+
+/* 沉浸阅读入口：主色按钮 + 悬停微动效 + 一抹流光 */
+.immersive-btn {
+  position: relative;
+  overflow: hidden;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  transition: transform 0.16s ease, box-shadow 0.16s ease;
+}
+
+.immersive-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(63, 159, 211, 0.28);
+}
+
+.immersive-btn:active {
+  transform: translateY(0);
+}
+
+/* 掠过按钮的一道流光，暗示「展开 / 进入」 */
+.immersive-btn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -120%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(
+    100deg,
+    transparent,
+    rgba(255, 255, 255, 0.55),
+    transparent
+  );
+  transform: skewX(-18deg);
+  transition: left 0.55s ease;
+  pointer-events: none;
+}
+
+.immersive-btn:hover::after {
+  left: 130%;
+}
+
+[data-theme="dark"] .immersive-btn::after {
+  background: linear-gradient(
+    100deg,
+    transparent,
+    rgba(143, 216, 255, 0.35),
+    transparent
+  );
 }
 
 .attachments-section {

@@ -137,7 +137,7 @@
 
               <!-- 复用邮件渲染核心 -->
               <div class="reader-paper-detail">
-                <MailDetail />
+                <MailDetail :in-reader="true" />
               </div>
             </div>
           </transition>
@@ -145,7 +145,7 @@
 
         <!-- 普通模式：直接复用 MailDetail -->
         <div v-else class="reader-plain">
-          <MailDetail />
+          <MailDetail :in-reader="true" />
         </div>
       </div>
 

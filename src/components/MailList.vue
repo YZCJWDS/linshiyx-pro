@@ -114,7 +114,9 @@
                 'mail-item--selected': emailStore.selectedMail?.id === mail.id,
                 'mail-item--unread': isUnread(mail)
               }"
+              title="单击查看 · 双击沉浸阅读"
               @click="handleSelectMail(mail)"
+              @dblclick="handleOpenReader(mail)"
             >
               <!-- 发件人头像（真实头像，失败降级首字母） -->
               <SenderAvatar :source="mail.source || '?'" class="mail-avatar" />
@@ -327,7 +329,13 @@ function handlePageSizeChange(size: number) {
 }
 
 // Methods
+// 单击：仅选中，在右侧第三栏显示（保留三泳道默认体验）
 function handleSelectMail(mail: EmailMessage) {
+  emailStore.selectMail(mail)
+}
+
+// 双击：快捷进入沉浸式阅读
+function handleOpenReader(mail: EmailMessage) {
   emailStore.selectMail(mail)
   uiStore.openReaderModal()
 }
