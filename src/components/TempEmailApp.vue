@@ -260,6 +260,7 @@ import MailList from './MailList.vue'
 import MailDetail from './MailDetail.vue'
 import SendMailComposer from './SendMailComposer.vue'
 import CosmicBackground from './CosmicBackground.vue'
+import MailReaderModal from './MailReaderModal.vue'
 
 const emailStore = useEmailStore()
 const uiStore = useUiStore()
