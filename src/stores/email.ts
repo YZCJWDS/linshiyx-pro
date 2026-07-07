@@ -29,8 +29,78 @@ export const useEmailStore = defineStore('email', () => {
   const STORAGE_KEYS = {
     ADDRESSES: 'linshiyx_admin_addresses_v3',
     SELECTED_ADDRESS: 'linshiyx_admin_selected_v3',
-    STORAGE_VERSION: 'linshiyx_storage_version'
+    STORAGE_VERSION: 'linshiyx_storage_version',
+    READ_MAILS: 'linshiyx_read_mail_ids_v1'
   }
+
+  // 已读邮件 ID 集合（持久化到 localStorage，刷新后仍保留已读状态）
+  const READ_MAILS_LIMIT = 2000
+  const readMailIds = ref<Set<string>>(new Set())
+
+  function loadReadMailIds() {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEYS.READ_MAILS)
+      if (stored) {
+        const ids = JSON.parse(stored)
+        if (Array.isArray(ids)) {
+          readMailIds.value = new Set(ids.map((id: any) => String(id)))
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to load read mail ids:', error)
+    }
+  }
+
+  function saveReadMailIds() {
+    try {
+      let ids = Array.from(readMailIds.value)
+      // 控制上限，避免无限增长；保留最近的部分
+      if (ids.length > READ_MAILS_LIMIT) {
+        ids = ids.slice(ids.length - READ_MAILS_LIMIT)
+        readMailIds.value = new Set(ids)
+      }
+      localStorage.setItem(STORAGE_KEYS.READ_MAILS, JSON.stringify(ids))
+    } catch (error) {
+      console.warn('Failed to save read mail ids:', error)
+    }
+  }
+
+  function isMailRead(id: string | number | undefined | null): boolean {
+    if (id === undefined || id === null) return false
+    return readMailIds.value.has(String(id))
+  }
+
+  function markMailRead(id: string | number | undefined | null) {
+    if (id === undefined || id === null) return
+    const key = String(id)
+    if (!readMailIds.value.has(key)) {
+      readMailIds.value.add(key)
+      // 触发响应式更新（Set 的 add 不会自动触发依赖）
+      readMailIds.value = new Set(readMailIds.value)
+      saveReadMailIds()
+    }
+  }
+
+  function markAllRead(ids: Array<string | number>) {
+    let changed = false
+    for (const id of ids) {
+      const key = String(id)
+      if (!readMailIds.value.has(key)) {
+        readMailIds.value.add(key)
+        changed = true
+      }
+    }
+    if (changed) {
+      readMailIds.value = new Set(readMailIds.value)
+      saveReadMailIds()
+    }
+  }
+
+  const unreadCount = computed(() =>
+    mails.value.reduce((sum, mail) => sum + (isMailRead(mail.id) ? 0 : 1), 0)
+  )
+
+  loadReadMailIds()
 
   // 存储版本，用于数据迁移
   const STORAGE_VERSION = '3.0'
@@ -677,6 +747,8 @@ export const useEmailStore = defineStore('email', () => {
   function selectMail(mail: EmailMessage) {
     // 完全按照示例前端的方式：直接设置选中邮件，不额外获取详情
     selectedMail.value = mail
+    // 打开即标记为已读并持久化
+    markMailRead(mail.id)
     console.log('Selected mail (reference frontend style):', mail)
     console.log('Mail fields available:', Object.keys(mail))
     console.log('Mail message field:', mail.message?.substring(0, 200) + '...')
@@ -868,6 +940,12 @@ export const useEmailStore = defineStore('email', () => {
     getNewMailCount,
     addNewMailCount,
     selectedAddressMails,
+    unreadCount,
+
+    // 已读状态
+    isMailRead,
+    markMailRead,
+    markAllRead,
 
     // Actions
     loadAddresses,

@@ -177,3 +177,4 @@ yll.png
 # AI assistant instruction files (keep local, don't commit)
 claude.md
 CLAUDE.md
+.claude/

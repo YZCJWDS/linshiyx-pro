@@ -42,6 +42,16 @@
         
         <div class="mail-actions">
           <n-button
+            v-if="unreadCount > 0"
+            size="tiny"
+            quaternary
+            round
+            @click="markAllRead"
+            title="全部标为已读"
+          >
+            全部已读
+          </n-button>
+          <n-button
             size="small"
             quaternary
             circle
@@ -82,9 +92,9 @@
           <n-spin v-if="loading.mails" class="loading-spin" />
           
           <!-- Empty State -->
-          <n-empty 
+          <n-empty
             v-else-if="!filteredMails.length"
-            :description="searchKeyword ? 'No emails found matching your search' : 'No emails received yet'"
+            :description="searchKeyword ? '没有找到匹配的邮件' : '还没有收到邮件'"
             size="small"
           >
             <template #icon>
@@ -97,23 +107,29 @@
           <!-- Mail List -->
           <div v-else class="mail-items">
             <div
-              v-for="mail in filteredMails"
+              v-for="mail in pagedMails"
               :key="mail.id"
               class="mail-item"
-              :class="{ 
+              :class="{
                 'mail-item--selected': emailStore.selectedMail?.id === mail.id,
                 'mail-item--unread': isUnread(mail)
               }"
               @click="handleSelectMail(mail)"
             >
+              <!-- 发件人头像 -->
+              <div
+                class="mail-avatar"
+                :style="{ background: avatarColor(mail) }"
+                :title="mail.source"
+              >
+                {{ avatarInitial(mail) }}
+              </div>
+
               <div class="mail-item-content">
                 <!-- Mail Header -->
                 <div class="mail-header">
                   <div class="mail-from">
-                    <n-icon size="14" class="from-icon">
-                      <PersonIcon />
-                    </n-icon>
-                    <span class="from-text" :title="mail.source">{{ truncateText(mail.source, 25) }}</span>
+                    <span class="from-text" :title="mail.source">{{ truncateText(mail.source || '未知发件人', 25) }}</span>
                   </div>
                   <div class="mail-time">
                     {{ formatDate(mail.created_at) }}
@@ -142,6 +158,22 @@
                       </template>
                       {{ getAttachmentCount(mail) }}
                     </n-tag>
+                    <!-- 验证码一键复制 -->
+                    <n-tag
+                      v-if="getMailCode(mail)"
+                      size="tiny"
+                      type="success"
+                      class="code-tag"
+                      @click.stop="copyCode(mail, getMailCode(mail)!)"
+                      :title="`点击复制验证码 ${getMailCode(mail)}`"
+                    >
+                      <template #icon>
+                        <n-icon size="12">
+                          <CodeIcon />
+                        </n-icon>
+                      </template>
+                      {{ getMailCode(mail) }}
+                    </n-tag>
                   </div>
                 </div>
               </div>
@@ -150,8 +182,8 @@
               <div class="mail-item-actions">
                 <n-popconfirm
                   @positive-click="handleDeleteMail(mail.id)"
-                  negative-text="Cancel"
-                  positive-text="Delete"
+                  negative-text="取消"
+                  positive-text="删除"
                 >
                   <template #trigger>
                     <n-button
@@ -160,7 +192,7 @@
                       circle
                       type="error"
                       @click.stop
-                      title="Delete Email"
+                      title="删除邮件"
                     >
                       <template #icon>
                         <n-icon size="14">
@@ -169,7 +201,7 @@
                       </template>
                     </n-button>
                   </template>
-                  Are you sure you want to delete this email?
+                  确定要删除这封邮件吗？
                 </n-popconfirm>
               </div>
             </div>
@@ -177,12 +209,27 @@
         </n-scrollbar>
       </div>
 
-      <!-- Mail Count Info -->
-      <div class="mail-count-info">
-        <n-text depth="3" size="small">
-          {{ filteredMails.length }} email{{ filteredMails.length !== 1 ? 's' : '' }}
-          {{ searchKeyword ? `found for "${searchKeyword}"` : 'total' }}
-        </n-text>
+      <!-- 分页与统计 -->
+      <div class="mail-footer">
+        <div class="mail-count-info">
+          <n-text depth="3">
+            共 {{ filteredMails.length }} 封{{ searchKeyword ? '（搜索结果）' : '' }}<template v-if="unreadCount > 0"> · {{ unreadCount }} 未读</template>
+          </n-text>
+        </div>
+        <div v-if="filteredMails.length > pageSize || pageSize !== 10" class="mail-pagination">
+          <n-select
+            :value="pageSize"
+            :options="pageSizeOptions"
+            size="tiny"
+            style="width: 96px"
+            @update:value="handlePageSizeChange"
+          />
+          <n-pagination
+            v-model:page="currentPage"
+            :page-count="Math.max(1, Math.ceil(filteredMails.length / pageSize))"
+            size="small"
+          />
+        </div>
       </div>
     </div>
   </div>
@@ -200,6 +247,8 @@ import {
   NSpin,
   NPopconfirm,
   NTag,
+  NPagination,
+  NSelect,
   useMessage
 } from 'naive-ui'
 import {
@@ -208,17 +257,20 @@ import {
   Refresh as RefreshIcon,
   Search as SearchIcon,
   Archive as InboxIcon,
-  Person as PersonIcon,
   Attach as AttachIcon,
-  Trash as DeleteIcon
+  Trash as DeleteIcon,
+  KeypadOutline as CodeIcon
 } from '@vicons/ionicons5'
 import { useEmailStore, useUiStore } from '@/stores'
-import { 
-  formatRelativeTime, 
-  truncateText, 
-  extractTextFromHtml, 
+import {
+  formatRelativeTime,
+  truncateText,
+  extractTextFromHtml,
   copyToClipboard,
-  debounce 
+  debounce,
+  extractVerificationCode,
+  stringToColor,
+  getInitial
 } from '@/utils/helpers'
 import type { EmailMessage } from '@/types'
 
@@ -228,7 +280,12 @@ const message = useMessage()
 
 // Local state
 const searchKeyword = ref('')
-const readEmails = ref<Set<string>>(new Set())
+
+// 分页状态
+const PAGE_SIZE_KEY = 'linshiyx_mail_page_size'
+const currentPage = ref(1)
+const pageSize = ref<number>(Number(localStorage.getItem(PAGE_SIZE_KEY)) || 10)
+const pageSizeOptions = [5, 10, 15, 20, 25].map(n => ({ label: `${n} 封/页`, value: n }))
 
 // Computed
 const loading = computed(() => emailStore.loading)
@@ -239,23 +296,46 @@ const filteredMails = computed(() => {
   // Apply search filter
   if (searchKeyword.value) {
     const keyword = searchKeyword.value.toLowerCase()
-    mails = mails.filter(mail => 
-      mail.subject.toLowerCase().includes(keyword) ||
-      mail.source.toLowerCase().includes(keyword) ||
-      extractTextFromHtml(mail.message).toLowerCase().includes(keyword)
+    mails = mails.filter(mail =>
+      (mail.subject || '').toLowerCase().includes(keyword) ||
+      (mail.source || '').toLowerCase().includes(keyword) ||
+      extractTextFromHtml(mail.message || '').toLowerCase().includes(keyword)
     )
   }
 
   // Sort by date (newest first)
-  return [...mails].sort((a, b) => 
+  return [...mails].sort((a, b) =>
     new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   )
 })
 
+// 当前页展示的邮件
+const pagedMails = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  return filteredMails.value.slice(start, start + pageSize.value)
+})
+
+// 未读数量（基于持久化已读状态）
+const unreadCount = computed(() =>
+  filteredMails.value.reduce((sum, mail) => sum + (emailStore.isMailRead(mail.id) ? 0 : 1), 0)
+)
+
+// 翻页 / 每页数量变化时保持在合法范围
+watch([filteredMails, pageSize], () => {
+  const maxPage = Math.max(1, Math.ceil(filteredMails.value.length / pageSize.value))
+  if (currentPage.value > maxPage) currentPage.value = maxPage
+})
+
+function handlePageSizeChange(size: number) {
+  pageSize.value = size
+  currentPage.value = 1
+  localStorage.setItem(PAGE_SIZE_KEY, String(size))
+}
+
 // Methods
 function handleSelectMail(mail: EmailMessage) {
   emailStore.selectMail(mail)
-  readEmails.value.add(mail.id)
+  uiStore.openReaderModal()
 }
 
 function handleDeleteMail(id: string) {
@@ -265,7 +345,7 @@ function handleDeleteMail(id: string) {
 async function refreshMails() {
   if (emailStore.selectedAddress) {
     await emailStore.loadMails(emailStore.selectedAddress.address)
-    message.success('Emails refreshed')
+    message.success('邮件已刷新')
   }
 }
 
@@ -273,15 +353,33 @@ async function copyAddress() {
   if (emailStore.selectedAddress) {
     const success = await copyToClipboard(emailStore.selectedAddress.address)
     if (success) {
-      message.success('Email address copied to clipboard')
+      message.success('邮箱地址已复制')
     } else {
-      message.error('Failed to copy email address')
+      message.error('复制邮箱地址失败')
     }
   }
 }
 
+// 一键复制验证码
+async function copyCode(mail: EmailMessage, code: string) {
+  const success = await copyToClipboard(code)
+  if (success) {
+    message.success(`验证码 ${code} 已复制`)
+    emailStore.markMailRead(mail.id)
+  } else {
+    message.error('复制验证码失败')
+  }
+}
+
+// 提取某封邮件的验证码（优先主题，其次正文）
+function getMailCode(mail: EmailMessage): string | null {
+  const subjectCode = extractVerificationCode(mail.subject || '')
+  if (subjectCode) return subjectCode
+  return extractVerificationCode(extractTextFromHtml(mail.message || ''))
+}
+
 const debouncedSearch = debounce(() => {
-  // Search is handled by computed property
+  currentPage.value = 1
 }, 300)
 
 function handleSearch() {
@@ -293,12 +391,21 @@ function formatDate(dateString: string) {
 }
 
 function getMailPreview(mail: EmailMessage): string {
-  const text = extractTextFromHtml(mail.message)
+  const text = extractTextFromHtml(mail.message || '')
   return truncateText(text, 80)
 }
 
 function isUnread(mail: EmailMessage): boolean {
-  return !readEmails.value.has(mail.id)
+  return !emailStore.isMailRead(mail.id)
+}
+
+// 头像色 / 首字母
+function avatarColor(mail: EmailMessage): string {
+  return stringToColor(mail.source || '?')
+}
+
+function avatarInitial(mail: EmailMessage): string {
+  return getInitial(mail.source || '?')
 }
 
 function hasAttachments(mail: EmailMessage): boolean {
@@ -308,6 +415,12 @@ function hasAttachments(mail: EmailMessage): boolean {
 function getAttachmentCount(mail: EmailMessage): string {
   if (!mail.attachments) return '0'
   return mail.attachments.length.toString()
+}
+
+// 全部标为已读
+function markAllRead() {
+  emailStore.markAllRead(filteredMails.value.map(mail => mail.id))
+  message.success('已全部标为已读')
 }
 
 // 解码邮件主题
@@ -342,7 +455,7 @@ function getDecodedSubject(mail: EmailMessage): string {
           return decodeURIComponent(escape(decoded))
         } else if (encoding.toUpperCase() === 'Q') {
           // Quoted-Printable 解码
-          return encodedText.replace(/_/g, ' ').replace(/=([0-9A-F]{2})/gi, (match, hex) => {
+          return encodedText.replace(/_/g, ' ').replace(/=([0-9A-F]{2})/gi, (_match: string, hex: string) => {
             return String.fromCharCode(parseInt(hex, 16))
           })
         }
@@ -358,10 +471,10 @@ function getDecodedSubject(mail: EmailMessage): string {
   return subject || '(No Subject)'
 }
 
-// Watch for address changes to clear read status
+// 切换邮箱时重置搜索与分页
 watch(() => emailStore.selectedAddress, () => {
-  readEmails.value.clear()
   searchKeyword.value = ''
+  currentPage.value = 1
 })
 </script>
 
@@ -667,11 +780,60 @@ watch(() => emailStore.selectedAddress, () => {
   box-shadow: var(--mail-shadow-hover);
 }
 
-.mail-count-info {
+/* 发件人头像 */
+.mail-avatar {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 1;
+  user-select: none;
+  box-shadow: 0 2px 6px rgba(33, 55, 76, 0.18), 0 0 0 1px rgba(255, 255, 255, 0.28) inset;
+}
+
+[data-theme="dark"] .mail-avatar {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.36), 0 0 0 1px rgba(255, 255, 255, 0.12) inset;
+}
+
+/* 验证码标签（可点击复制） */
+.code-tag {
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.5px;
+  transition: transform 0.14s ease, box-shadow 0.14s ease;
+}
+
+.code-tag:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(56, 168, 157, 0.4);
+}
+
+/* 底部分页与统计 */
+.mail-footer {
   flex-shrink: 0;
   padding-top: 8px;
   border-top: 1px solid var(--mail-border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mail-count-info {
   text-align: center;
+}
+
+.mail-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 /* Responsive adjustments */

@@ -10,6 +10,17 @@ export const useUiStore = defineStore('ui', () => {
   const theme = ref<'light' | 'dark'>('light')
   const useUTCDate = ref(false) // 是否使用UTC时间显示
 
+  // 全屏详读弹窗开关
+  const readerModalVisible = ref(false)
+
+  function openReaderModal() {
+    readerModalVisible.value = true
+  }
+
+  function closeReaderModal() {
+    readerModalVisible.value = false
+  }
+
   // Notification actions
   function showNotification(notification: NotificationMessage) {
     notifications.value.push({
@@ -130,8 +141,11 @@ export const useUiStore = defineStore('ui', () => {
     sidebarCollapsed,
     theme,
     useUTCDate,
+    readerModalVisible,
 
     // Actions
+    openReaderModal,
+    closeReaderModal,
     showNotification,
     showSuccess,
     showError,

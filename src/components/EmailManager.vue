@@ -48,6 +48,23 @@
       </div>
     </div>
 
+    <!-- 地址搜索 -->
+    <div v-if="emailStore.hasAddresses" class="address-search-section">
+      <n-input
+        v-model:value="addressSearch"
+        placeholder="搜索邮箱地址或备注..."
+        clearable
+        size="small"
+        @input="handleAddressSearch"
+      >
+        <template #prefix>
+          <n-icon size="16">
+            <SearchIcon />
+          </n-icon>
+        </template>
+      </n-input>
+    </div>
+
     <!-- Email List Section -->
     <div class="email-list-section">
       <div class="email-list">
@@ -147,6 +164,25 @@
       </div>
     </div>
 
+    <!-- 地址分页 -->
+    <div
+      v-if="filteredAddresses.length > addrPageSize || addrPageSize !== 10"
+      class="address-pagination"
+    >
+      <n-select
+        :value="addrPageSize"
+        :options="addrPageSizeOptions"
+        size="tiny"
+        style="width: 92px"
+        @update:value="handleAddrPageSizeChange"
+      />
+      <n-pagination
+        v-model:page="addrCurrentPage"
+        :page-count="Math.max(1, Math.ceil(filteredAddresses.length / addrPageSize))"
+        size="small"
+      />
+    </div>
+
     <!-- Create Email Modal -->
     <n-modal
       v-model:show="showCreateModal"
@@ -240,7 +276,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive } from 'vue'
+import { ref, computed, reactive, watch } from 'vue'
 import {
   NCard,
   NForm,
@@ -256,6 +292,7 @@ import {
   NBadge,
   NText,
   NModal,
+  NPagination,
   useMessage,
   type FormInst,
   type FormRules
@@ -266,6 +303,7 @@ import {
   Refresh as RefreshIcon,
   Copy as CopyIcon,
   Trash as DeleteIcon,
+  Search as SearchIcon,
   Dice as DiceIcon
 } from '@vicons/ionicons5'
 import { useEmailStore, useUiStore } from '@/stores'
@@ -288,6 +326,47 @@ const form = reactive({
 
 // Loading states
 const loading = computed(() => emailStore.loading)
+
+// 地址搜索
+const addressSearch = ref('')
+
+// 地址分页状态
+const ADDR_PAGE_SIZE_KEY = 'linshiyx_address_page_size'
+const addrCurrentPage = ref(1)
+const addrPageSize = ref<number>(Number(localStorage.getItem(ADDR_PAGE_SIZE_KEY)) || 10)
+const addrPageSizeOptions = [5, 10, 15, 20, 25].map(n => ({ label: `${n} 个/页`, value: n }))
+
+// 过滤后的地址（按地址/备注名搜索）
+const filteredAddresses = computed(() => {
+  const keyword = addressSearch.value.trim().toLowerCase()
+  if (!keyword) return emailStore.addresses
+  return emailStore.addresses.filter(addr =>
+    (addr.address || '').toLowerCase().includes(keyword) ||
+    (addr.name || '').toLowerCase().includes(keyword)
+  )
+})
+
+// 当前页展示的地址
+const pagedAddresses = computed(() => {
+  const start = (addrCurrentPage.value - 1) * addrPageSize.value
+  return filteredAddresses.value.slice(start, start + addrPageSize.value)
+})
+
+// 搜索或数量变化时，保持页码合法
+watch([filteredAddresses, addrPageSize], () => {
+  const maxPage = Math.max(1, Math.ceil(filteredAddresses.value.length / addrPageSize.value))
+  if (addrCurrentPage.value > maxPage) addrCurrentPage.value = maxPage
+})
+
+function handleAddrPageSizeChange(size: number) {
+  addrPageSize.value = size
+  addrCurrentPage.value = 1
+  localStorage.setItem(ADDR_PAGE_SIZE_KEY, String(size))
+}
+
+function handleAddressSearch() {
+  addrCurrentPage.value = 1
+}
 
 // Modal style for better proportions
 const modalStyle = computed(() => ({
@@ -474,6 +553,16 @@ function getLastMailTime(address: EmailAddress): string {
   gap: 8px;
 }
 
+.address-search {
+  flex-shrink: 0;
+  padding: 6px 2px 0;
+}
+
+.address-search :deep(.n-input) {
+  background: var(--manager-panel-strong);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08) inset;
+}
+
 .email-list-section {
   flex: 1;
   min-height: 0;
@@ -483,6 +572,30 @@ function getLastMailTime(address: EmailAddress): string {
   border: 0;
   border-radius: 0;
   overflow: hidden;
+}
+
+.addr-footer {
+  flex-shrink: 0;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--manager-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.addr-count {
+  color: var(--n-text-color-3);
+  font-size: 12px;
+}
+
+.addr-pagination {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .email-list {

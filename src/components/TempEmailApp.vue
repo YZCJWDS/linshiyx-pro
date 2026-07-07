@@ -150,6 +150,9 @@
     <!-- 前景星尘层：浮在 UI 之上，只画粒子（screen 混合），让星尘在工作区也清晰可见 -->
     <CosmicBackground class="app-cosmic-overlay" variant="workspace" :density="0.92" :overlay="true" />
 
+    <!-- 全屏详读弹窗 -->
+    <MailReaderModal />
+
     <!-- 头像预览弹窗 -->
     <n-modal
       v-model:show="showAvatarPreview"

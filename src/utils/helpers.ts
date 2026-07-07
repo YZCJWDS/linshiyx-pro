@@ -311,6 +311,62 @@ export function parseEmailHeaders(headers: string): Record<string, string> {
   return parsed
 }
 
+// 从邮件文本中提取验证码（4-8 位数字，或含字母的验证码）
+export function extractVerificationCode(text: string): string | null {
+  if (!text) return null
+
+  // 优先匹配「验证码/code/verification」等关键词附近的数字或字母数字组合
+  const keywordPatterns = [
+    /(?:验证码|校验码|动态码|verification code|verify code|security code|otp|code)[^0-9a-zA-Z]{0,12}([0-9]{4,8})/i,
+    /(?:验证码|校验码|动态码|verification code|verify code|security code|otp|code)[^0-9a-zA-Z]{0,12}([0-9A-Z]{4,8})/i,
+    /([0-9]{4,8})[^0-9a-zA-Z]{0,12}(?:是您的验证码|为您的验证码|验证码)/i
+  ]
+
+  for (const pattern of keywordPatterns) {
+    const match = text.match(pattern)
+    if (match && match[1]) {
+      return match[1]
+    }
+  }
+
+  // 兜底：匹配独立出现的 6 位数字（最常见的验证码长度）
+  const sixDigit = text.match(/(?<![0-9])([0-9]{6})(?![0-9])/)
+  if (sixDigit && sixDigit[1]) {
+    return sixDigit[1]
+  }
+
+  // 再兜底：4 位数字
+  const fourDigit = text.match(/(?<![0-9])([0-9]{4})(?![0-9])/)
+  if (fourDigit && fourDigit[1]) {
+    return fourDigit[1]
+  }
+
+  return null
+}
+
+// 根据字符串（发件人/邮箱）稳定生成一个柔和的头像背景色
+export function stringToColor(input: string): string {
+  const str = input || '?'
+  let hash = 0
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash)
+    hash |= 0
+  }
+  const hue = Math.abs(hash) % 360
+  // 柔和且在明暗主题下都可读的饱和度/亮度
+  return `hsl(${hue}, 62%, 55%)`
+}
+
+// 取发件人首字母（优先展示名，其次邮箱首字符），用于头像
+export function getInitial(nameOrEmail: string): string {
+  const raw = (nameOrEmail || '').trim()
+  if (!raw) return '?'
+  // 去掉尖括号内的邮箱，取展示名部分
+  const displayPart = raw.replace(/<[^>]*>/g, '').trim() || raw
+  const firstChar = displayPart.replace(/^["']|["']$/g, '').charAt(0)
+  return (firstChar || '?').toUpperCase()
+}
+
 // Sanitize HTML content
 export function sanitizeHtml(html: string): string {
   // Remove dangerous elements and attributes

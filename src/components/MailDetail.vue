@@ -360,7 +360,7 @@ function getDecodedSubject(): string {
           return result
         } else if (encoding.toUpperCase() === 'Q') {
           // Quoted-Printable 解码
-          const result = encodedText.replace(/_/g, ' ').replace(/=([0-9A-F]{2})/gi, (match, hex) => {
+          const result = encodedText.replace(/_/g, ' ').replace(/=([0-9A-F]{2})/gi, (_match: string, hex: string) => {
             return String.fromCharCode(parseInt(hex, 16))
           })
           console.log('Quoted-Printable decoded result:', result)
@@ -429,10 +429,9 @@ function parseEmailContent(rawEmail: string): string {
       // 清理 base64 字符串（移除换行和空格）
       const base64Content = base64Matches[1].replace(/\s/g, '')
 
-      try {
-        // 解码 base64
-        const decodedContent = atob(base64Content)
+      const decodedContent = atob(base64Content)
 
+      try {
         // 尝试解码 UTF-8
         const utf8Content = decodeURIComponent(escape(decodedContent))
 
