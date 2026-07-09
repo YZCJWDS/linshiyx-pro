@@ -5,7 +5,7 @@
       <div class="bg-image bg-left"></div>
       <div class="bg-image bg-right"></div>
       <div class="bg-overlay"></div>
-      <CosmicBackground class="login-cosmic-effects" variant="login" :density="1.45" />
+      <CosmicBackground class="login-cosmic-effects" variant="login" :density="0.82" />
     </div>
 
     <n-button
@@ -247,7 +247,7 @@ async function handleLogin() {
 
 .login-cosmic-effects {
   --cosmic-z-index: 3;
-  --cosmic-opacity: 1;
+  --cosmic-opacity: 0.5;
 }
 
 .login-container {
@@ -438,7 +438,7 @@ async function handleLogin() {
 }
 
 [data-theme="dark"] .login-cosmic-effects {
-  --cosmic-opacity: 1;
+  --cosmic-opacity: 0.42;
 }
 
 [data-theme="dark"] .login-card {
@@ -584,15 +584,4 @@ async function handleLogin() {
   animation: fadeInUp 0.8s ease-out;
 }
 
-/* 添加一些粒子效果的伪元素 */
-.background-layer::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(112deg, rgba(255, 255, 255, 0.18), transparent 34%),
-    linear-gradient(180deg, rgba(126, 198, 255, 0.08), transparent 58%);
-  z-index: 2;
-  pointer-events: none;
-}
 </style>

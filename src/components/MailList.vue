@@ -9,9 +9,11 @@
           </n-icon>
         </template>
         <template #extra>
-          <n-text depth="3">
-            从左侧面板选择一个邮箱地址来查看收到的邮件
-          </n-text>
+          <div class="empty-extra">
+            <n-text depth="3" class="empty-copy">
+              在左侧邮箱列表或底部“邮箱”标签中选择一个地址。
+            </n-text>
+          </div>
         </template>
       </n-empty>
     </div>
@@ -118,7 +120,16 @@
       <div class="mail-items-container">
         <n-scrollbar style="max-height: 100%;">
           <!-- Loading State -->
-          <n-spin v-if="loading.mails" class="loading-spin" />
+          <div v-if="loading.mails" class="mail-skeleton-list" aria-label="正在加载邮件">
+            <div v-for="item in 5" :key="item" class="mail-skeleton-card">
+              <span class="skeleton-avatar"></span>
+              <div class="skeleton-lines">
+                <span class="skeleton-line skeleton-line--title"></span>
+                <span class="skeleton-line skeleton-line--body"></span>
+                <span class="skeleton-line skeleton-line--meta"></span>
+              </div>
+            </div>
+          </div>
           
           <!-- Empty State -->
           <n-empty
@@ -130,6 +141,32 @@
               <n-icon size="48" color="#ccc">
                 <InboxIcon />
               </n-icon>
+            </template>
+            <template #extra>
+              <div class="empty-extra">
+                <n-button
+                  v-if="searchKeyword"
+                  size="small"
+                  secondary
+                  @click="clearSearch"
+                >
+                  清空搜索
+                </n-button>
+                <n-button
+                  v-else
+                  size="small"
+                  secondary
+                  @click="refreshMails"
+                  :loading="loading.mails"
+                >
+                  <template #icon>
+                    <n-icon>
+                      <RefreshIcon />
+                    </n-icon>
+                  </template>
+                  刷新收件箱
+                </n-button>
+              </div>
             </template>
           </n-empty>
 
@@ -468,6 +505,11 @@ function handleSearch() {
   debouncedSearch()
 }
 
+function clearSearch() {
+  searchKeyword.value = ''
+  currentPage.value = 1
+}
+
 function formatDate(dateString: string) {
   return formatRelativeTime(dateString, uiStore.useUTCDate)
 }
@@ -785,6 +827,96 @@ onUnmounted(() => {
   display: flex;
   justify-content: center;
   padding: 40px 0;
+}
+
+.empty-extra {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  max-width: 260px;
+}
+
+.empty-copy {
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.mail-skeleton-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.mail-skeleton-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-height: 114px;
+  padding: 12px 10px 12px 14px;
+  border: 1px solid var(--mail-border);
+  border-radius: var(--radius-card);
+  background: var(--mail-item);
+  box-shadow: var(--mail-shadow);
+  overflow: hidden;
+}
+
+.skeleton-avatar,
+.skeleton-line {
+  display: block;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0)),
+    rgba(88, 112, 130, 0.16);
+  background-size: 180% 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+.skeleton-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.skeleton-lines {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 2px;
+}
+
+.skeleton-line {
+  height: 12px;
+  border-radius: 999px;
+}
+
+.skeleton-line--title {
+  width: 68%;
+}
+
+.skeleton-line--body {
+  width: 92%;
+}
+
+.skeleton-line--meta {
+  width: 42%;
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 140% 0;
+  }
+  100% {
+    background-position: -140% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-avatar,
+  .skeleton-line {
+    animation: none;
+  }
 }
 
 .mail-items {

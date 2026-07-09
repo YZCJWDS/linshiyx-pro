@@ -9,9 +9,11 @@
           </n-icon>
         </template>
         <template #extra>
-          <n-text depth="3">
-            从邮件列表中选择一封邮件来查看完整内容
-          </n-text>
+          <div class="empty-extra">
+            <n-text depth="3" class="empty-copy">
+              选择一封邮件后，这里会显示标题、发件人、附件和正文。
+            </n-text>
+          </div>
         </template>
       </n-empty>
     </div>
@@ -95,7 +97,7 @@
             quaternary
             circle
             @click="downloadMail"
-            title="Download Email"
+            title="下载邮件"
           >
             <template #icon>
               <n-icon>
@@ -136,7 +138,7 @@
             <AttachIcon />
           </n-icon>
           <span class="attachments-title">
-            Attachments ({{ emailStore.selectedMail.attachments?.length }})
+            附件（{{ emailStore.selectedMail.attachments?.length }}）
           </span>
         </div>
         
@@ -667,9 +669,9 @@ async function copyMailContent() {
 
   const success = await copyToClipboard(content)
   if (success) {
-    message.success('Email content copied to clipboard')
+    message.success('邮件内容已复制')
   } else {
-    message.error('Failed to copy email content')
+    message.error('复制邮件内容失败')
   }
 }
 
@@ -694,7 +696,7 @@ ${mail.message}`
   document.body.removeChild(a)
   URL.revokeObjectURL(url)
 
-  message.success('Email downloaded')
+  message.success('邮件已下载')
 }
 
 function downloadAttachment(attachment: EmailAttachment) {
@@ -733,10 +735,10 @@ function downloadAttachment(attachment: EmailAttachment) {
       URL.revokeObjectURL(url)
     }
 
-    message.success(`Downloaded ${attachment.filename}`)
+    message.success(`附件 ${attachment.filename} 已下载`)
   } catch (error) {
     console.error('Download attachment error:', error)
-    message.error('Failed to download attachment')
+    message.error('下载附件失败')
   }
 }
 
@@ -747,10 +749,10 @@ function handleDeleteMail() {
 }
 
 function formatFileSize(bytes: number): string {
-  if (bytes === 0) return '0 Bytes'
+  if (bytes === 0) return '0 字节'
 
   const k = 1024
-  const sizes = ['Bytes', 'KB', 'MB', 'GB']
+  const sizes = ['字节', 'KB', 'MB', 'GB']
   const i = Math.floor(Math.log(bytes) / Math.log(k))
 
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
@@ -783,9 +785,9 @@ function handleIframeLoad(event: Event) {
   --detail-item-hover: rgba(79, 143, 199, 0.1);
   --detail-border: rgba(88, 112, 130, 0.2);
   --detail-shadow: 0 1px 0 rgba(255, 255, 255, 0.72) inset, 0 1px 2px rgba(33, 55, 76, 0.08), 0 14px 34px rgba(33, 55, 76, 0.12);
-  --detail-stage: #e5eef0;
-  --detail-stage-soft: rgba(238, 246, 246, 0.92);
-  --reader-paper-shadow: 0 1px 0 rgba(255, 255, 255, 0.82) inset, 0 2px 5px rgba(33, 55, 76, 0.12), 0 26px 58px rgba(33, 55, 76, 0.18);
+  --detail-stage: #edf3f4;
+  --detail-stage-soft: rgba(248, 252, 252, 0.94);
+  --reader-paper-shadow: 0 1px 0 rgba(255, 255, 255, 0.88) inset, 0 2px 5px rgba(33, 55, 76, 0.1), 0 18px 40px rgba(33, 55, 76, 0.14);
 }
 
 [data-theme="dark"] .mail-detail {
@@ -796,9 +798,9 @@ function handleIframeLoad(event: Event) {
   --detail-item-hover: rgba(143, 216, 255, 0.13);
   --detail-border: rgba(196, 226, 248, 0.17);
   --detail-shadow: 0 1px 0 rgba(255, 255, 255, 0.055) inset, 0 1px 2px rgba(0, 0, 0, 0.34), 0 16px 40px rgba(0, 0, 0, 0.32);
-  --detail-stage: #060d1a;
-  --detail-stage-soft: rgba(9, 18, 32, 0.94);
-  --reader-paper-shadow: 0 1px 0 rgba(255, 255, 255, 0.055) inset, 0 2px 6px rgba(0, 0, 0, 0.44), 0 28px 68px rgba(0, 0, 0, 0.46);
+  --detail-stage: #08111f;
+  --detail-stage-soft: rgba(12, 22, 38, 0.94);
+  --reader-paper-shadow: 0 1px 0 rgba(255, 255, 255, 0.055) inset, 0 2px 6px rgba(0, 0, 0, 0.38), 0 22px 52px rgba(0, 0, 0, 0.4);
 }
 
 .empty-state {
@@ -807,6 +809,17 @@ function handleIframeLoad(event: Event) {
   align-items: center;
   justify-content: center;
   padding: 40px 20px;
+}
+
+.empty-extra {
+  display: flex;
+  justify-content: center;
+  max-width: 280px;
+}
+
+.empty-copy {
+  font-size: 12px;
+  line-height: 1.65;
 }
 
 .mail-content {
@@ -1090,18 +1103,17 @@ function handleIframeLoad(event: Event) {
   flex: 1;
   min-height: 0;
   background:
-    radial-gradient(70% 46% at 50% 0%, rgba(255, 255, 255, 0.54), transparent 72%),
-    radial-gradient(62% 56% at 92% 12%, rgba(56, 194, 177, 0.08), transparent 70%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.34), transparent 36%),
     linear-gradient(180deg, var(--detail-stage-soft), var(--detail-stage)),
     var(--detail-stage);
   box-shadow:
-    inset 0 16px 34px rgba(33, 55, 76, 0.08),
-    inset 0 -18px 36px rgba(33, 55, 76, 0.06);
+    inset 0 12px 28px rgba(33, 55, 76, 0.06),
+    inset 0 -14px 28px rgba(33, 55, 76, 0.04);
 }
 
 .rendered-content {
   min-height: 100%;
-  padding: 34px min(4.8vw, 48px);
+  padding: 28px min(4vw, 40px);
   --reader-shell: transparent;
   --reader-paper: #ffffff;
   --reader-text: #1f2937;
@@ -1115,7 +1127,7 @@ function handleIframeLoad(event: Event) {
 
 .html-iframe {
   width: 100%;
-  max-width: 960px;
+  max-width: 920px;
   min-height: 560px;
   display: block;
   margin: 0 auto;
@@ -1131,9 +1143,9 @@ function handleIframeLoad(event: Event) {
 }
 
 .text-display {
-  max-width: 920px;
+  max-width: 880px;
   margin: 0 auto;
-  padding: 28px;
+  padding: 30px;
   border: 1px solid var(--reader-border);
   border-radius: var(--radius-panel);
   white-space: pre-wrap;
@@ -1150,14 +1162,14 @@ function handleIframeLoad(event: Event) {
 
 .shadow-content {
   display: block;
-  max-width: 960px;
+  max-width: 920px;
   min-height: 100%;
   margin: 0 auto;
-  filter: drop-shadow(0 2px 4px rgba(33, 55, 76, 0.1)) drop-shadow(0 26px 44px rgba(33, 55, 76, 0.16));
+  filter: drop-shadow(0 2px 4px rgba(33, 55, 76, 0.08)) drop-shadow(0 18px 34px rgba(33, 55, 76, 0.12));
 }
 
 [data-theme="dark"] .shadow-content {
-  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.38)) drop-shadow(0 28px 54px rgba(0, 0, 0, 0.46));
+  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.32)) drop-shadow(0 22px 44px rgba(0, 0, 0, 0.38));
 }
 
 /* 🎨 邮件显示模式样式 */
@@ -1246,13 +1258,12 @@ function handleIframeLoad(event: Event) {
 
 [data-theme="dark"] .mail-body-content {
   background:
-    radial-gradient(70% 46% at 50% 0%, rgba(143, 216, 255, 0.08), transparent 72%),
-    radial-gradient(62% 56% at 92% 12%, rgba(196, 204, 255, 0.055), transparent 70%),
+    linear-gradient(180deg, rgba(143, 216, 255, 0.05), transparent 34%),
     linear-gradient(180deg, var(--detail-stage-soft), var(--detail-stage)),
     var(--detail-stage);
   box-shadow:
-    inset 0 18px 38px rgba(0, 0, 0, 0.34),
-    inset 0 -18px 40px rgba(0, 0, 0, 0.24);
+    inset 0 14px 30px rgba(0, 0, 0, 0.28),
+    inset 0 -14px 34px rgba(0, 0, 0, 0.2);
 }
 
 [data-theme="dark"] .attachments-header {
@@ -1296,8 +1307,24 @@ function handleIframeLoad(event: Event) {
 }
 
 @media (max-width: 768px) {
+  .mail-content {
+    padding: 10px;
+    gap: 10px;
+  }
+
+  .mail-header {
+    padding: 14px;
+    gap: 12px;
+  }
+
+  .mail-header-avatar {
+    width: 40px;
+    height: 40px;
+  }
+
   .mail-subject {
     font-size: 16px;
+    margin-bottom: 10px;
   }
 
   .mail-meta-info {
@@ -1315,23 +1342,33 @@ function handleIframeLoad(event: Event) {
   }
 
   .mail-body-header {
-    align-items: flex-start;
+    align-items: stretch;
     flex-direction: column;
     padding: 10px 12px;
   }
 
+  .view-options {
+    width: 100%;
+  }
+
   .rendered-content,
   .text-content {
-    padding: 14px;
+    padding: 16px;
   }
 
   .source-content {
-    padding: 14px;
+    padding: 16px;
   }
 
   .text-display,
   .source-code {
     padding: 18px;
+    border-radius: 10px;
+  }
+
+  .html-iframe {
+    min-height: 480px;
+    border-radius: 10px;
   }
 }
 </style>

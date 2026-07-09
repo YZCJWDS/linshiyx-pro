@@ -80,13 +80,36 @@
               </n-icon>
             </template>
             <template #extra>
-              <n-text depth="3" style="font-size: 12px;">
-                点击上方"生成新邮箱"来创建您的第一个临时邮箱
-              </n-text>
+              <div class="empty-extra">
+                <n-text depth="3" class="empty-copy">
+                  先创建一个地址，收到验证码时会自动出现在收件箱里。
+                </n-text>
+                <n-button
+                  type="primary"
+                  size="small"
+                  @click="handleShowCreateModal"
+                  :loading="loading.creating"
+                >
+                  <template #icon>
+                    <n-icon>
+                      <AddIcon />
+                    </n-icon>
+                  </template>
+                  生成第一个邮箱
+                </n-button>
+              </div>
             </template>
           </n-empty>
 
-          <n-spin v-else-if="loading.addresses" class="loading-spin" />
+          <div v-else-if="loading.addresses" class="address-skeleton-list" aria-label="正在加载邮箱地址">
+            <div v-for="item in 4" :key="item" class="address-skeleton-card">
+              <span class="skeleton-dot"></span>
+              <div class="skeleton-lines">
+                <span class="skeleton-line skeleton-line--long"></span>
+                <span class="skeleton-line skeleton-line--short"></span>
+              </div>
+            </div>
+          </div>
 
           <div v-else class="email-items">
             <div
@@ -608,6 +631,91 @@ function getLastMailTime(address: EmailAddress): string {
   display: flex;
   justify-content: center;
   padding: 40px 0;
+}
+
+.empty-extra {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  max-width: 240px;
+}
+
+.empty-copy {
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.address-skeleton-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.address-skeleton-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 74px;
+  padding: 12px;
+  border: 1px solid var(--manager-border);
+  border-radius: var(--radius-card);
+  background: var(--manager-item);
+  box-shadow: var(--manager-shadow);
+  overflow: hidden;
+}
+
+.skeleton-dot,
+.skeleton-line {
+  display: block;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.56), rgba(255, 255, 255, 0)),
+    rgba(88, 112, 130, 0.16);
+  background-size: 180% 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+.skeleton-dot {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.skeleton-lines {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.skeleton-line {
+  height: 12px;
+  border-radius: 999px;
+}
+
+.skeleton-line--long {
+  width: 78%;
+}
+
+.skeleton-line--short {
+  width: 42%;
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 140% 0;
+  }
+  100% {
+    background-position: -140% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-dot,
+  .skeleton-line {
+    animation: none;
+  }
 }
 
 .email-items {

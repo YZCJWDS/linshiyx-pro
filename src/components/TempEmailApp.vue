@@ -25,6 +25,7 @@
         </div>
         <div class="header-right">
           <n-button
+            class="desktop-header-action"
             quaternary
             circle
             @click="uiStore.toggleTheme"
@@ -38,6 +39,7 @@
             </template>
           </n-button>
           <n-button
+            class="primary-header-action"
             quaternary
             circle
             @click="refreshAll"
@@ -52,6 +54,7 @@
           </n-button>
 
           <n-button
+            class="primary-header-action"
             quaternary
             circle
             @click="openComposeModal"
@@ -65,6 +68,7 @@
           </n-button>
 
           <n-button
+            class="desktop-header-action"
             quaternary
             circle
             @click="handleLogout"
@@ -79,7 +83,7 @@
           </n-button>
 
           <!-- 用户头像 -->
-          <div class="user-avatar" title="点击查看完整头像" @click="showAvatarPreview = true">
+          <div class="user-avatar desktop-header-action" title="点击查看完整头像" @click="showAvatarPreview = true">
             <img
               src="/image.jpg"
               alt="用户头像"
@@ -87,6 +91,25 @@
               @error="handleAvatarError"
             />
           </div>
+
+          <n-dropdown
+            trigger="click"
+            :options="mobileMoreOptions"
+            @select="handleMobileMoreSelect"
+          >
+            <n-button
+              class="mobile-more-action"
+              quaternary
+              circle
+              title="更多操作"
+            >
+              <template #icon>
+                <n-icon>
+                  <MoreIcon />
+                </n-icon>
+              </template>
+            </n-button>
+          </n-dropdown>
         </div>
       </div>
     </header>
@@ -273,6 +296,7 @@ import {
   NSpin,
   NModal,
   NText,
+  NDropdown,
   useMessage
 } from 'naive-ui'
 import {
@@ -283,7 +307,8 @@ import {
   LogOut as LogOutIcon,
   Send as SendIcon,
   MailOpenOutline as InboxIcon,
-  DocumentTextOutline as DetailIcon
+  DocumentTextOutline as DetailIcon,
+  EllipsisHorizontal as MoreIcon
 } from '@vicons/ionicons5'
 import { useEmailStore, useUiStore, useAuthStore } from '@/stores'
 import { useKeyboard, commonShortcuts } from '@/composables/useKeyboard'
@@ -414,6 +439,37 @@ const isDark = computed(() => uiStore.theme === 'dark')
 const isRefreshing = computed(() => 
   emailStore.loading.addresses || emailStore.loading.mails
 )
+
+const mobileMoreOptions = computed(() => [
+  {
+    label: isDark.value ? '切换到浅色模式' : '切换到深色模式',
+    key: 'theme'
+  },
+  {
+    label: '查看头像',
+    key: 'avatar'
+  },
+  {
+    label: '退出登录',
+    key: 'logout'
+  }
+])
+
+function handleMobileMoreSelect(key: string) {
+  if (key === 'theme') {
+    uiStore.toggleTheme()
+    return
+  }
+
+  if (key === 'avatar') {
+    showAvatarPreview.value = true
+    return
+  }
+
+  if (key === 'logout') {
+    handleLogout()
+  }
+}
 
 async function refreshAll() {
   try {
@@ -813,6 +869,10 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.mobile-more-action {
+  display: none;
 }
 
 /* 用户头像样式 */
@@ -1225,6 +1285,14 @@ onUnmounted(() => {
 
   .header-right {
     gap: 6px;
+  }
+
+  .desktop-header-action {
+    display: none !important;
+  }
+
+  .mobile-more-action {
+    display: inline-flex;
   }
 
   .app-main {
