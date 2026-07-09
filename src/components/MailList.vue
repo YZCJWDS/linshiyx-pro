@@ -85,6 +85,35 @@
         </n-input>
       </div>
 
+      <!-- 最新验证码高亮卡片 -->
+      <transition name="code-card">
+        <button
+          v-if="latestCode"
+          type="button"
+          class="latest-code-card"
+          :class="{ 'latest-code-card--copied': codeCopied }"
+          @click="copyLatestCode"
+          :title="`点击复制验证码 ${latestCode.code}`"
+        >
+          <div class="code-card-left">
+            <n-icon size="18" class="code-card-icon">
+              <CodeIcon />
+            </n-icon>
+            <div class="code-card-info">
+              <span class="code-card-label">最新验证码</span>
+              <span class="code-card-source">{{ truncateText(latestCode.mail.source || '未知发件人', 22) }}</span>
+            </div>
+          </div>
+          <div class="code-card-right">
+            <span class="code-card-value">{{ latestCode.code }}</span>
+            <n-icon size="16" class="code-card-action">
+              <CheckmarkIcon v-if="codeCopied" />
+              <CopyIcon v-else />
+            </n-icon>
+          </div>
+        </button>
+      </transition>
+
       <!-- Mail Items -->
       <div class="mail-items-container">
         <n-scrollbar style="max-height: 100%;">
@@ -105,14 +134,15 @@
           </n-empty>
 
           <!-- Mail List -->
-          <div v-else class="mail-items">
+          <transition-group v-else tag="div" name="mail-item" class="mail-items">
             <div
               v-for="mail in pagedMails"
               :key="mail.id"
               class="mail-item"
               :class="{
                 'mail-item--selected': emailStore.selectedMail?.id === mail.id,
-                'mail-item--unread': isUnread(mail)
+                'mail-item--unread': isUnread(mail),
+                'mail-item--read': !isUnread(mail)
               }"
               title="单击查看 · 双击沉浸阅读"
               @click="handleSelectMail(mail)"
@@ -201,7 +231,7 @@
                 </n-popconfirm>
               </div>
             </div>
-          </div>
+          </transition-group>
         </n-scrollbar>
       </div>
 
@@ -232,7 +262,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onUnmounted } from 'vue'
 import {
   NEmpty,
   NIcon,
@@ -255,7 +285,8 @@ import {
   Archive as InboxIcon,
   Attach as AttachIcon,
   Trash as DeleteIcon,
-  KeypadOutline as CodeIcon
+  KeypadOutline as CodeIcon,
+  Checkmark as CheckmarkIcon
 } from '@vicons/ionicons5'
 import { useEmailStore, useUiStore } from '@/stores'
 import {
@@ -380,6 +411,55 @@ function getMailCode(mail: EmailMessage): string | null {
   return extractVerificationCode(extractTextFromHtml(mail.message || ''))
 }
 
+// 最新一封带验证码的邮件（用于顶部高亮卡片，仅在最近范围内查找避免展示过期验证码）
+const latestCode = computed<{ mail: EmailMessage; code: string } | null>(() => {
+  // filteredMails 已按时间倒序，取前若干封中第一封带验证码的
+  const recent = filteredMails.value.slice(0, 12)
+  for (const mail of recent) {
+    const code = getMailCode(mail)
+    if (code) return { mail, code }
+  }
+  return null
+})
+
+// 顶部验证码卡片复制反馈状态
+const codeCopied = ref(false)
+let codeCopiedTimer: ReturnType<typeof setTimeout> | null = null
+
+function clearCodeCopiedTimer() {
+  if (codeCopiedTimer) {
+    clearTimeout(codeCopiedTimer)
+    codeCopiedTimer = null
+  }
+}
+
+function resetCodeCopiedFeedback() {
+  clearCodeCopiedTimer()
+  codeCopied.value = false
+}
+
+async function copyLatestCode() {
+  if (!latestCode.value) return
+  const { mail, code } = latestCode.value
+  const success = await copyToClipboard(code)
+  if (success) {
+    codeCopied.value = true
+    emailStore.markMailRead(mail.id)
+    message.success(`验证码 ${code} 已复制`)
+    clearCodeCopiedTimer()
+    codeCopiedTimer = setTimeout(() => {
+      codeCopied.value = false
+      codeCopiedTimer = null
+    }, 1600)
+  } else {
+    message.error('复制验证码失败')
+  }
+}
+
+watch(() => latestCode.value?.code, () => {
+  resetCodeCopiedFeedback()
+})
+
 const debouncedSearch = debounce(() => {
   currentPage.value = 1
 }, 300)
@@ -425,6 +505,10 @@ function getDecodedSubject(mail: EmailMessage): string {
 watch(() => emailStore.selectedAddress, () => {
   searchKeyword.value = ''
   currentPage.value = 1
+})
+
+onUnmounted(() => {
+  resetCodeCopiedFeedback()
 })
 </script>
 
@@ -521,6 +605,177 @@ watch(() => emailStore.selectedAddress, () => {
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08) inset;
 }
 
+/* 最新验证码高亮卡片 */
+.latest-code-card {
+  flex-shrink: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1px solid rgba(56, 168, 157, 0.42);
+  border-radius: var(--radius-card);
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  background:
+    linear-gradient(120deg, rgba(56, 194, 177, 0.2), rgba(255, 255, 255, 0.72) 62%, rgba(235, 248, 246, 0.7));
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.66) inset,
+    0 3px 8px rgba(33, 55, 76, 0.1),
+    0 12px 28px rgba(56, 168, 157, 0.16);
+  cursor: pointer;
+  overflow: hidden;
+  position: relative;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease,
+    background 0.24s ease;
+}
+
+.latest-code-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 30%, rgba(255, 255, 255, 0.5) 50%, transparent 70%);
+  transform: translateX(-120%);
+  transition: transform 0.6s ease;
+  pointer-events: none;
+}
+
+.latest-code-card:hover {
+  border-color: var(--success-color);
+  transform: translateY(-2px);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.72) inset,
+    0 5px 12px rgba(33, 55, 76, 0.14),
+    0 20px 44px rgba(56, 168, 157, 0.24);
+}
+
+.latest-code-card:focus-visible {
+  outline: 2px solid var(--success-color);
+  outline-offset: 2px;
+}
+
+.latest-code-card:hover::before {
+  transform: translateX(120%);
+}
+
+.latest-code-card--copied {
+  border-color: var(--success-color);
+  background:
+    linear-gradient(120deg, rgba(56, 194, 177, 0.34), rgba(56, 194, 177, 0.16));
+}
+
+.code-card-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.code-card-icon {
+  color: var(--success-color-pressed);
+  flex-shrink: 0;
+}
+
+.code-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.code-card-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--success-color-pressed);
+  letter-spacing: 0.4px;
+}
+
+.code-card-source {
+  font-size: 11px;
+  color: var(--n-text-color-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.code-card-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.code-card-value {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--n-text-color);
+  font-variant-numeric: tabular-nums;
+}
+
+.code-card-action {
+  color: var(--success-color-pressed);
+  transition: transform 0.18s ease;
+}
+
+.latest-code-card--copied .code-card-action {
+  transform: scale(1.2);
+}
+
+[data-theme="dark"] .latest-code-card {
+  border-color: rgba(158, 220, 255, 0.32);
+  background:
+    linear-gradient(120deg, rgba(143, 216, 255, 0.2), rgba(18, 34, 55, 0.9) 60%, rgba(12, 22, 40, 0.86));
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.06) inset,
+    0 3px 8px rgba(0, 0, 0, 0.34),
+    0 14px 30px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .latest-code-card--copied {
+  background:
+    linear-gradient(120deg, rgba(143, 216, 255, 0.3), rgba(18, 34, 55, 0.92));
+}
+
+[data-theme="dark"] .code-card-icon,
+[data-theme="dark"] .code-card-label,
+[data-theme="dark"] .code-card-action {
+  color: var(--success-color);
+}
+
+/* 卡片进出场动画 */
+.code-card-enter-active,
+.code-card-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease, max-height 0.3s ease, margin 0.3s ease;
+  overflow: hidden;
+}
+
+.code-card-enter-from,
+.code-card-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+  max-height: 0;
+}
+
+.code-card-enter-to,
+.code-card-leave-from {
+  max-height: 80px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .latest-code-card,
+  .latest-code-card::before,
+  .code-card-action {
+    transition: none;
+  }
+}
+
 .mail-items-container {
   flex: 1;
   min-height: 0;
@@ -536,6 +791,7 @@ watch(() => emailStore.selectedAddress, () => {
   display: flex;
   flex-direction: column;
   gap: 7px;
+  position: relative;
 }
 
 .mail-item {
@@ -617,6 +873,53 @@ watch(() => emailStore.selectedAddress, () => {
 
 .mail-item--unread .mail-subject {
   font-weight: 600;
+}
+
+/* 已读邮件降低视觉权重，突出未读 */
+.mail-item--read:not(.mail-item--selected) {
+  opacity: 0.82;
+}
+
+.mail-item--read:not(.mail-item--selected) .mail-subject {
+  font-weight: 500;
+  color: var(--n-text-color-2);
+}
+
+.mail-item--read:not(.mail-item--selected):hover {
+  opacity: 1;
+}
+
+/* 列表项进出场与移动动画：删除淡出收拢、新邮件渐入 */
+.mail-item-enter-active {
+  transition: opacity 0.32s ease, transform 0.32s ease;
+}
+
+.mail-item-leave-active {
+  transition: opacity 0.28s ease, transform 0.28s ease;
+  position: absolute;
+  width: 100%;
+}
+
+.mail-item-enter-from {
+  opacity: 0;
+  transform: translateY(-10px) scale(0.98);
+}
+
+.mail-item-leave-to {
+  opacity: 0;
+  transform: translateX(24px) scale(0.96);
+}
+
+.mail-item-move {
+  transition: transform 0.32s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mail-item-enter-active,
+  .mail-item-leave-active,
+  .mail-item-move {
+    transition: none;
+  }
 }
 
 .mail-item-content {

@@ -81,7 +81,7 @@
             quaternary
             circle
             @click="copyMailContent"
-            title="Copy Content"
+            title="复制内容"
           >
             <template #icon>
               <n-icon>
@@ -106,8 +106,8 @@
           
           <n-popconfirm
             @positive-click="handleDeleteMail"
-            negative-text="Cancel"
-            positive-text="Delete"
+            negative-text="取消"
+            positive-text="删除"
           >
             <template #trigger>
               <n-button
@@ -115,7 +115,7 @@
                 quaternary
                 circle
                 type="error"
-                title="Delete Email"
+                title="删除邮件"
               >
                 <template #icon>
                   <n-icon>
@@ -124,7 +124,7 @@
                 </template>
               </n-button>
             </template>
-            Are you sure you want to delete this email?
+            确定要删除这封邮件吗？
           </n-popconfirm>
         </div>
       </div>
@@ -162,7 +162,7 @@
               size="small"
               quaternary
               @click="downloadAttachment(attachment)"
-              title="Download Attachment"
+              title="下载附件"
             >
               <template #icon>
                 <n-icon>

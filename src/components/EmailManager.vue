@@ -90,7 +90,7 @@
 
           <div v-else class="email-items">
             <div
-              v-for="address in emailStore.addresses"
+              v-for="address in pagedAddresses"
               :key="address.id"
               class="email-item"
               :class="{ 
@@ -125,7 +125,7 @@
                   quaternary
                   circle
                   @click.stop="copyEmailAddress(address.address)"
-                  title="Copy Address"
+                  title="复制地址"
                 >
                   <template #icon>
                     <n-icon size="14">
@@ -136,8 +136,8 @@
                 
                 <n-popconfirm
                   @positive-click="handleDeleteEmail(address.id)"
-                  negative-text="Cancel"
-                  positive-text="Delete"
+                  negative-text="取消"
+                  positive-text="删除"
                 >
                   <template #trigger>
                     <n-button
@@ -146,7 +146,7 @@
                       circle
                       type="error"
                       @click.stop
-                      title="Delete Address"
+                      title="删除地址"
                     >
                       <template #icon>
                         <n-icon size="14">
@@ -155,7 +155,7 @@
                       </template>
                     </n-button>
                   </template>
-                  Are you sure you want to delete this email address?
+                  确定要删除这个邮箱地址吗？
                 </n-popconfirm>
               </div>
             </div>
@@ -387,7 +387,7 @@ const domainOptions = computed(() => {
 // Form validation rules
 const rules: FormRules = {
   domain: [
-    { required: true, message: 'Please select a domain', trigger: 'change' }
+    { required: true, message: '请选择邮箱域名', trigger: 'change' }
   ]
 }
 

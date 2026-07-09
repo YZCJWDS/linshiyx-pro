@@ -32,5 +32,7 @@ interface FileSystemDirectoryHandle {
 
 declare module '*mail_parser_wasm.js' {
   const wasmModule: any
+  export const __tla: Promise<void>
+  export const parse_message: (rawEmail: string) => any
   export default wasmModule
 }

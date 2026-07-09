@@ -241,7 +241,9 @@ export const addressApi = {
           }
 
           const formatted = {
-            id: addr.id || addr._id || generateRandomId(),
+            // 兜底用唯一的邮箱地址派生稳定 id，避免后端不返回 id 时每次刷新随机生成
+            // 造成选中态丢失、删除/去重按 id 匹配错乱
+            id: addr.id || addr._id || addressValue || generateRandomId(),
             name: addr.name || addr.prefix || '',
             address: addressValue,
             domain: addr.domain || addressValue.split('@')[1] || '',

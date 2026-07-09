@@ -93,9 +93,9 @@
 
     <!-- Main Content - Three Column Layout -->
     <main class="app-main">
-      <div class="three-column-layout">
+      <div class="three-column-layout" :data-mobile-tab="mobileTab">
         <!-- Column 1: Email Manager -->
-        <div class="column email-manager-column">
+        <div class="column email-manager-column" data-tab-panel="address">
           <div class="column-header">
             <h2 class="column-title">邮箱地址</h2>
             <n-badge :value="emailStore.addresses.length" :max="99" type="info" />
@@ -106,7 +106,7 @@
         </div>
 
         <!-- Column 2: Mail List -->
-        <div class="column mail-list-column">
+        <div class="column mail-list-column" data-tab-panel="list">
           <div class="column-header">
             <h2 class="column-title">
               {{ emailStore.selectedAddress ? '收件箱' : '选择邮箱地址' }}
@@ -124,7 +124,7 @@
         </div>
 
         <!-- Column 3: Mail Detail -->
-        <div class="column mail-detail-column">
+        <div class="column mail-detail-column" data-tab-panel="detail">
           <div class="column-header">
             <h2 class="column-title">
               {{ emailStore.selectedMail ? '邮件内容' : '选择邮件' }}
@@ -138,12 +138,42 @@
 
     </main>
 
+    <!-- 移动端底部标签栏（仅窄屏显示） -->
+    <nav class="mobile-tabbar" role="tablist" aria-label="视图切换">
+      <button
+        v-for="tab in mobileTabs"
+        :key="tab.key"
+        type="button"
+        class="mobile-tab"
+        :class="{ 'mobile-tab--active': mobileTab === tab.key }"
+        role="tab"
+        :aria-selected="mobileTab === tab.key"
+        :aria-disabled="tab.disabled"
+        :disabled="tab.disabled"
+        @click="setMobileTab(tab.key)"
+      >
+        <span class="mobile-tab-icon">
+          <n-icon size="20">
+            <component :is="tab.icon" />
+          </n-icon>
+          <n-badge
+            v-if="tab.badge"
+            :value="tab.badge"
+            :max="99"
+            :type="tab.badgeType"
+            class="mobile-tab-badge"
+          />
+        </span>
+        <span class="mobile-tab-label">{{ tab.label }}</span>
+      </button>
+    </nav>
+
     <!-- Global Loading Overlay -->
     <n-spin
       v-if="uiStore.loading"
       class="global-loading"
       size="large"
-      description="Loading..."
+      description="加载中..."
     />
     </div> <!-- 关闭 app-content -->
 
@@ -235,7 +265,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import {
   NIcon,
   NButton,
@@ -251,7 +281,9 @@ import {
   Moon as MoonIcon,
   Refresh as RefreshIcon,
   LogOut as LogOutIcon,
-  Send as SendIcon
+  Send as SendIcon,
+  MailOpenOutline as InboxIcon,
+  DocumentTextOutline as DetailIcon
 } from '@vicons/ionicons5'
 import { useEmailStore, useUiStore, useAuthStore } from '@/stores'
 import { useKeyboard, commonShortcuts } from '@/composables/useKeyboard'
@@ -278,6 +310,53 @@ const showComposeModal = ref(false)
 const sendingMail = ref(false)
 const composeModalKey = ref(0)
 const sendMailComposerRef = ref<InstanceType<typeof SendMailComposer> | null>(null)
+
+// 移动端底部标签栏：当前激活的视图（address / list / detail）
+type MobileTabKey = 'address' | 'list' | 'detail'
+const mobileTab = ref<MobileTabKey>('address')
+
+const mobileTabs = computed(() => [
+  {
+    key: 'address' as MobileTabKey,
+    label: '邮箱',
+    icon: MailIcon,
+    badge: emailStore.addresses.length,
+    badgeType: 'info' as const
+  },
+  {
+    key: 'list' as MobileTabKey,
+    label: '收件箱',
+    icon: InboxIcon,
+    badge: emailStore.selectedAddress ? emailStore.unreadCount : 0,
+    badgeType: 'error' as const,
+    disabled: !emailStore.selectedAddress
+  },
+  {
+    key: 'detail' as MobileTabKey,
+    label: '详情',
+    icon: DetailIcon,
+    badge: 0,
+    badgeType: 'default' as const,
+    disabled: !emailStore.selectedMail
+  }
+])
+
+// 选中邮箱后自动切到收件箱，选中邮件后自动切到详情（仅影响移动端视图状态）
+watch(() => emailStore.selectedAddress, (addr) => {
+  mobileTab.value = addr ? 'list' : 'address'
+})
+watch(() => emailStore.selectedMail, (mail) => {
+  if (mail) mobileTab.value = 'detail'
+  else if (mobileTab.value === 'detail') {
+    mobileTab.value = emailStore.selectedAddress ? 'list' : 'address'
+  }
+})
+
+function setMobileTab(tab: MobileTabKey) {
+  if (tab === 'list' && !emailStore.selectedAddress) return
+  if (tab === 'detail' && !emailStore.selectedMail) return
+  mobileTab.value = tab
+}
 
 // 检查背景图片加载状态
 function checkBackgroundImage() {
@@ -1048,6 +1127,25 @@ onUnmounted(() => {
     0 0 0 1px rgba(63, 159, 211, 0.06);
 }
 
+/* 详情栏顶部主色高光条：强化聚焦，让视线落到最重要的一栏 */
+.mail-detail-column::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--n-primary-color) 50%,
+    transparent 100%
+  );
+  opacity: 0.55;
+}
+
 .mail-detail-column .column-header {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.3), transparent 84%),
@@ -1075,6 +1173,11 @@ onUnmounted(() => {
 
 [data-theme="dark"] .global-loading {
   background: rgba(7, 17, 31, 0.82);
+}
+
+/* 移动端底部标签栏：桌面端隐藏，仅窄屏显示 */
+.mobile-tabbar {
+  display: none;
 }
 
 /* Responsive Design */
@@ -1125,24 +1228,36 @@ onUnmounted(() => {
   }
 
   .app-main {
-    overflow-y: auto;
-    padding: 8px 10px 12px;
+    overflow: hidden;
+    padding: 8px 10px 0;
+    /* 为底部标签栏预留空间（含安全区） */
+    padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px));
   }
 
+  /* 移动端：三栏不再堆叠，改为单栏 + 底部 Tab 切换 */
   .three-column-layout {
     grid-template-columns: 1fr;
-    grid-auto-rows: auto;
-    height: auto;
-    min-height: 100%;
+    grid-template-rows: 1fr;
+    height: 100%;
+    min-height: 0;
+    padding: 8px;
+    border-radius: 18px;
   }
 
-  .column {
-    border-left: 1px solid var(--app-border);
-    border-top: 1px solid var(--app-border);
-  }
-
-  .column:first-child {
+  /* 默认只显示"邮箱"栏，其余通过 data-mobile-tab 控制 */
+  .three-column-layout .column {
+    display: none;
+    grid-row: 1;
+    grid-column: 1;
+    border-left: 0;
     border-top: 0;
+    min-height: 0;
+  }
+
+  .three-column-layout[data-mobile-tab="address"] .email-manager-column,
+  .three-column-layout[data-mobile-tab="list"] .mail-list-column,
+  .three-column-layout[data-mobile-tab="detail"] .mail-detail-column {
+    display: flex;
   }
 
   .column-header {
@@ -1153,21 +1268,78 @@ onUnmounted(() => {
   .column-title {
     font-size: 14px;
   }
+
+  /* 底部标签栏 */
+  .mobile-tabbar {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 200;
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
+    gap: 4px;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.2), transparent 60%),
+      var(--app-panel-strong);
+    border-top: 1px solid var(--app-border-strong);
+    backdrop-filter: blur(22px) saturate(1.08);
+    box-shadow: 0 -6px 22px rgba(33, 55, 76, 0.12);
+  }
+
+  .mobile-tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 6px 4px;
+    min-height: 44px;
+    border: 0;
+    border-radius: 12px;
+    font: inherit;
+    color: var(--n-text-color-3);
+    background: transparent;
+    cursor: pointer;
+    transition: color 0.18s ease, background-color 0.18s ease;
+  }
+
+  .mobile-tab:disabled {
+    cursor: not-allowed;
+    opacity: 0.48;
+  }
+
+  .mobile-tab-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+
+  .mobile-tab-badge {
+    position: absolute;
+    top: -6px;
+    right: -12px;
+    transform: scale(0.82);
+  }
+
+  .mobile-tab-label {
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1;
+  }
+
+  .mobile-tab--active {
+    color: var(--n-primary-color);
+    background: var(--app-accent-soft);
+  }
 }
 
-/* 超小屏幕 - 使用标签页模式 */
-@media (max-width: 640px) {
-  .three-column-layout {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto auto auto;
-  }
-
-  .column {
-    min-height: 260px;
-  }
-
-  .mail-detail-column {
-    min-height: 520px;
-  }
+[data-theme="dark"] .mobile-tabbar {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent 60%),
+    rgba(12, 22, 38, 0.86);
 }
 </style>
