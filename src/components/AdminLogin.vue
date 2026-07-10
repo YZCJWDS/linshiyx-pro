@@ -28,7 +28,7 @@
       <div class="login-card">
         <div class="login-header">
           <div class="login-crest" aria-hidden="true">
-            <img src="/image/brand-crest.png" alt="" class="login-crest-image" />
+            <img src="/image/brand-crest.png?v=20260710-cachefix" alt="" class="login-crest-image" />
           </div>
           <h1 class="login-title">域名邮箱管理系统</h1>
           <p class="login-subtitle">请输入管理员密码进入邮箱工作台</p>
@@ -213,7 +213,7 @@ async function handleLogin() {
 
 .bg-left {
   left: 0;
-  background-image: url('../../image/2plus.png');
+  background-image: url('../../image/2plus.png?v=20260710-cachefix');
   background-position: center right;
 }
 
