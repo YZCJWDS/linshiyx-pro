@@ -530,6 +530,11 @@ onUnmounted(() => {
   opacity: var(--cosmic-opacity, 0.95);
 }
 
+.cosmic-effects--login .cosmic-nebula,
+.cosmic-effects--login .cosmic-sweep {
+  display: none;
+}
+
 .cosmic-effects--overlay {
   mix-blend-mode: screen;
 }

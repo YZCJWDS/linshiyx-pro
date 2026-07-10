@@ -27,9 +27,9 @@
     <div class="login-container">
       <div class="login-card">
         <div class="login-header">
-          <n-icon size="48" class="login-icon">
-            <LockIcon />
-          </n-icon>
+          <div class="login-crest" aria-hidden="true">
+            <img src="/image/brand-crest.png" alt="" class="login-crest-image" />
+          </div>
           <h1 class="login-title">域名邮箱管理系统</h1>
           <p class="login-subtitle">请输入管理员密码进入邮箱工作台</p>
         </div>
@@ -98,7 +98,6 @@ import {
   type FormRules
 } from 'naive-ui'
 import {
-  LockClosed as LockIcon,
   Key as KeyIcon,
   Sunny as SunIcon,
   Moon as MoonIcon
@@ -214,7 +213,7 @@ async function handleLogin() {
 
 .bg-left {
   left: 0;
-  background-image: url('/image/login-hero.jpg');
+  background-image: url('../../image/2plus.png');
   background-position: center right;
 }
 
@@ -324,14 +323,32 @@ async function handleLogin() {
   margin-bottom: 30px;
 }
 
-.login-icon {
-  color: var(--login-accent);
+.login-crest {
+  width: 84px;
+  height: 84px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin-bottom: 16px;
   background: rgba(87, 148, 201, 0.13);
   border: 1px solid rgba(87, 148, 201, 0.2);
   border-radius: 8px;
-  padding: 10px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.42);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.42),
+    0 12px 28px rgba(55, 123, 184, 0.12);
+}
+
+.login-crest-image {
+  width: 76px;
+  height: 76px;
+  display: block;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 10px rgba(42, 96, 143, 0.16));
+  transition: transform 0.24s ease;
+}
+
+.login-card:hover .login-crest-image {
+  transform: translateY(-2px) scale(1.02);
 }
 
 .login-title {
@@ -462,13 +479,26 @@ async function handleLogin() {
     0 0 0 1px rgba(114, 184, 232, 0.16);
 }
 
-[data-theme="dark"] .login-icon {
-  color: var(--login-accent);
+[data-theme="dark"] .login-crest {
   background: rgba(124, 198, 240, 0.12);
   border-color: rgba(124, 198, 240, 0.26);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.12),
     0 10px 24px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .login-crest-image {
+  filter: drop-shadow(0 8px 14px rgba(90, 174, 224, 0.2));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-crest-image {
+    transition: none;
+  }
+
+  .login-card:hover .login-crest-image {
+    transform: none;
+  }
 }
 
 [data-theme="dark"] .login-title {

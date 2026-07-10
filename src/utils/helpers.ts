@@ -529,16 +529,40 @@ function md5Hex(input: string): string {
 
 // Sanitize HTML content
 export function sanitizeHtml(html: string): string {
-  // Remove dangerous elements and attributes
-  let sanitized = html
+  const template = document.createElement('template')
+  template.innerHTML = html
 
-  // Remove script tags and their content
-  sanitized = sanitized.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+  template.content
+    .querySelectorAll('script, iframe, object, embed, form, input, button, textarea, select, meta, link, base')
+    .forEach(element => element.remove())
 
-  // Remove dangerous attributes
-  sanitized = sanitized.replace(/\s*on\w+\s*=\s*["'][^"']*["']/gi, '')
-  sanitized = sanitized.replace(/\s*javascript\s*:/gi, '')
-  sanitized = sanitized.replace(/\s+(src|href)\s*=\s*(['"])\s*data:(?!image\/)[^'"]*\2/gi, '')
+  template.content.querySelectorAll<HTMLElement>('*').forEach(element => {
+    for (const attribute of Array.from(element.attributes)) {
+      const name = attribute.name.toLowerCase()
+      const value = attribute.value.trim()
 
-  return sanitized
+      if (name.startsWith('on') || name === 'srcdoc' || name === 'formaction') {
+        element.removeAttribute(attribute.name)
+        continue
+      }
+
+      if (['href', 'src', 'xlink:href'].includes(name)) {
+        const isSafeImageData = element.tagName === 'IMG' && /^data:image\/(?:png|jpe?g|gif|webp);/i.test(value)
+        if (/^(?:javascript|vbscript|data):/i.test(value) && !isSafeImageData) {
+          element.removeAttribute(attribute.name)
+          continue
+        }
+      }
+
+      if (name === 'style' && /(?:expression\s*\(|url\s*\(\s*['"]?\s*(?:javascript|data:text\/html))/i.test(value)) {
+        element.removeAttribute(attribute.name)
+      }
+    }
+
+    if (element.tagName === 'A' && element.getAttribute('target') === '_blank') {
+      element.setAttribute('rel', 'noopener noreferrer')
+    }
+  })
+
+  return template.innerHTML
 }

@@ -2,20 +2,14 @@
   <div class="mail-detail">
     <!-- No Mail Selected State -->
     <div v-if="!emailStore.selectedMail" class="empty-state">
-      <n-empty description="选择邮件查看内容" size="large">
-        <template #icon>
-          <n-icon size="64" color="#ccc">
-            <DocumentIcon />
-          </n-icon>
-        </template>
-        <template #extra>
-          <div class="empty-extra">
-            <n-text depth="3" class="empty-copy">
-              选择一封邮件后，这里会显示标题、发件人、附件和正文。
-            </n-text>
-          </div>
-        </template>
-      </n-empty>
+      <div class="empty-visual" aria-hidden="true">
+        <img src="/image/mail-vision.jpg" alt="" class="empty-visual-image" />
+        <span class="empty-status"><span class="empty-status-dot"></span>等待来信</span>
+      </div>
+      <div class="empty-copy">
+        <h2 class="empty-title">选择邮件查看内容</h2>
+        <p class="empty-description">标题、发件人、附件和正文会在这里清晰呈现。</p>
+      </div>
     </div>
 
     <!-- Mail Content -->
@@ -280,9 +274,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import {
-  NEmpty,
   NIcon,
-  NText,
   NButton,
   NButtonGroup,
   NScrollbar,
@@ -806,20 +798,108 @@ function handleIframeLoad(event: Event) {
 .empty-state {
   height: 100%;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 40px 20px;
+  gap: 18px;
+  padding: 32px 20px;
+  text-align: center;
 }
 
-.empty-extra {
-  display: flex;
-  justify-content: center;
-  max-width: 280px;
+.empty-visual {
+  position: relative;
+  width: min(220px, 72%);
+  aspect-ratio: 36 / 29;
+}
+
+.empty-visual-image {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  border: 1px solid rgba(116, 146, 174, 0.28);
+  border-radius: 8px;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.82) inset,
+    0 16px 36px rgba(33, 55, 76, 0.16);
+}
+
+.empty-status {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 7px;
+  color: #29445d;
+  background: rgba(248, 252, 255, 0.88);
+  box-shadow: 0 5px 14px rgba(33, 55, 76, 0.16);
+  backdrop-filter: blur(8px);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.empty-status-dot {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 6px;
+  border-radius: 50%;
+  background: var(--success-color);
+  box-shadow: 0 0 0 3px var(--success-color-suppl);
+  animation: empty-status-breathe 2.4s ease-in-out infinite;
 }
 
 .empty-copy {
+  max-width: 340px;
+}
+
+.empty-title {
+  margin: 0;
+  color: var(--n-text-color);
+  font-size: 17px;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.empty-description {
+  margin: 7px 0 0;
+  color: var(--n-text-color-3);
   font-size: 12px;
   line-height: 1.65;
+}
+
+[data-theme="dark"] .empty-visual-image {
+  border-color: rgba(171, 214, 245, 0.2);
+  filter: brightness(0.82) saturate(0.9);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.36);
+}
+
+[data-theme="dark"] .empty-status {
+  color: #d8edfa;
+  border-color: rgba(171, 214, 245, 0.24);
+  background: rgba(12, 27, 45, 0.86);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.34);
+}
+
+@keyframes empty-status-breathe {
+  0%,
+  100% {
+    opacity: 0.7;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .empty-status-dot {
+    animation: none;
+  }
 }
 
 .mail-content {
@@ -1307,6 +1387,19 @@ function handleIframeLoad(event: Event) {
 }
 
 @media (max-width: 768px) {
+  .empty-state {
+    gap: 14px;
+    padding: 24px 16px;
+  }
+
+  .empty-visual {
+    width: min(190px, 68%);
+  }
+
+  .empty-title {
+    font-size: 16px;
+  }
+
   .mail-content {
     padding: 10px;
     gap: 10px;

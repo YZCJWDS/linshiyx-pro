@@ -16,12 +16,29 @@
     <header class="app-header">
       <div class="header-content">
         <div class="header-left">
-          <h1 class="app-title">
-            <n-icon size="24" class="title-icon">
-              <MailIcon />
-            </n-icon>
-            临时邮箱系统
-          </h1>
+          <div class="brand-mark" aria-hidden="true">
+            <img src="/image/brand-crest.png" alt="" class="brand-mark-image" />
+          </div>
+          <div class="brand-copy">
+            <h1 class="app-title">临时邮箱</h1>
+            <span class="brand-meta">{{ emailStore.addresses.length }} 个地址</span>
+          </div>
+
+          <div v-if="emailStore.selectedAddress" class="mailbox-context desktop-header-action">
+            <span class="mailbox-status-dot" aria-hidden="true"></span>
+            <span class="mailbox-address" :title="emailStore.selectedAddress.address">
+              {{ emailStore.selectedAddress.address }}
+            </span>
+            <button
+              type="button"
+              class="copy-address-button"
+              title="复制当前邮箱地址"
+              aria-label="复制当前邮箱地址"
+              @click="copySelectedAddress"
+            >
+              <n-icon size="15"><CopyIcon /></n-icon>
+            </button>
+          </div>
         </div>
         <div class="header-right">
           <n-button
@@ -237,53 +254,68 @@
       </template>
     </n-modal>
 
-    <!-- 发送邮件弹窗 -->
-    <n-modal
-      v-model:show="showComposeModal"
-      preset="card"
-      title="发送邮件"
-      :bordered="false"
-      :segmented="false"
+    <!-- 右侧写信抽屉 -->
+    <n-drawer
+      :show="showComposeModal"
+      @update:show="handleComposeModalVisibility"
+      placement="right"
+      width="min(620px, 100vw)"
+      show-mask="transparent"
       :mask-closable="false"
-      :style="{ width: '760px', maxWidth: '94vw' }"
-      class="compose-mail-modal"
+      :close-on-esc="!sendingMail"
+      :block-scroll="false"
+      drawer-class="compose-mail-drawer"
     >
-      <div class="compose-modal-subtitle">
-        <n-text depth="3">
-          {{ emailStore.selectedAddress?.address ? `发件邮箱：${emailStore.selectedAddress.address}` : '请先选择一个邮箱地址' }}
-        </n-text>
-      </div>
+      <n-drawer-content
+        title="新邮件"
+        :closable="!sendingMail"
+        :native-scrollbar="true"
+        body-class="compose-mail-drawer-body"
+        footer-class="compose-mail-drawer-footer"
+      >
+        <div class="compose-drawer-layout">
+          <div class="compose-modal-subtitle">
+            <span class="compose-sender-icon"><n-icon><MailIcon /></n-icon></span>
+            <span class="compose-sender-label">发件邮箱</span>
+            <strong class="compose-sender-address">
+              {{ emailStore.selectedAddress?.address || '请先选择一个邮箱地址' }}
+            </strong>
+          </div>
 
-      <SendMailComposer
-        v-if="showComposeModal"
-        ref="sendMailComposerRef"
-        :key="composeModalKey"
-        :from-address="emailStore.selectedAddress"
-        @sent="handleMailSent"
-        @cancel="closeComposeModal"
-      />
-
-      <template #footer>
-        <div class="compose-modal-footer">
-          <n-button @click="closeComposeModal" :disabled="sendingMail">
-            取消
-          </n-button>
-          <n-button
-            type="primary"
-            :loading="sendingMail"
-            :disabled="!emailStore.selectedAddress?.address"
-            @click="sendCurrentMail"
-          >
-            <template #icon>
-              <n-icon>
-                <SendIcon />
-              </n-icon>
-            </template>
-            发送邮件
-          </n-button>
+          <SendMailComposer
+            v-if="showComposeModal"
+            ref="sendMailComposerRef"
+            :key="composeModalKey"
+            :from-address="emailStore.selectedAddress"
+            @sent="handleMailSent"
+            @sending-change="handleSendingChange"
+          />
         </div>
-      </template>
-    </n-modal>
+
+        <template #footer>
+          <div class="compose-modal-footer">
+            <n-button @click="requestCloseComposeModal" :disabled="sendingMail">
+              取消
+            </n-button>
+            <n-button
+              type="primary"
+              :loading="sendingMail"
+              :disabled="sendingMail || !emailStore.selectedAddress?.address"
+              class="compose-send-button"
+              title="发送邮件（Ctrl/Command + Enter）"
+              @click="sendCurrentMail"
+            >
+              <template #icon>
+                <n-icon>
+                  <SendIcon />
+                </n-icon>
+              </template>
+              发送
+            </n-button>
+          </div>
+        </template>
+      </n-drawer-content>
+    </n-drawer>
   </div>
 </template>
 
@@ -295,9 +327,12 @@ import {
   NBadge,
   NSpin,
   NModal,
+  NDrawer,
+  NDrawerContent,
   NText,
   NDropdown,
-  useMessage
+  useMessage,
+  useDialog
 } from 'naive-ui'
 import {
   Mail as MailIcon,
@@ -308,10 +343,12 @@ import {
   Send as SendIcon,
   MailOpenOutline as InboxIcon,
   DocumentTextOutline as DetailIcon,
-  EllipsisHorizontal as MoreIcon
+  EllipsisHorizontal as MoreIcon,
+  CopyOutline as CopyIcon
 } from '@vicons/ionicons5'
 import { useEmailStore, useUiStore, useAuthStore } from '@/stores'
 import { useKeyboard, commonShortcuts } from '@/composables/useKeyboard'
+import { copyToClipboard } from '@/utils/helpers'
 import EmailManager from './EmailManager.vue'
 import MailList from './MailList.vue'
 import MailDetail from './MailDetail.vue'
@@ -323,6 +360,7 @@ const emailStore = useEmailStore()
 const uiStore = useUiStore()
 const authStore = useAuthStore()
 const message = useMessage()
+const dialog = useDialog()
 
 // 背景图片状态
 const backgroundLoaded = ref(false)
@@ -335,6 +373,7 @@ const showComposeModal = ref(false)
 const sendingMail = ref(false)
 const composeModalKey = ref(0)
 const sendMailComposerRef = ref<InstanceType<typeof SendMailComposer> | null>(null)
+const composeCloseDialogOpen = ref(false)
 
 // 移动端底部标签栏：当前激活的视图（address / list / detail）
 type MobileTabKey = 'address' | 'list' | 'detail'
@@ -485,6 +524,18 @@ async function refreshAll() {
   }
 }
 
+async function copySelectedAddress() {
+  const address = emailStore.selectedAddress?.address
+  if (!address) return
+
+  const copied = await copyToClipboard(address)
+  if (copied) {
+    message.success('邮箱地址已复制')
+  } else {
+    message.error('复制邮箱地址失败')
+  }
+}
+
 async function handleLogout() {
   try {
     // 调用认证store的logout方法
@@ -514,7 +565,43 @@ function openComposeModal() {
 
 function closeComposeModal() {
   if (sendingMail.value) return
+  sendMailComposerRef.value?.saveDraft()
   showComposeModal.value = false
+}
+
+function requestCloseComposeModal() {
+  if (sendingMail.value || composeCloseDialogOpen.value) return
+
+  const hasContent = sendMailComposerRef.value?.hasContent() ?? false
+  if (!hasContent) {
+    closeComposeModal()
+    return
+  }
+
+  sendMailComposerRef.value?.saveDraft()
+  composeCloseDialogOpen.value = true
+  dialog.warning({
+    title: '关闭写信窗口？',
+    content: '当前内容已保存为草稿，下次打开时可以继续编辑。',
+    positiveText: '关闭',
+    negativeText: '继续编辑',
+    onPositiveClick: closeComposeModal,
+    onAfterLeave: () => {
+      composeCloseDialogOpen.value = false
+    }
+  })
+}
+
+function handleComposeModalVisibility(show: boolean) {
+  if (show) {
+    showComposeModal.value = true
+  } else {
+    requestCloseComposeModal()
+  }
+}
+
+function handleSendingChange(sending: boolean) {
+  sendingMail.value = sending
 }
 
 async function sendCurrentMail() {
@@ -528,12 +615,7 @@ async function sendCurrentMail() {
     return
   }
 
-  sendingMail.value = true
-  try {
-    await sendMailComposerRef.value.sendMail()
-  } finally {
-    sendingMail.value = false
-  }
+  await sendMailComposerRef.value.sendMail()
 }
 
 function handleMailSent() {
@@ -839,21 +921,110 @@ onUnmounted(() => {
 .header-left {
   display: flex;
   align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.brand-mark {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(63, 159, 211, 0.2);
+  border-radius: 8px;
+  color: var(--n-primary-color);
+  background: var(--app-accent-soft);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.42);
+}
+
+.brand-mark-image {
+  width: 30px;
+  height: 30px;
+  display: block;
+  object-fit: contain;
+  filter: drop-shadow(0 3px 5px rgba(42, 96, 143, 0.16));
+  transition: transform 0.2s ease;
+}
+
+.brand-mark:hover .brand-mark-image {
+  transform: translateY(-1px) scale(1.04);
+}
+
+.brand-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 88px;
 }
 
 .app-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 700;
   color: var(--n-text-color);
   margin: 0;
+  line-height: 1.2;
   letter-spacing: 0;
 }
 
-.title-icon {
+.brand-meta {
+  margin-top: 2px;
+  color: var(--n-text-color-3);
+  font-size: 11px;
+  line-height: 1;
+}
+
+.mailbox-context {
+  min-width: 0;
+  max-width: 320px;
+  height: 34px;
+  margin-left: 8px;
+  padding: 0 5px 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-panel-soft);
+}
+
+.mailbox-status-dot {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 7px;
+  border-radius: 50%;
+  background: var(--success-color);
+  box-shadow: 0 0 0 3px var(--success-color-suppl);
+}
+
+.mailbox-address {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--n-text-color-2);
+  font-size: 12px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.copy-address-button {
+  width: 26px;
+  height: 26px;
+  flex: 0 0 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 6px;
+  color: var(--n-text-color-3);
+  background: transparent;
+  transition: color 0.18s ease, background-color 0.18s ease;
+}
+
+.copy-address-button:hover {
   color: var(--n-primary-color);
+  background: var(--app-accent-soft);
 }
 
 .app-header :deep(.n-button) {
@@ -868,7 +1039,16 @@ onUnmounted(() => {
 .header-right {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 5px;
+  padding: 3px;
+  border: 1px solid var(--app-border);
+  border-radius: 10px;
+  background: var(--app-panel-soft);
+}
+
+.header-right :deep(.n-button) {
+  width: 32px;
+  height: 32px;
 }
 
 .mobile-more-action {
@@ -953,27 +1133,87 @@ onUnmounted(() => {
 }
 
 .compose-modal-subtitle {
-  margin: -4px 0 12px;
-  padding: 10px 12px;
+  margin: 0 0 10px;
+  min-height: 44px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   border: 1px solid var(--app-border);
-  border-radius: 6px;
+  border-radius: 8px;
   background: var(--app-panel-soft);
 }
 
-.compose-mail-modal :deep(.n-card) {
+.compose-sender-icon {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  color: var(--n-primary-color);
+  background: var(--app-accent-soft);
+}
+
+.compose-sender-label {
+  flex: 0 0 auto;
+  color: var(--n-text-color-3);
+  font-size: 12px;
+}
+
+.compose-sender-address {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--n-text-color-2);
+  font-size: 13px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.compose-drawer-layout {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.compose-drawer-layout :deep(.send-mail-composer) {
+  flex: 1;
+  min-height: 0;
+  height: auto;
+}
+
+.compose-drawer-layout :deep(.composer-content) {
+  padding: 4px 2px 12px;
+}
+
+:global(.compose-mail-drawer) {
   background:
     linear-gradient(145deg, rgba(248, 252, 255, 0.96), rgba(233, 243, 251, 0.94));
-  border: 1px solid rgba(255, 255, 255, 0.62);
-  box-shadow: 0 28px 80px rgba(48, 77, 108, 0.22);
+  border-left: 1px solid rgba(255, 255, 255, 0.62);
+  box-shadow: -24px 0 70px rgba(30, 57, 84, 0.22);
   backdrop-filter: blur(20px) saturate(1.1);
 }
 
-.compose-mail-modal :deep(.send-mail-composer) {
-  height: min(68vh, 620px);
+:global(.compose-mail-drawer .n-drawer-header) {
+  min-height: 58px;
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(116, 146, 174, 0.2);
+  background: rgba(255, 255, 255, 0.3);
 }
 
-.compose-mail-modal :deep(.composer-content) {
-  padding: 6px 2px 0;
+:global(.compose-mail-drawer-body) {
+  min-height: 0;
+  padding: 12px 16px !important;
+  overflow: hidden;
+}
+
+:global(.compose-mail-drawer-footer) {
+  padding: 12px 16px !important;
+  border-top: 1px solid rgba(116, 146, 174, 0.2);
+  background: rgba(255, 255, 255, 0.34);
 }
 
 .compose-modal-footer {
@@ -982,11 +1222,23 @@ onUnmounted(() => {
   gap: 10px;
 }
 
-[data-theme="dark"] .compose-mail-modal :deep(.n-card) {
+.compose-send-button {
+  min-width: 120px;
+  font-weight: 600;
+  box-shadow: 0 6px 16px rgba(63, 159, 211, 0.22);
+}
+
+:global([data-theme="dark"] .compose-mail-drawer) {
   background:
     linear-gradient(145deg, rgba(15, 31, 52, 0.96), rgba(9, 22, 39, 0.94));
-  border: 1px solid rgba(148, 190, 225, 0.22);
-  box-shadow: 0 32px 86px rgba(0, 0, 0, 0.42);
+  border-left: 1px solid rgba(148, 190, 225, 0.22);
+  box-shadow: -28px 0 80px rgba(0, 0, 0, 0.46);
+}
+
+:global([data-theme="dark"] .compose-mail-drawer .n-drawer-header),
+:global([data-theme="dark"] .compose-mail-drawer-footer) {
+  border-color: rgba(148, 190, 225, 0.18);
+  background: rgba(6, 15, 28, 0.34);
 }
 
 /* 深色模式下的预览弹窗 */
@@ -1006,6 +1258,18 @@ onUnmounted(() => {
 
   .avatar-preview-image {
     max-height: 300px;
+  }
+
+  :global(.compose-mail-drawer-body) {
+    padding: 10px 12px !important;
+  }
+
+  .compose-modal-subtitle {
+    margin-bottom: 8px;
+  }
+
+  .compose-modal-footer :deep(.n-button) {
+    min-width: 96px;
   }
 }
 
@@ -1273,7 +1537,22 @@ onUnmounted(() => {
   }
 
   .app-title {
-    font-size: 16px;
+    font-size: 15px;
+  }
+
+  .brand-mark {
+    width: 32px;
+    height: 32px;
+    flex-basis: 32px;
+  }
+
+  .brand-mark-image {
+    width: 28px;
+    height: 28px;
+  }
+
+  .brand-meta {
+    display: none;
   }
 
   /* 移动端头像样式 */
@@ -1402,6 +1681,20 @@ onUnmounted(() => {
   .mobile-tab--active {
     color: var(--n-primary-color);
     background: var(--app-accent-soft);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brand-mark-image,
+  .avatar-image,
+  .avatar-preview-image {
+    transition: none;
+  }
+
+  .brand-mark:hover .brand-mark-image,
+  .user-avatar:hover .avatar-image,
+  .avatar-preview-image:hover {
+    transform: none;
   }
 }
 
