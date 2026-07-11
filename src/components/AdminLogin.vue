@@ -2,8 +2,17 @@
   <div class="admin-login">
     <!-- 背景图片层 -->
     <div class="background-layer">
-      <div class="bg-image bg-left"></div>
-      <div class="bg-image bg-right"></div>
+      <img
+        v-if="loginBackgroundSrc"
+        :src="loginBackgroundSrc"
+        alt=""
+        class="bg-image bg-left"
+        :class="{ 'bg-image--loaded': loginBackgroundLoaded }"
+        decoding="async"
+        fetchpriority="high"
+        @load="handleLoginBackgroundLoad"
+        @error="handleLoginBackgroundError"
+      />
       <div class="bg-overlay"></div>
       <CosmicBackground class="login-cosmic-effects" variant="login" :density="0.82" />
     </div>
@@ -28,7 +37,16 @@
       <div class="login-card">
         <div class="login-header">
           <div class="login-crest" aria-hidden="true">
-            <img src="/image/brand-crest.png?v=20260710-cachefix" alt="" class="login-crest-image" />
+            <img
+              v-if="!crestLoadFailed"
+              src="/image/brand-crest.png?v=20260710-resilient"
+              alt=""
+              class="login-crest-image"
+              @error="crestLoadFailed = true"
+            />
+            <n-icon v-else class="login-crest-fallback" size="46">
+              <MailIcon />
+            </n-icon>
           </div>
           <h1 class="login-title">域名邮箱管理系统</h1>
           <p class="login-subtitle">请输入管理员密码进入邮箱工作台</p>
@@ -99,17 +117,40 @@ import {
 } from 'naive-ui'
 import {
   Key as KeyIcon,
+  MailOutline as MailIcon,
   Sunny as SunIcon,
   Moon as MoonIcon
 } from '@vicons/ionicons5'
 import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores'
 import CosmicBackground from './CosmicBackground.vue'
+import loginArtworkUrl from '../../image/2plus.png?url'
 
 const authStore = useAuthStore()
 const uiStore = useUiStore()
 const message = useMessage()
 const isDark = computed(() => uiStore.theme === 'dark')
+const loginBackgroundSrc = ref(loginArtworkUrl)
+const loginBackgroundLoaded = ref(false)
+const loginBackgroundAttempt = ref(0)
+const crestLoadFailed = ref(false)
+
+function handleLoginBackgroundLoad() {
+  loginBackgroundLoaded.value = true
+}
+
+function handleLoginBackgroundError() {
+  loginBackgroundLoaded.value = false
+  loginBackgroundAttempt.value += 1
+
+  if (loginBackgroundAttempt.value === 1) {
+    loginBackgroundSrc.value = `${loginArtworkUrl}?retry=20260710-resilient`
+  } else if (loginBackgroundAttempt.value === 2) {
+    loginBackgroundSrc.value = '/image/login-hero.jpg?v=20260710-resilient'
+  } else {
+    loginBackgroundSrc.value = ''
+  }
+}
 
 // Form state
 const formRef = ref<FormInst | null>(null)
@@ -194,17 +235,22 @@ async function handleLogin() {
 
 .bg-image {
   position: absolute;
-  top: 0;
+  inset: 0;
   width: 100%;
   height: 100%;
   z-index: 0;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  display: block;
+  object-fit: cover;
+  object-position: center;
   filter: saturate(0.98) contrast(0.98);
-  opacity: 1;
+  opacity: 0;
   transform: scale(1.01);
-  transition: all 0.3s ease;
+  pointer-events: none;
+  transition: opacity 0.35s ease, filter 0.3s ease;
+}
+
+.bg-image--loaded {
+  opacity: 1;
 }
 
 .bg-image:hover {
@@ -212,13 +258,7 @@ async function handleLogin() {
 }
 
 .bg-left {
-  left: 0;
-  background-image: url('../../image/2plus.png?v=20260710-cachefix');
-  background-position: center right;
-}
-
-.bg-right {
-  display: none;
+  object-position: center right;
 }
 
 /* 渐变遮罩层 */
@@ -246,7 +286,7 @@ async function handleLogin() {
 
 .login-cosmic-effects {
   --cosmic-z-index: 3;
-  --cosmic-opacity: 0.5;
+  --cosmic-opacity: 0.34;
 }
 
 .login-container {
@@ -347,6 +387,10 @@ async function handleLogin() {
   transition: transform 0.24s ease;
 }
 
+.login-crest-fallback {
+  color: var(--login-accent);
+}
+
 .login-card:hover .login-crest-image {
   transform: translateY(-2px) scale(1.02);
 }
@@ -431,21 +475,21 @@ async function handleLogin() {
 }
 
 [data-theme="dark"] .bg-image {
-  filter: brightness(0.66) saturate(0.96) contrast(1.04);
+  filter: brightness(0.82) saturate(0.98) contrast(1.02);
 }
 
 [data-theme="dark"] .bg-image:hover {
-  filter: brightness(0.7) saturate(1) contrast(1.06);
+  filter: brightness(0.86) saturate(1) contrast(1.04);
 }
 
 [data-theme="dark"] .bg-overlay {
   background:
     linear-gradient(
       90deg,
-      rgba(7, 17, 31, 0.82) 0%,
-      rgba(7, 17, 31, 0.64) 34%,
-      rgba(7, 17, 31, 0.34) 64%,
-      rgba(7, 17, 31, 0.12) 100%
+      rgba(7, 17, 31, 0.72) 0%,
+      rgba(7, 17, 31, 0.46) 34%,
+      rgba(7, 17, 31, 0.16) 64%,
+      rgba(7, 17, 31, 0.04) 100%
     ),
     linear-gradient(
       180deg,
@@ -455,7 +499,7 @@ async function handleLogin() {
 }
 
 [data-theme="dark"] .login-cosmic-effects {
-  --cosmic-opacity: 0.42;
+  --cosmic-opacity: 0.28;
 }
 
 [data-theme="dark"] .login-card {
@@ -557,7 +601,7 @@ async function handleLogin() {
   }
 
   .bg-left {
-    background-position: 66% center;
+    object-position: 66% center;
   }
 
   .bg-overlay {
