@@ -8,7 +8,7 @@
         'background-error': backgroundError
       }"
     ></div>
-    <CosmicBackground class="app-cosmic-effects" variant="workspace" :density="1.05" />
+    <CosmicBackground class="app-cosmic-effects" variant="workspace" :density="1.2" />
 
     <!-- 内容层 -->
     <div class="app-content">
@@ -17,7 +17,16 @@
       <div class="header-content">
         <div class="header-left">
           <div class="brand-mark" aria-hidden="true">
-            <img src="/image/brand-crest.png" alt="" class="brand-mark-image" />
+            <img
+              v-if="!brandMarkLoadFailed"
+              src="/image/brand-crest.png?v=20260711-workspace"
+              alt=""
+              class="brand-mark-image"
+              @error="brandMarkLoadFailed = true"
+            />
+            <n-icon v-else class="brand-mark-fallback" size="22">
+              <MailIcon />
+            </n-icon>
           </div>
           <div class="brand-copy">
             <h1 class="app-title">临时邮箱</h1>
@@ -218,7 +227,7 @@
     </div> <!-- 关闭 app-content -->
 
     <!-- 前景星尘层：浮在 UI 之上，只画粒子（screen 混合），让星尘在工作区也清晰可见 -->
-    <CosmicBackground class="app-cosmic-overlay" variant="workspace" :density="0.92" :overlay="true" />
+    <CosmicBackground class="app-cosmic-overlay" variant="workspace" :density="1.12" :overlay="true" />
 
     <!-- 全屏详读弹窗 -->
     <MailReaderModal />
@@ -259,7 +268,7 @@
       :show="showComposeModal"
       @update:show="handleComposeModalVisibility"
       placement="right"
-      width="min(620px, 100vw)"
+      width="min(960px, 100vw)"
       show-mask="transparent"
       :mask-closable="false"
       :close-on-esc="!sendingMail"
@@ -267,19 +276,40 @@
       drawer-class="compose-mail-drawer"
     >
       <n-drawer-content
-        title="新邮件"
+        title="撰写邮件"
         :closable="!sendingMail"
         :native-scrollbar="true"
         body-class="compose-mail-drawer-body"
         footer-class="compose-mail-drawer-footer"
       >
         <div class="compose-drawer-layout">
-          <div class="compose-modal-subtitle">
-            <span class="compose-sender-icon"><n-icon><MailIcon /></n-icon></span>
-            <span class="compose-sender-label">发件邮箱</span>
-            <strong class="compose-sender-address">
-              {{ emailStore.selectedAddress?.address || '请先选择一个邮箱地址' }}
-            </strong>
+          <div class="compose-hero">
+            <img
+              v-if="!composeArtworkLoadFailed"
+              src="/image/mail-vision.jpg?v=20260711-compose"
+              alt=""
+              class="compose-hero-image"
+              @error="composeArtworkLoadFailed = true"
+            />
+            <div class="compose-hero-shade"></div>
+            <div class="compose-hero-copy">
+              <span class="compose-hero-eyebrow">MAIL STUDIO</span>
+              <strong>让每一封邮件都清楚、得体</strong>
+              <span>支持文本、HTML 与富文本编辑，草稿会自动保存。</span>
+            </div>
+          </div>
+
+          <div class="compose-identity-bar">
+            <div class="compose-sender-summary">
+              <span class="compose-sender-icon"><n-icon><MailIcon /></n-icon></span>
+              <span class="compose-sender-copy">
+                <span class="compose-sender-label">发件邮箱</span>
+                <strong class="compose-sender-address">
+                  {{ emailStore.selectedAddress?.address || '请先选择一个邮箱地址' }}
+                </strong>
+              </span>
+            </div>
+            <span class="compose-shortcut-hint">Ctrl / Command + Enter 快速发送</span>
           </div>
 
           <SendMailComposer
@@ -294,24 +324,27 @@
 
         <template #footer>
           <div class="compose-modal-footer">
-            <n-button @click="requestCloseComposeModal" :disabled="sendingMail">
-              取消
-            </n-button>
-            <n-button
-              type="primary"
-              :loading="sendingMail"
-              :disabled="sendingMail || !emailStore.selectedAddress?.address"
-              class="compose-send-button"
-              title="发送邮件（Ctrl/Command + Enter）"
-              @click="sendCurrentMail"
-            >
-              <template #icon>
-                <n-icon>
-                  <SendIcon />
-                </n-icon>
-              </template>
-              发送
-            </n-button>
+            <span class="compose-footer-note">发送前请再次确认收件人和邮件主题</span>
+            <div class="compose-footer-actions">
+              <n-button @click="requestCloseComposeModal" :disabled="sendingMail">
+                取消
+              </n-button>
+              <n-button
+                type="primary"
+                :loading="sendingMail"
+                :disabled="sendingMail || !emailStore.selectedAddress?.address"
+                class="compose-send-button"
+                title="发送邮件（Ctrl/Command + Enter）"
+                @click="sendCurrentMail"
+              >
+                <template #icon>
+                  <n-icon>
+                    <SendIcon />
+                  </n-icon>
+                </template>
+                发送邮件
+              </n-button>
+            </div>
           </div>
         </template>
       </n-drawer-content>
@@ -369,6 +402,8 @@ const appBackgroundUrl = '/image/bg-posts.webp'
 
 // 界面状态管理
 const showAvatarPreview = ref(false)
+const brandMarkLoadFailed = ref(false)
+const composeArtworkLoadFailed = ref(false)
 const showComposeModal = ref(false)
 const sendingMail = ref(false)
 const composeModalKey = ref(0)
@@ -729,11 +764,13 @@ onUnmounted(() => {
 .app-cosmic-effects {
   --cosmic-z-index: 0;
   --cosmic-opacity: 1;
+  filter: brightness(1.16) saturate(1.08);
 }
 
 .app-cosmic-overlay {
   --cosmic-z-index: 5;
-  --cosmic-opacity: 0.9;
+  --cosmic-opacity: 0.98;
+  filter: brightness(1.12) saturate(1.06);
 }
 
 /* 背景遮罩层 - 提供更好的可读性 */
@@ -822,7 +859,7 @@ onUnmounted(() => {
 }
 
 [data-theme="dark"] .app-cosmic-overlay {
-  --cosmic-opacity: 0.5;
+  --cosmic-opacity: 0.72;
 }
 
 /* 背景图片加载状态 */
@@ -946,6 +983,11 @@ onUnmounted(() => {
   object-fit: contain;
   filter: drop-shadow(0 3px 5px rgba(42, 96, 143, 0.16));
   transition: transform 0.2s ease;
+}
+
+.brand-mark-fallback {
+  color: var(--n-primary-color);
+  filter: drop-shadow(0 3px 5px rgba(42, 96, 143, 0.16));
 }
 
 .brand-mark:hover .brand-mark-image {
@@ -1132,43 +1174,137 @@ onUnmounted(() => {
   padding-top: 8px;
 }
 
-.compose-modal-subtitle {
-  margin: 0 0 10px;
-  min-height: 44px;
+.compose-hero {
+  position: relative;
+  min-height: 148px;
+  margin-bottom: 14px;
+  overflow: hidden;
+  border: 1px solid var(--app-border-strong);
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at 74% 18%, rgba(143, 216, 255, 0.24), transparent 38%),
+    linear-gradient(135deg, #132a45, #071524);
+  box-shadow: var(--app-shadow-soft);
+}
+
+.compose-hero-image,
+.compose-hero-shade {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.compose-hero-image {
+  display: block;
+  object-fit: cover;
+  object-position: 72% 44%;
+}
+
+.compose-hero-shade {
+  background:
+    linear-gradient(90deg, rgba(7, 18, 34, 0.92) 0%, rgba(8, 21, 39, 0.72) 42%, rgba(8, 20, 37, 0.12) 78%),
+    linear-gradient(180deg, rgba(5, 13, 25, 0.08), rgba(5, 13, 25, 0.4));
+}
+
+.compose-hero-copy {
+  position: relative;
+  z-index: 1;
+  width: min(54%, 440px);
+  min-height: 148px;
+  padding: 22px 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  color: #f2f9ff;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.28);
+}
+
+.compose-hero-eyebrow {
+  margin-bottom: 7px;
+  color: #8fd8ff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+}
+
+.compose-hero-copy strong {
+  margin-bottom: 6px;
+  font-size: clamp(17px, 2vw, 22px);
+  line-height: 1.3;
+}
+
+.compose-hero-copy > span:last-child {
+  color: rgba(222, 239, 251, 0.76);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.compose-identity-bar {
+  margin: 0 0 14px;
+  min-height: 56px;
   padding: 8px 12px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
+  gap: 16px;
   border: 1px solid var(--app-border);
-  border-radius: 8px;
-  background: var(--app-panel-soft);
+  border-radius: 12px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12), transparent),
+    var(--app-panel-soft);
+}
+
+.compose-sender-summary {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .compose-sender-icon {
-  width: 28px;
-  height: 28px;
-  flex: 0 0 28px;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 7px;
+  border-radius: 10px;
   color: var(--n-primary-color);
   background: var(--app-accent-soft);
 }
 
+.compose-sender-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
 .compose-sender-label {
-  flex: 0 0 auto;
   color: var(--n-text-color-3);
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .compose-sender-address {
   min-width: 0;
   overflow: hidden;
   color: var(--n-text-color-2);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.compose-shortcut-hint {
+  flex: 0 0 auto;
+  padding: 6px 9px;
+  border: 1px solid var(--app-border);
+  border-radius: 999px;
+  color: var(--n-text-color-3);
+  background: var(--app-panel-soft);
+  font-size: 11px;
   white-space: nowrap;
 }
 
@@ -1186,44 +1322,59 @@ onUnmounted(() => {
 }
 
 .compose-drawer-layout :deep(.composer-content) {
-  padding: 4px 2px 12px;
+  padding: 0 2px 18px;
 }
 
 :global(.compose-mail-drawer) {
   background:
     linear-gradient(145deg, rgba(248, 252, 255, 0.96), rgba(233, 243, 251, 0.94));
   border-left: 1px solid rgba(255, 255, 255, 0.62);
+  border-radius: 20px 0 0 20px;
   box-shadow: -24px 0 70px rgba(30, 57, 84, 0.22);
   backdrop-filter: blur(20px) saturate(1.1);
+  overflow: hidden;
 }
 
 :global(.compose-mail-drawer .n-drawer-header) {
-  min-height: 58px;
-  padding: 14px 18px;
+  min-height: 62px;
+  padding: 15px 22px;
   border-bottom: 1px solid rgba(116, 146, 174, 0.2);
   background: rgba(255, 255, 255, 0.3);
 }
 
 :global(.compose-mail-drawer-body) {
   min-height: 0;
-  padding: 12px 16px !important;
+  padding: 16px 20px 0 !important;
   overflow: hidden;
 }
 
 :global(.compose-mail-drawer-footer) {
-  padding: 12px 16px !important;
+  padding: 13px 20px !important;
   border-top: 1px solid rgba(116, 146, 174, 0.2);
   background: rgba(255, 255, 255, 0.34);
 }
 
 .compose-modal-footer {
+  width: 100%;
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.compose-footer-note {
+  color: var(--n-text-color-3);
+  font-size: 11px;
+}
+
+.compose-footer-actions {
+  display: flex;
+  align-items: center;
   gap: 10px;
 }
 
 .compose-send-button {
-  min-width: 120px;
+  min-width: 142px;
   font-weight: 600;
   box-shadow: 0 6px 16px rgba(63, 159, 211, 0.22);
 }
@@ -1261,11 +1412,49 @@ onUnmounted(() => {
   }
 
   :global(.compose-mail-drawer-body) {
-    padding: 10px 12px !important;
+    padding: 10px 12px 0 !important;
   }
 
-  .compose-modal-subtitle {
-    margin-bottom: 8px;
+  :global(.compose-mail-drawer) {
+    border-radius: 0;
+  }
+
+  .compose-hero {
+    min-height: 112px;
+    margin-bottom: 10px;
+    border-radius: 12px;
+  }
+
+  .compose-hero-copy {
+    width: 72%;
+    min-height: 112px;
+    padding: 16px;
+  }
+
+  .compose-hero-copy strong {
+    font-size: 16px;
+  }
+
+  .compose-hero-copy > span:last-child,
+  .compose-shortcut-hint,
+  .compose-footer-note {
+    display: none;
+  }
+
+  .compose-identity-bar {
+    min-height: 50px;
+    margin-bottom: 10px;
+    padding: 7px 9px;
+  }
+
+  .compose-sender-icon {
+    width: 32px;
+    height: 32px;
+    flex-basis: 32px;
+  }
+
+  .compose-modal-footer {
+    justify-content: flex-end;
   }
 
   .compose-modal-footer :deep(.n-button) {

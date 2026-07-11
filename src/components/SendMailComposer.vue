@@ -34,26 +34,28 @@
         </div>
 
         <n-form ref="formRef" :model="mailForm" :rules="rules" size="large">
-          <!-- To Address -->
-          <n-form-item path="toMail" label="收件人">
-            <n-input
-              v-model:value="mailForm.toMail"
-              placeholder="收件人邮箱地址"
-              clearable
-              autofocus
-              :input-props="{ type: 'email', autocomplete: 'off' }"
-            />
-          </n-form-item>
+          <div class="composer-address-grid">
+            <!-- To Address -->
+            <n-form-item path="toMail" label="收件人">
+              <n-input
+                v-model:value="mailForm.toMail"
+                placeholder="name@example.com"
+                clearable
+                autofocus
+                :input-props="{ type: 'email', autocomplete: 'off' }"
+              />
+            </n-form-item>
 
-          <!-- Subject -->
-          <n-form-item path="subject" label="主题">
-            <n-input
-              v-model:value="mailForm.subject"
-              placeholder="邮件主题"
-              maxlength="200"
-              show-count
-            />
-          </n-form-item>
+            <!-- Subject -->
+            <n-form-item path="subject" label="邮件主题">
+              <n-input
+                v-model:value="mailForm.subject"
+                placeholder="简明扼要地说明邮件内容"
+                maxlength="200"
+                show-count
+              />
+            </n-form-item>
+          </div>
 
           <!-- Content Type Options -->
           <n-form-item label="内容类型">
@@ -168,7 +170,7 @@
                 v-model:value="mailForm.content"
                 type="textarea"
                 :placeholder="mailForm.contentType === 'html' ? '请输入 HTML 内容...' : '请输入邮件内容...'"
-                :autosize="{ minRows: 10, maxRows: 20 }"
+                :autosize="{ minRows: 14, maxRows: 28 }"
               />
               <div class="plain-editor-footer">
                 <span>{{ mailForm.contentType === 'html' ? 'HTML 源码' : '纯文本' }}</span>
@@ -639,6 +641,7 @@ defineExpose({
   --composer-toolbar: rgba(239, 247, 249, 0.88);
   --composer-border: rgba(116, 146, 174, 0.22);
   --composer-muted: rgba(67, 86, 104, 0.7);
+  --composer-shadow: 0 16px 42px rgba(48, 77, 108, 0.12);
 }
 
 [data-theme="dark"] .send-mail-composer {
@@ -647,30 +650,39 @@ defineExpose({
   --composer-toolbar: rgba(10, 22, 38, 0.92);
   --composer-border: rgba(148, 190, 225, 0.16);
   --composer-muted: rgba(190, 211, 229, 0.64);
+  --composer-shadow: 0 18px 48px rgba(0, 0, 0, 0.24);
 }
 
 .composer-content {
   flex: 1;
-  padding: 16px;
+  padding: 0;
   overflow-y: auto;
   min-height: 0;
 }
 
 .composer-form {
   max-width: 100%;
+  padding: 18px 20px 22px;
+  border: 1px solid var(--composer-border);
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 32%),
+    var(--composer-panel);
+  box-shadow: var(--composer-shadow);
+  backdrop-filter: blur(16px) saturate(1.06);
 }
 
 .draft-status-bar {
   min-height: 34px;
-  margin-bottom: 8px;
-  padding: 3px 4px 3px 10px;
+  margin-bottom: 14px;
+  padding: 4px 5px 4px 11px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
   border: 1px solid var(--composer-border);
-  border-radius: 8px;
-  background: var(--composer-panel);
+  border-radius: 10px;
+  background: var(--composer-toolbar);
 }
 
 .draft-status {
@@ -711,7 +723,24 @@ defineExpose({
 }
 
 .composer-form :deep(.n-form-item) {
-  margin-bottom: 2px;
+  margin-bottom: 8px;
+}
+
+.composer-address-grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.9fr) minmax(340px, 1.1fr);
+  gap: 14px;
+}
+
+.composer-form :deep(.n-form-item-label) {
+  padding-bottom: 6px;
+  color: var(--n-text-color-2);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.composer-form :deep(.n-input) {
+  background: var(--composer-paper);
 }
 
 .content-type-row {
@@ -725,8 +754,8 @@ defineExpose({
 .content-preview {
   width: 100%;
   border: 1px solid var(--composer-border);
-  border-radius: 8px;
-  min-height: 200px;
+  border-radius: 12px;
+  min-height: 320px;
   background: var(--composer-panel);
   overflow: hidden;
 }
@@ -740,8 +769,8 @@ defineExpose({
 }
 
 .preview-paper {
-  min-height: 220px;
-  padding: 20px;
+  min-height: 340px;
+  padding: 24px;
   background: var(--composer-paper);
   color: var(--n-text-color);
   overflow-wrap: anywhere;
@@ -750,7 +779,7 @@ defineExpose({
 .rich-editor {
   width: 100%;
   border: 1px solid var(--composer-border);
-  border-radius: 8px;
+  border-radius: 12px;
   background: var(--composer-paper);
   overflow: hidden;
   transition: border-color 0.18s ease, box-shadow 0.18s ease;
@@ -787,13 +816,13 @@ defineExpose({
 }
 
 .rich-editor-surface {
-  min-height: 240px;
-  max-height: 420px;
-  padding: 18px;
+  min-height: 360px;
+  max-height: 580px;
+  padding: 22px 24px;
   overflow-y: auto;
   color: var(--n-text-color);
-  font-size: 14px;
-  line-height: 1.7;
+  font-size: 15px;
+  line-height: 1.75;
   word-break: break-word;
 }
 
@@ -832,7 +861,7 @@ defineExpose({
   width: 100%;
   overflow: hidden;
   border: 1px solid var(--composer-border);
-  border-radius: 8px;
+  border-radius: 12px;
   background: var(--composer-paper);
   transition: border-color 0.18s ease, box-shadow 0.18s ease;
 }
@@ -848,6 +877,12 @@ defineExpose({
   --n-border-focus: 0 !important;
   --n-box-shadow-focus: none !important;
   border-radius: 0;
+}
+
+.plain-editor :deep(.n-input__textarea-el) {
+  padding: 18px 20px;
+  font-size: 15px;
+  line-height: 1.75;
 }
 
 .plain-editor-footer {
@@ -887,7 +922,17 @@ defineExpose({
 /* Responsive design */
 @media (max-width: 768px) {
   .composer-content {
-    padding: 8px 10px 12px;
+    padding: 0 0 12px;
+  }
+
+  .composer-form {
+    padding: 14px 12px 16px;
+    border-radius: 12px;
+  }
+
+  .composer-address-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
   }
 
   .content-type-row {
@@ -905,7 +950,7 @@ defineExpose({
   }
 
   .rich-editor-surface {
-    min-height: 200px;
+    min-height: 260px;
     padding: 14px;
   }
 
@@ -921,7 +966,7 @@ defineExpose({
   }
 
   .preview-paper {
-    min-height: 200px;
+    min-height: 260px;
     padding: 16px;
   }
 }
