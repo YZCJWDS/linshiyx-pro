@@ -33,6 +33,11 @@
           </span>
         </div>
 
+        <div class="reader-toolbar-context" v-if="emailStore.selectedMail">
+          <strong :title="readerSubject">{{ readerSubject }}</strong>
+          <span :title="emailStore.selectedMail.source">{{ emailStore.selectedMail.source || '未知发件人' }}</span>
+        </div>
+
         <div class="reader-toolbar-right">
           <!-- 验证码一键复制（工具栏内的紧凑入口） -->
           <n-button
@@ -57,10 +62,10 @@
           <!-- 专注模式切换 -->
           <n-button
             quaternary
-            circle
             size="small"
             :type="uiStore.readerFocusMode ? 'primary' : 'default'"
             :title="uiStore.readerFocusMode ? '退出专注模式' : '进入专注模式'"
+            class="reader-focus-toggle"
             @click="uiStore.toggleReaderFocusMode()"
           >
             <template #icon>
@@ -69,6 +74,7 @@
                 <ExpandIcon v-else />
               </n-icon>
             </template>
+            <span class="reader-focus-label">{{ uiStore.readerFocusMode ? '退出专注' : '专注阅读' }}</span>
           </n-button>
 
           <n-button-group size="small">
@@ -176,7 +182,7 @@ import {
 } from '@vicons/ionicons5'
 import { useEmailStore, useUiStore } from '@/stores'
 import MailDetail from './MailDetail.vue'
-import { extractMailVerificationCode, copyToClipboard } from '@/utils/helpers'
+import { extractMailVerificationCode, copyToClipboard, decodeMailSubject } from '@/utils/helpers'
 import type { EmailMessage } from '@/types'
 
 const emailStore = useEmailStore()
@@ -203,6 +209,12 @@ const hasNext = computed(() => currentIndex.value >= 0 && currentIndex.value < t
 const progressPercent = computed(() => {
   if (total.value <= 0 || currentIndex.value < 0) return 0
   return Math.round(((currentIndex.value + 1) / total.value) * 100)
+})
+
+const readerSubject = computed(() => {
+  const mail = emailStore.selectedMail
+  if (!mail) return '邮件阅读'
+  return decodeMailSubject(mail.subject || '', mail.raw || mail.message || '')
 })
 
 const verificationCode = computed(() => {
@@ -323,37 +335,73 @@ onUnmounted(() => {
 }
 
 .reader-shell {
-  width: min(1080px, 94vw);
-  height: min(88vh, 920px);
+  width: min(1320px, 96vw);
+  height: min(92vh, 980px);
   display: flex;
   flex-direction: column;
-  background: var(--card-color, #fff);
-  border-radius: var(--radius-shell, 22px);
+  background: #edf3f7;
+  border-radius: 20px;
   overflow: hidden;
-  box-shadow: var(--box-shadow-3);
+  box-shadow: 0 28px 80px rgba(19, 38, 58, 0.3);
   border: 1px solid var(--border-color);
+}
+
+.reader-shell--dark {
+  background: #08121f;
+  box-shadow: 0 32px 90px rgba(0, 0, 0, 0.58);
 }
 
 .reader-toolbar {
   flex-shrink: 0;
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 12px 16px;
+  gap: 18px;
+  min-height: 58px;
+  padding: 10px 14px;
   border-bottom: 1px solid var(--divider-color);
-  background: linear-gradient(180deg, rgba(63, 159, 211, 0.06), transparent);
+  background: rgba(249, 252, 255, 0.92);
+  backdrop-filter: blur(18px) saturate(1.15);
 }
 
 .reader-shell--dark .reader-toolbar {
-  background: linear-gradient(180deg, rgba(143, 216, 255, 0.08), transparent);
+  background: rgba(11, 23, 39, 0.92);
 }
 
 .reader-toolbar-left,
 .reader-toolbar-right {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 7px;
+}
+
+.reader-toolbar-context {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  text-align: center;
+}
+
+.reader-toolbar-context strong,
+.reader-toolbar-context span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reader-toolbar-context strong {
+  color: var(--n-text-color);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.reader-toolbar-context span {
+  color: var(--n-text-color-3);
+  font-size: 10px;
 }
 
 .reader-position {
@@ -368,21 +416,89 @@ onUnmounted(() => {
   letter-spacing: 0.5px;
 }
 
+.reader-focus-toggle {
+  min-width: 92px;
+}
+
+.reader-focus-label {
+  font-size: 12px;
+}
+
 .reader-body {
   flex: 1;
   min-height: 0;
   overflow: hidden;
   position: relative;
+  background:
+    radial-gradient(90% 60% at 50% 0%, rgba(83, 151, 199, 0.08), transparent 72%),
+    #e8eff4;
+}
+
+.reader-shell--dark .reader-body {
+  background:
+    radial-gradient(90% 60% at 50% 0%, rgba(120, 190, 240, 0.08), transparent 72%),
+    #07101c;
 }
 
 .reader-plain {
   height: 100%;
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  border-left: 1px solid var(--divider-color);
+  border-right: 1px solid var(--divider-color);
+  background: var(--card-color, #fff);
 }
 
 /* 让内部 MailDetail 填满弹窗主体 */
 .reader-plain :deep(.mail-detail),
 .reader-paper-detail :deep(.mail-detail) {
   height: 100%;
+}
+
+/* 压平 MailDetail 原有的多层卡片，让沉浸阅读更像单一阅读器而不是面板套面板。 */
+.reader-plain :deep(.mail-content),
+.reader-paper-detail :deep(.mail-content) {
+  padding: 0;
+  gap: 0;
+}
+
+.reader-plain :deep(.mail-header),
+.reader-paper-detail :deep(.mail-header) {
+  padding: 16px 20px;
+  border-width: 0 0 1px;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.reader-plain :deep(.attachments-section),
+.reader-paper-detail :deep(.attachments-section) {
+  margin: 12px 16px 0;
+  border-radius: 12px;
+  box-shadow: none;
+}
+
+.reader-plain :deep(.mail-body),
+.reader-paper-detail :deep(.mail-body) {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.reader-plain :deep(.mail-body-header),
+.reader-paper-detail :deep(.mail-body-header) {
+  min-height: 48px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--detail-border);
+}
+
+.reader-plain :deep(.mail-body-content),
+.reader-paper-detail :deep(.mail-body-content) {
+  box-shadow: none;
+}
+
+.reader-plain :deep(.rendered-content),
+.reader-paper-detail :deep(.rendered-content) {
+  padding: 20px clamp(18px, 3vw, 34px);
 }
 
 /* ============ 专注沉浸模式 ============ */
@@ -408,24 +524,29 @@ onUnmounted(() => {
 
 .reader-shell--focus .reader-toolbar {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
+  top: 12px;
+  left: 50%;
+  right: auto;
+  width: min(1180px, calc(100vw - 32px));
+  transform: translateX(-50%);
   z-index: 20;
-  border-bottom: none;
-  padding: 16px 24px;
-  background: linear-gradient(180deg, rgba(10, 21, 38, 0.28), transparent);
-  backdrop-filter: blur(4px);
+  min-height: 52px;
+  padding: 7px 10px;
+  border: 1px solid rgba(133, 169, 198, 0.2);
+  border-radius: 14px;
+  background: rgba(10, 21, 38, 0.7);
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(18px) saturate(1.12);
   transition: opacity 0.4s ease, transform 0.4s ease;
 }
 
 .reader-shell--focus:not(.reader-shell--dark) .reader-toolbar {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.42), transparent);
+  background: rgba(255, 255, 255, 0.78);
 }
 
 .reader-toolbar--hidden {
   opacity: 0;
-  transform: translateY(-100%);
+  transform: translate(-50%, calc(-100% - 16px)) !important;
   pointer-events: none;
 }
 
@@ -493,20 +614,21 @@ onUnmounted(() => {
 /* 信纸 */
 .reader-paper {
   position: absolute;
-  inset: 0;
-  margin: auto;
-  width: min(920px, 88vw);
-  height: min(86vh, 900px);
+  top: 76px;
+  bottom: 28px;
+  left: 50%;
+  width: min(1120px, 88vw);
+  transform: translateX(-50%);
   display: flex;
   flex-direction: column;
   gap: 0;
   overflow: hidden;
-  border-radius: 20px;
+  border-radius: 16px;
   background: var(--card-color, #fff);
   border: 1px solid var(--border-color);
   box-shadow:
     0 2px 6px rgba(33, 55, 76, 0.12),
-    0 30px 70px rgba(33, 55, 76, 0.26);
+    0 26px 64px rgba(33, 55, 76, 0.24);
 }
 
 .reader-shell--dark .reader-paper {
@@ -523,13 +645,14 @@ onUnmounted(() => {
 /* 验证码卡片 */
 .code-card {
   flex-shrink: 0;
-  margin: 16px 18px 0;
-  padding: 14px 18px;
-  border-radius: 16px;
+  margin: 12px 14px 0;
+  padding: 9px 12px;
+  border-radius: 12px;
   cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
   background:
     linear-gradient(135deg, rgba(56, 194, 177, 0.16), rgba(63, 159, 211, 0.12));
   border: 1px solid rgba(56, 194, 177, 0.4);
@@ -554,25 +677,26 @@ onUnmounted(() => {
 
 .code-card-value {
   display: flex;
-  gap: 8px;
+  justify-content: center;
+  gap: 5px;
   flex-wrap: wrap;
 }
 
 .code-char {
-  min-width: 34px;
-  height: 44px;
-  padding: 0 6px;
+  min-width: 27px;
+  height: 34px;
+  padding: 0 5px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-  font-size: 26px;
+  font-size: 20px;
   font-weight: 700;
   line-height: 1;
   color: var(--n-primary-color);
   background: var(--card-color, #fff);
   border: 1px solid rgba(56, 194, 177, 0.35);
-  border-radius: 10px;
+  border-radius: 8px;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
@@ -602,7 +726,7 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   z-index: 18;
-  padding: 0 clamp(64px, 12vw, 160px) 18px;
+  padding: 0 clamp(64px, 12vw, 160px) 10px;
   pointer-events: none;
 }
 
@@ -631,12 +755,41 @@ onUnmounted(() => {
 
 .paper-open-enter-from {
   opacity: 0;
-  transform: scale(0.94) translateY(14px);
+  transform: translateX(-50%) scale(0.94) translateY(14px);
 }
 
 .paper-open-leave-to {
   opacity: 0;
-  transform: scale(0.98);
+  transform: translateX(-50%) scale(0.98);
+}
+
+@media (max-width: 1024px) {
+  .reader-shell {
+    width: 98vw;
+    height: 94vh;
+  }
+
+  .reader-toolbar {
+    gap: 8px;
+  }
+
+  .reader-toolbar-context span,
+  .reader-focus-label {
+    display: none;
+  }
+
+  .reader-focus-toggle {
+    min-width: auto;
+  }
+
+  .reader-code-btn {
+    max-width: 150px;
+  }
+
+  .reader-code-btn :deep(.n-button__content) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 
 @media (max-width: 768px) {
@@ -647,10 +800,48 @@ onUnmounted(() => {
   }
 
   .reader-paper {
+    top: 58px;
+    bottom: 0;
     width: 100vw;
-    height: 100vh;
     border-radius: 0;
     border: none;
+  }
+
+  .reader-toolbar {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 6px;
+    padding: 8px;
+  }
+
+  .reader-toolbar-context {
+    display: none;
+  }
+
+  .reader-toolbar-left,
+  .reader-toolbar-right {
+    gap: 3px;
+  }
+
+  .reader-focus-toggle {
+    min-width: auto;
+  }
+
+  .reader-focus-label {
+    display: none;
+  }
+
+  .reader-code-btn {
+    max-width: 112px;
+  }
+
+  .reader-code-btn :deep(.n-button__content) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .reader-shell--focus .reader-toolbar {
+    top: 6px;
+    width: calc(100vw - 12px);
   }
 
   .reader-nav-zone {
@@ -658,9 +849,28 @@ onUnmounted(() => {
   }
 
   .code-char {
-    min-width: 28px;
-    height: 38px;
-    font-size: 22px;
+    min-width: 24px;
+    height: 31px;
+    font-size: 18px;
+  }
+
+  .code-card {
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+  }
+
+  .code-card-label {
+    grid-column: 1 / -1;
+  }
+
+  .reader-plain :deep(.mail-header),
+  .reader-paper-detail :deep(.mail-header) {
+    padding: 12px;
+  }
+
+  .reader-plain :deep(.mail-body-header),
+  .reader-paper-detail :deep(.mail-body-header) {
+    padding: 8px 10px;
   }
 }
 </style>
