@@ -123,7 +123,7 @@
               <div v-if="verificationCode" class="code-card" @click="copyCode">
                 <div class="code-card-label">
                   <n-icon size="15"><CodeIcon /></n-icon>
-                  <span>检测到验证码</span>
+                  <span>验证码</span>
                 </div>
                 <div class="code-card-value">
                   <span
@@ -137,7 +137,7 @@
                     <CheckmarkIcon v-if="codeCopied" />
                     <CopyIcon v-else />
                   </n-icon>
-                  <span>{{ codeCopied ? '已复制到剪贴板' : '点击复制' }}</span>
+                  <span>{{ codeCopied ? '已复制' : '复制' }}</span>
                 </div>
               </div>
 
@@ -464,10 +464,68 @@ onUnmounted(() => {
 
 .reader-plain :deep(.mail-header),
 .reader-paper-detail :deep(.mail-header) {
-  padding: 16px 20px;
+  gap: 12px;
+  padding: 10px 14px;
   border-width: 0 0 1px;
   border-radius: 0;
   box-shadow: none;
+}
+
+.reader-plain :deep(.mail-header-avatar),
+.reader-paper-detail :deep(.mail-header-avatar) {
+  width: 40px !important;
+  height: 40px !important;
+  margin-top: 0;
+  border-radius: 12px !important;
+}
+
+.reader-plain :deep(.mail-subject),
+.reader-paper-detail :deep(.mail-subject) {
+  margin-bottom: 7px;
+  font-size: 17px;
+  line-height: 1.3;
+}
+
+.reader-plain :deep(.mail-meta-info),
+.reader-paper-detail :deep(.mail-meta-info) {
+  display: flex;
+  gap: 6px;
+}
+
+.reader-plain :deep(.mail-from),
+.reader-plain :deep(.mail-to),
+.reader-plain :deep(.mail-date),
+.reader-paper-detail :deep(.mail-from),
+.reader-paper-detail :deep(.mail-to),
+.reader-paper-detail :deep(.mail-date) {
+  flex: 1 1 0;
+  gap: 6px;
+  min-height: 30px;
+  padding: 4px 7px;
+  border-radius: 8px;
+}
+
+.reader-plain :deep(.mail-from),
+.reader-paper-detail :deep(.mail-from) {
+  flex-grow: 1.35;
+}
+
+.reader-plain :deep(.mail-date),
+.reader-paper-detail :deep(.mail-date) {
+  grid-column: auto;
+  flex-grow: 0.85;
+}
+
+.reader-plain :deep(.meta-label),
+.reader-paper-detail :deep(.meta-label) {
+  min-width: auto;
+}
+
+.reader-plain :deep(.mail-actions),
+.reader-paper-detail :deep(.mail-actions) {
+  gap: 2px;
+  padding: 2px;
+  border-radius: 10px;
 }
 
 .reader-plain :deep(.attachments-section),
@@ -486,8 +544,9 @@ onUnmounted(() => {
 
 .reader-plain :deep(.mail-body-header),
 .reader-paper-detail :deep(.mail-body-header) {
-  min-height: 48px;
-  padding: 8px 14px;
+  min-height: 42px;
+  gap: 8px;
+  padding: 5px 12px;
   border-bottom: 1px solid var(--detail-border);
 }
 
@@ -645,14 +704,14 @@ onUnmounted(() => {
 /* 验证码卡片 */
 .code-card {
   flex-shrink: 0;
-  margin: 12px 14px 0;
-  padding: 9px 12px;
-  border-radius: 12px;
+  margin: 8px 12px 0;
+  padding: 6px 10px;
+  border-radius: 10px;
   cursor: pointer;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   background:
     linear-gradient(135deg, rgba(56, 194, 177, 0.16), rgba(63, 159, 211, 0.12));
   border: 1px solid rgba(56, 194, 177, 0.4);
@@ -683,20 +742,20 @@ onUnmounted(() => {
 }
 
 .code-char {
-  min-width: 27px;
-  height: 34px;
-  padding: 0 5px;
+  min-width: 24px;
+  height: 29px;
+  padding: 0 4px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-  font-size: 20px;
+  font-size: 17px;
   font-weight: 700;
   line-height: 1;
   color: var(--n-primary-color);
   background: var(--card-color, #fff);
   border: 1px solid rgba(56, 194, 177, 0.35);
-  border-radius: 8px;
+  border-radius: 7px;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
@@ -849,9 +908,9 @@ onUnmounted(() => {
   }
 
   .code-char {
-    min-width: 24px;
-    height: 31px;
-    font-size: 18px;
+    min-width: 22px;
+    height: 27px;
+    font-size: 16px;
   }
 
   .code-card {
@@ -865,7 +924,31 @@ onUnmounted(() => {
 
   .reader-plain :deep(.mail-header),
   .reader-paper-detail :deep(.mail-header) {
-    padding: 12px;
+    gap: 8px;
+    padding: 8px 10px;
+  }
+
+  .reader-plain :deep(.mail-header-avatar),
+  .reader-paper-detail :deep(.mail-header-avatar) {
+    width: 34px !important;
+    height: 34px !important;
+  }
+
+  .reader-plain :deep(.mail-meta-info),
+  .reader-paper-detail :deep(.mail-meta-info) {
+    flex-wrap: wrap;
+  }
+
+  .reader-plain :deep(.mail-from),
+  .reader-plain :deep(.mail-to),
+  .reader-paper-detail :deep(.mail-from),
+  .reader-paper-detail :deep(.mail-to) {
+    flex-basis: calc(50% - 3px);
+  }
+
+  .reader-plain :deep(.mail-date),
+  .reader-paper-detail :deep(.mail-date) {
+    flex-basis: 100%;
   }
 
   .reader-plain :deep(.mail-body-header),

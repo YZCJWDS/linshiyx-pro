@@ -139,7 +139,7 @@ const loginBackgroundSrc = ref(loginArtworkUrl)
 const loginBackgroundLoaded = ref(false)
 const loginBackgroundAttempt = ref(0)
 const crestLoadFailed = ref(false)
-const appVersion = '1.2.0'
+const appVersion = '1.2.1'
 const appUpdatedAt = '2026-07-19'
 
 function handleLoginBackgroundLoad() {
