@@ -176,7 +176,7 @@
         <div class="column mail-detail-column" data-tab-panel="detail">
           <div class="column-header">
             <h2 class="column-title">
-              {{ emailStore.selectedMail ? '阅读预览' : '选择邮件' }}
+              {{ emailStore.selectedMail ? '邮件阅读' : '选择邮件' }}
             </h2>
           </div>
           <div class="column-content">
@@ -432,7 +432,7 @@ const mobileTabs = computed(() => [
   },
   {
     key: 'detail' as MobileTabKey,
-    label: '预览',
+    label: '阅读',
     icon: DetailIcon,
     badge: 0,
     badgeType: 'default' as const,

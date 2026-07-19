@@ -12,62 +12,106 @@
       </div>
     </div>
 
-    <!-- 主界面只保留舒适的摘要，完整邮件统一进入沉浸阅读 -->
-    <div v-else-if="!inReader" class="mail-preview-launcher">
-      <div class="preview-card">
-        <div class="preview-card-topline">
-          <span
-            class="preview-read-state"
-            :class="{ 'preview-read-state--unread': !emailStore.isMailRead(emailStore.selectedMail.id) }"
-          >
-            <span class="preview-read-dot" aria-hidden="true"></span>
-            {{ emailStore.isMailRead(emailStore.selectedMail.id) ? '已读' : '未读' }}
-          </span>
-          <span class="preview-date">{{ formatMailDetailTime(emailStore.selectedMail.created_at) }}</span>
-        </div>
-
-        <div class="preview-identity">
-          <SenderAvatar
-            :source="emailStore.selectedMail.source || '?'"
-            :size="58"
-            class="preview-avatar"
-          />
-          <div class="preview-heading">
-            <h3 class="preview-subject">{{ getDecodedSubject() }}</h3>
-            <p class="preview-sender" :title="emailStore.selectedMail.source">
-              来自 {{ emailStore.selectedMail.source || '未知发件人' }}
-            </p>
+    <!-- Gmail 风格主界面阅读：紧凑邮件头 + 完整正文，沉浸阅读作为增强入口 -->
+    <div v-else-if="!inReader" class="mail-inline-reader">
+      <header class="inline-reader-header">
+        <div class="inline-subject-row">
+          <h3 class="inline-subject">{{ getDecodedSubject() }}</h3>
+          <div class="inline-actions">
+            <n-button
+              size="small"
+              type="primary"
+              secondary
+              round
+              @click="openReader"
+              title="沉浸式阅读（也可双击邮件）"
+            >
+              <template #icon><n-icon><ExpandIcon /></n-icon></template>
+              沉浸阅读
+            </n-button>
+            <n-button size="small" quaternary circle @click="copyMailContent" title="复制内容">
+              <template #icon><n-icon><CopyIcon /></n-icon></template>
+            </n-button>
+            <n-button size="small" quaternary circle @click="downloadMail" title="下载邮件">
+              <template #icon><n-icon><DownloadIcon /></n-icon></template>
+            </n-button>
+            <n-popconfirm
+              @positive-click="handleDeleteMail"
+              negative-text="取消"
+              positive-text="删除"
+            >
+              <template #trigger>
+                <n-button size="small" quaternary circle type="error" title="删除邮件">
+                  <template #icon><n-icon><DeleteIcon /></n-icon></template>
+                </n-button>
+              </template>
+              确定要删除这封邮件吗？
+            </n-popconfirm>
           </div>
         </div>
 
-        <div class="preview-meta-row">
-          <n-icon size="15"><MailIcon /></n-icon>
-          <span>发送至</span>
-          <strong :title="emailStore.selectedMail.address">{{ emailStore.selectedMail.address }}</strong>
+        <div class="inline-sender-row">
+          <SenderAvatar
+            :source="emailStore.selectedMail.source || '?'"
+            :size="40"
+            class="inline-avatar"
+          />
+          <div class="inline-sender-main">
+            <div class="inline-sender-name" :title="emailStore.selectedMail.source">
+              {{ emailStore.selectedMail.source || '未知发件人' }}
+            </div>
+            <div class="inline-recipient" :title="emailStore.selectedMail.address">
+              发送至 {{ emailStore.selectedMail.address }}
+            </div>
+          </div>
+          <time class="inline-date" :datetime="emailStore.selectedMail.created_at">
+            {{ formatMailDetailTime(emailStore.selectedMail.created_at) }}
+          </time>
         </div>
+      </header>
 
-        <p class="preview-excerpt">{{ mailPreviewText }}</p>
+      <div class="inline-reader-content">
+        <n-scrollbar style="height: 100%;">
+          <div class="inline-reader-paper">
+            <pre
+              v-if="settingsStore.preferShowTextMail || !isHtmlMail"
+              class="inline-text-display"
+            >{{ getDisplayText() }}</pre>
+            <ShadowHtmlComponent
+              v-else
+              :key="emailStore.selectedMail.id"
+              :html-content="sanitizedHtmlContent"
+              :display-mode="effectiveMailDisplayMode"
+              embedded
+              class="inline-shadow-content"
+            />
+          </div>
 
-        <div v-if="hasAttachments" class="preview-attachment-note">
-          <n-icon size="15"><AttachIcon /></n-icon>
-          含 {{ emailStore.selectedMail.attachments?.length }} 个附件，可在沉浸阅读中查看和下载
-        </div>
-
-        <n-button
-          type="primary"
-          size="large"
-          block
-          round
-          class="preview-open-button"
-          @click="openReader"
-        >
-          <template #icon>
-            <n-icon><ExpandIcon /></n-icon>
-          </template>
-          打开沉浸式阅读
-        </n-button>
-
-        <p class="preview-hint">进入后标记为已读 · 支持上下翻阅与快捷复制验证码</p>
+          <div v-if="hasAttachments" class="attachments-section inline-attachments">
+            <div class="attachments-header">
+              <n-icon size="16"><AttachIcon /></n-icon>
+              <span class="attachments-title">附件（{{ emailStore.selectedMail.attachments?.length }}）</span>
+            </div>
+            <div class="attachments-list">
+              <div
+                v-for="(attachment, index) in emailStore.selectedMail.attachments"
+                :key="index"
+                class="attachment-item"
+              >
+                <div class="attachment-info">
+                  <n-icon size="20" class="attachment-icon"><DocumentIcon /></n-icon>
+                  <div class="attachment-details">
+                    <span class="attachment-name" :title="attachment.filename">{{ attachment.filename }}</span>
+                    <span class="attachment-meta">{{ attachment.content_type }} • {{ formatFileSize(attachment.size) }}</span>
+                  </div>
+                </div>
+                <n-button size="small" quaternary @click="downloadAttachment(attachment)" title="下载附件">
+                  <template #icon><n-icon><DownloadIcon /></n-icon></template>
+                </n-button>
+              </div>
+            </div>
+          </div>
+        </n-scrollbar>
       </div>
     </div>
 
@@ -489,12 +533,6 @@ function parseEmailContent(rawEmail: string): string {
 // Computed
 const hasAttachments = computed(() => {
   return emailStore.selectedMail?.attachments && emailStore.selectedMail.attachments.length > 0
-})
-
-const mailPreviewText = computed(() => {
-  const text = getDisplayText().replace(/\s+/g, ' ').trim()
-  if (!text || text === '邮件内容为空') return '此邮件没有可供预览的纯文本内容，请进入沉浸阅读查看完整格式。'
-  return text.length > 260 ? `${text.slice(0, 260)}…` : text
 })
 
 const isHtmlMail = computed(() => {
@@ -1259,156 +1297,133 @@ function handleIframeLoad(event: Event) {
     inset 0 -14px 28px rgba(33, 55, 76, 0.04);
 }
 
-.mail-preview-launcher {
+.mail-inline-reader {
   height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: clamp(18px, 3vw, 42px);
-  overflow: auto;
-}
-
-.preview-card {
-  width: min(100%, 620px);
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  padding: clamp(22px, 3vw, 34px);
-  border: 1px solid var(--detail-border);
-  border-radius: 22px;
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.32), transparent 48%),
-    var(--detail-panel-strong);
-  box-shadow: var(--detail-shadow);
+  background: var(--detail-stage);
 }
 
-.preview-card-topline,
-.preview-read-state,
-.preview-identity,
-.preview-meta-row,
-.preview-attachment-note {
+.inline-reader-header {
+  flex: 0 0 auto;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--detail-border);
+  background: var(--detail-panel-strong);
+}
+
+.inline-subject-row,
+.inline-sender-row,
+.inline-actions {
   display: flex;
   align-items: center;
 }
 
-.preview-card-topline {
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.preview-read-state {
-  gap: 7px;
-  color: var(--n-text-color-3);
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.preview-read-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--n-text-color-disabled);
-}
-
-.preview-read-state--unread {
-  color: var(--n-primary-color);
-}
-
-.preview-read-state--unread .preview-read-dot {
-  background: var(--n-primary-color);
-  box-shadow: 0 0 0 4px var(--n-primary-color-suppl);
-}
-
-.preview-date {
-  color: var(--n-text-color-3);
-  font-size: 12px;
-}
-
-.preview-identity {
+.inline-subject-row {
   align-items: flex-start;
+  justify-content: space-between;
   gap: 16px;
 }
 
-.preview-avatar {
+.inline-subject {
+  min-width: 0;
+  margin: 0;
+  color: var(--n-text-color);
+  font-size: clamp(18px, 1.8vw, 23px);
+  font-weight: 650;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.inline-actions {
+  flex: 0 0 auto;
+  gap: 2px;
+}
+
+.inline-sender-row {
+  gap: 11px;
+  margin-top: 15px;
+}
+
+.inline-avatar {
   flex: 0 0 auto;
 }
 
-.preview-heading {
+.inline-sender-main {
   min-width: 0;
+  flex: 1;
 }
 
-.preview-subject {
-  margin: 1px 0 7px;
+.inline-sender-name {
   color: var(--n-text-color);
-  font-size: clamp(20px, 2vw, 26px);
-  line-height: 1.35;
-  overflow-wrap: anywhere;
-}
-
-.preview-sender {
-  margin: 0;
-  color: var(--n-text-color-2);
   font-size: 13px;
-  line-height: 1.55;
-  overflow-wrap: anywhere;
-}
-
-.preview-meta-row {
-  gap: 7px;
-  min-width: 0;
-  padding: 10px 12px;
-  border: 1px solid var(--detail-border);
-  border-radius: 10px;
-  color: var(--n-text-color-3);
-  background: var(--detail-chip);
-  font-size: 12px;
-}
-
-.preview-meta-row strong {
-  min-width: 0;
-  margin-left: 2px;
-  color: var(--n-text-color-2);
-  font-weight: 600;
+  font-weight: 650;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.preview-excerpt {
-  display: -webkit-box;
-  margin: 0;
-  color: var(--n-text-color-2);
-  font-size: 14px;
-  line-height: 1.85;
-  overflow: hidden;
-  overflow-wrap: anywhere;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 6;
-}
-
-.preview-attachment-note {
-  align-items: flex-start;
-  gap: 7px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  color: var(--n-text-color-2);
-  background: var(--n-primary-color-suppl);
-  font-size: 12px;
-  line-height: 1.55;
-}
-
-.preview-open-button {
-  height: 48px;
+.inline-recipient {
   margin-top: 2px;
-  font-weight: 650;
-}
-
-.preview-hint {
-  margin: -8px 0 0;
   color: var(--n-text-color-3);
   font-size: 11px;
-  line-height: 1.5;
-  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inline-date {
+  flex: 0 0 auto;
+  align-self: flex-start;
+  padding-top: 2px;
+  color: var(--n-text-color-3);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.inline-reader-content {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.26), transparent 30%),
+    var(--detail-stage);
+}
+
+.inline-reader-paper {
+  width: min(100%, 980px);
+  min-height: 100%;
+  margin: 0 auto;
+  background: #ffffff;
+}
+
+.inline-text-display {
+  min-height: 100%;
+  margin: 0;
+  padding: clamp(24px, 4vw, 42px);
+  border: 0;
+  color: #1f2937;
+  background: #ffffff;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.78;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.inline-shadow-content {
+  min-height: 100%;
+}
+
+.inline-attachments {
+  width: min(calc(100% - 28px), 952px);
+  margin: 14px auto 20px;
+}
+
+[data-theme="dark"] .inline-reader-paper,
+[data-theme="dark"] .inline-text-display {
+  color: #e8eef7;
+  background: #101c31;
 }
 
 .rendered-content {
@@ -1625,23 +1640,25 @@ function handleIframeLoad(event: Event) {
     gap: 10px;
   }
 
-  .mail-preview-launcher {
-    align-items: flex-start;
+  .inline-reader-header {
     padding: 14px;
   }
 
-  .preview-card {
-    gap: 15px;
-    padding: 20px;
-    border-radius: 16px;
+  .inline-subject-row {
+    flex-direction: column;
+    gap: 10px;
   }
 
-  .preview-identity {
-    gap: 12px;
+  .inline-actions {
+    align-self: flex-end;
   }
 
-  .preview-subject {
-    font-size: 19px;
+  .inline-sender-row {
+    margin-top: 12px;
+  }
+
+  .inline-date {
+    display: none;
   }
 
   .mail-header {

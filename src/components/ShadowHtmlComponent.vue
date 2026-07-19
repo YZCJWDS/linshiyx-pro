@@ -20,6 +20,7 @@ type ReaderDisplayMode = 'light' | 'dark' | 'high-contrast'
 interface Props {
   htmlContent: string
   displayMode?: ReaderDisplayMode
+  embedded?: boolean
 }
 
 const props = defineProps<Props>()
@@ -240,13 +241,13 @@ function renderShadowDOM() {
 
           .mail-reader {
             min-height: 100%;
-            padding: 32px;
-            border: 1px solid ${palette.border};
-            border-radius: 18px;
+            padding: ${props.embedded ? '24px clamp(20px, 4vw, 40px)' : '32px'};
+            border: ${props.embedded ? '0' : `1px solid ${palette.border}`};
+            border-radius: ${props.embedded ? '0' : '18px'};
             background: ${palette.background};
             color: ${palette.text};
             overflow-wrap: anywhere;
-            box-shadow: ${palette.shadow};
+            box-shadow: ${props.embedded ? 'none' : palette.shadow};
           }
 
           body {
@@ -387,7 +388,7 @@ onUnmounted(() => {
   shadowRoot = null
 })
 
-watch(() => [props.htmlContent, props.displayMode], () => {
+watch(() => [props.htmlContent, props.displayMode, props.embedded], () => {
   renderShadowDOM()
 }, { flush: 'post' })
 </script>
