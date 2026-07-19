@@ -96,6 +96,11 @@
           <n-text depth="3" size="small">
             请联系管理员获取访问密码
           </n-text>
+          <div class="login-version" aria-label="应用版本信息">
+            <span>v{{ appVersion }}</span>
+            <span aria-hidden="true">·</span>
+            <time :datetime="appUpdatedAt">更新于 {{ appUpdatedAt }}</time>
+          </div>
         </div>
       </div>
     </div>
@@ -134,6 +139,8 @@ const loginBackgroundSrc = ref(loginArtworkUrl)
 const loginBackgroundLoaded = ref(false)
 const loginBackgroundAttempt = ref(0)
 const crestLoadFailed = ref(false)
+const appVersion = '1.1.0'
+const appUpdatedAt = '2026-07-19'
 
 function handleLoginBackgroundLoad() {
   loginBackgroundLoaded.value = true
@@ -425,6 +432,20 @@ async function handleLogin() {
   color: rgba(39, 57, 82, 0.6);
 }
 
+.login-version {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 7px;
+  color: rgba(39, 57, 82, 0.42);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+  user-select: none;
+}
+
 .password-input {
   --n-color: rgba(255, 255, 255, 0.58) !important;
   --n-color-focus: rgba(255, 255, 255, 0.86) !important;
@@ -552,6 +573,10 @@ async function handleLogin() {
 [data-theme="dark"] .login-subtitle,
 [data-theme="dark"] .login-footer :deep(.n-text) {
   color: var(--login-muted);
+}
+
+[data-theme="dark"] .login-version {
+  color: rgba(207, 225, 240, 0.4);
 }
 
 [data-theme="dark"] .password-input {

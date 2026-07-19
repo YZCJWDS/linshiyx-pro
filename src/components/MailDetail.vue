@@ -12,7 +12,66 @@
       </div>
     </div>
 
-    <!-- Mail Content -->
+    <!-- 主界面只保留舒适的摘要，完整邮件统一进入沉浸阅读 -->
+    <div v-else-if="!inReader" class="mail-preview-launcher">
+      <div class="preview-card">
+        <div class="preview-card-topline">
+          <span
+            class="preview-read-state"
+            :class="{ 'preview-read-state--unread': !emailStore.isMailRead(emailStore.selectedMail.id) }"
+          >
+            <span class="preview-read-dot" aria-hidden="true"></span>
+            {{ emailStore.isMailRead(emailStore.selectedMail.id) ? '已读' : '未读' }}
+          </span>
+          <span class="preview-date">{{ formatMailDetailTime(emailStore.selectedMail.created_at) }}</span>
+        </div>
+
+        <div class="preview-identity">
+          <SenderAvatar
+            :source="emailStore.selectedMail.source || '?'"
+            :size="58"
+            class="preview-avatar"
+          />
+          <div class="preview-heading">
+            <h3 class="preview-subject">{{ getDecodedSubject() }}</h3>
+            <p class="preview-sender" :title="emailStore.selectedMail.source">
+              来自 {{ emailStore.selectedMail.source || '未知发件人' }}
+            </p>
+          </div>
+        </div>
+
+        <div class="preview-meta-row">
+          <n-icon size="15"><MailIcon /></n-icon>
+          <span>发送至</span>
+          <strong :title="emailStore.selectedMail.address">{{ emailStore.selectedMail.address }}</strong>
+        </div>
+
+        <p class="preview-excerpt">{{ mailPreviewText }}</p>
+
+        <div v-if="hasAttachments" class="preview-attachment-note">
+          <n-icon size="15"><AttachIcon /></n-icon>
+          含 {{ emailStore.selectedMail.attachments?.length }} 个附件，可在沉浸阅读中查看和下载
+        </div>
+
+        <n-button
+          type="primary"
+          size="large"
+          block
+          round
+          class="preview-open-button"
+          @click="openReader"
+        >
+          <template #icon>
+            <n-icon><ExpandIcon /></n-icon>
+          </template>
+          打开沉浸式阅读
+        </n-button>
+
+        <p class="preview-hint">进入后标记为已读 · 支持上下翻阅与快捷复制验证码</p>
+      </div>
+    </div>
+
+    <!-- 沉浸阅读中的完整邮件内容 -->
     <div v-else class="mail-content">
       <!-- Mail Header -->
       <div class="mail-header">
@@ -315,6 +374,9 @@ const viewMode = ref<'rendered' | 'source'>('rendered')
 
 // 打开沉浸式阅读弹窗
 function openReader() {
+  if (emailStore.selectedMail) {
+    emailStore.markMailRead(emailStore.selectedMail.id)
+  }
   uiStore.openReaderModal()
 }
 
@@ -427,6 +489,12 @@ function parseEmailContent(rawEmail: string): string {
 // Computed
 const hasAttachments = computed(() => {
   return emailStore.selectedMail?.attachments && emailStore.selectedMail.attachments.length > 0
+})
+
+const mailPreviewText = computed(() => {
+  const text = getDisplayText().replace(/\s+/g, ' ').trim()
+  if (!text || text === '邮件内容为空') return '此邮件没有可供预览的纯文本内容，请进入沉浸阅读查看完整格式。'
+  return text.length > 260 ? `${text.slice(0, 260)}…` : text
 })
 
 const isHtmlMail = computed(() => {
@@ -1191,6 +1259,158 @@ function handleIframeLoad(event: Event) {
     inset 0 -14px 28px rgba(33, 55, 76, 0.04);
 }
 
+.mail-preview-launcher {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(18px, 3vw, 42px);
+  overflow: auto;
+}
+
+.preview-card {
+  width: min(100%, 620px);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: clamp(22px, 3vw, 34px);
+  border: 1px solid var(--detail-border);
+  border-radius: 22px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.32), transparent 48%),
+    var(--detail-panel-strong);
+  box-shadow: var(--detail-shadow);
+}
+
+.preview-card-topline,
+.preview-read-state,
+.preview-identity,
+.preview-meta-row,
+.preview-attachment-note {
+  display: flex;
+  align-items: center;
+}
+
+.preview-card-topline {
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.preview-read-state {
+  gap: 7px;
+  color: var(--n-text-color-3);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.preview-read-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--n-text-color-disabled);
+}
+
+.preview-read-state--unread {
+  color: var(--n-primary-color);
+}
+
+.preview-read-state--unread .preview-read-dot {
+  background: var(--n-primary-color);
+  box-shadow: 0 0 0 4px var(--n-primary-color-suppl);
+}
+
+.preview-date {
+  color: var(--n-text-color-3);
+  font-size: 12px;
+}
+
+.preview-identity {
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.preview-avatar {
+  flex: 0 0 auto;
+}
+
+.preview-heading {
+  min-width: 0;
+}
+
+.preview-subject {
+  margin: 1px 0 7px;
+  color: var(--n-text-color);
+  font-size: clamp(20px, 2vw, 26px);
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.preview-sender {
+  margin: 0;
+  color: var(--n-text-color-2);
+  font-size: 13px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.preview-meta-row {
+  gap: 7px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--detail-border);
+  border-radius: 10px;
+  color: var(--n-text-color-3);
+  background: var(--detail-chip);
+  font-size: 12px;
+}
+
+.preview-meta-row strong {
+  min-width: 0;
+  margin-left: 2px;
+  color: var(--n-text-color-2);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.preview-excerpt {
+  display: -webkit-box;
+  margin: 0;
+  color: var(--n-text-color-2);
+  font-size: 14px;
+  line-height: 1.85;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 6;
+}
+
+.preview-attachment-note {
+  align-items: flex-start;
+  gap: 7px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  color: var(--n-text-color-2);
+  background: var(--n-primary-color-suppl);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.preview-open-button {
+  height: 48px;
+  margin-top: 2px;
+  font-weight: 650;
+}
+
+.preview-hint {
+  margin: -8px 0 0;
+  color: var(--n-text-color-3);
+  font-size: 11px;
+  line-height: 1.5;
+  text-align: center;
+}
+
 .rendered-content {
   min-height: 100%;
   padding: 28px min(4vw, 40px);
@@ -1403,6 +1623,25 @@ function handleIframeLoad(event: Event) {
   .mail-content {
     padding: 10px;
     gap: 10px;
+  }
+
+  .mail-preview-launcher {
+    align-items: flex-start;
+    padding: 14px;
+  }
+
+  .preview-card {
+    gap: 15px;
+    padding: 20px;
+    border-radius: 16px;
+  }
+
+  .preview-identity {
+    gap: 12px;
+  }
+
+  .preview-subject {
+    font-size: 19px;
   }
 
   .mail-header {

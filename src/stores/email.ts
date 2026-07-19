@@ -30,12 +30,14 @@ export const useEmailStore = defineStore('email', () => {
     ADDRESSES: 'linshiyx_admin_addresses_v3',
     SELECTED_ADDRESS: 'linshiyx_admin_selected_v3',
     STORAGE_VERSION: 'linshiyx_storage_version',
-    READ_MAILS: 'linshiyx_read_mail_ids_v1'
+    READ_MAILS: 'linshiyx_read_mail_ids_v1',
+    MAIL_BASELINES: 'linshiyx_mail_baseline_addresses_v1'
   }
 
   // 已读邮件 ID 集合（持久化到 localStorage，刷新后仍保留已读状态）
   const READ_MAILS_LIMIT = 2000
   const readMailIds = ref<Set<string>>(new Set())
+  const mailBaselineAddresses = ref<Set<string>>(new Set())
 
   function loadReadMailIds() {
     try {
@@ -62,6 +64,31 @@ export const useEmailStore = defineStore('email', () => {
       localStorage.setItem(STORAGE_KEYS.READ_MAILS, JSON.stringify(ids))
     } catch (error) {
       console.warn('Failed to save read mail ids:', error)
+    }
+  }
+
+  function loadMailBaselines() {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEYS.MAIL_BASELINES)
+      if (!stored) return
+
+      const addresses = JSON.parse(stored)
+      if (Array.isArray(addresses)) {
+        mailBaselineAddresses.value = new Set(addresses.map(address => String(address)))
+      }
+    } catch (error) {
+      console.warn('Failed to load mail baselines:', error)
+    }
+  }
+
+  function saveMailBaselines() {
+    try {
+      localStorage.setItem(
+        STORAGE_KEYS.MAIL_BASELINES,
+        JSON.stringify(Array.from(mailBaselineAddresses.value))
+      )
+    } catch (error) {
+      console.warn('Failed to save mail baselines:', error)
     }
   }
 
@@ -113,6 +140,21 @@ export const useEmailStore = defineStore('email', () => {
     }
   }
 
+  function ensureMailBaseline(address: string, sourceMails: EmailMessage[]) {
+    if (mailBaselineAddresses.value.has(address)) return
+
+    // 第一次看到该邮箱时，当前已有邮件属于历史基线，不应全部冒充“新未读”。
+    markAllRead(
+      sourceMails
+        .filter(mail => mailBelongsToAddress(mail, address))
+        .map(mail => mail.id)
+    )
+
+    mailBaselineAddresses.value.add(address)
+    mailBaselineAddresses.value = new Set(mailBaselineAddresses.value)
+    saveMailBaselines()
+  }
+
   const unreadCount = computed(() => {
     const address = selectedAddress.value?.address
     if (!address) return 0
@@ -124,6 +166,7 @@ export const useEmailStore = defineStore('email', () => {
   })
 
   loadReadMailIds()
+  loadMailBaselines()
 
   // 存储版本，用于数据迁移
   const STORAGE_VERSION = '3.0'
@@ -641,8 +684,16 @@ export const useEmailStore = defineStore('email', () => {
   async function deleteAddress(id: string) {
     loading.value.deleting = true
     try {
+      const deletedAddress = addresses.value.find(address => address.id === id)
       await addressApi.delete(id)
       addresses.value = addresses.value.filter(addr => addr.id !== id)
+
+      if (deletedAddress) {
+        mailBaselineAddresses.value.delete(deletedAddress.address)
+        mailBaselineAddresses.value = new Set(mailBaselineAddresses.value)
+        delete newMailCounts.value[deletedAddress.address]
+        saveMailBaselines()
+      }
 
       // 保存到本地存储（后端已经通过 addressApi.delete 删除了）
       saveAddressesToStorage()
@@ -681,6 +732,7 @@ export const useEmailStore = defineStore('email', () => {
       replaceMails(processedMails)
       const targetAddress = address || selectedAddress.value?.address
       if (targetAddress && !keyword) {
+        ensureMailBaseline(targetAddress, processedMails)
         syncUnreadCountForAddress(targetAddress, processedMails)
       }
       console.log('Loaded mails:', mails.value.length)
@@ -766,11 +818,11 @@ export const useEmailStore = defineStore('email', () => {
     loadMailsForAddress(address)
   }
 
-  function selectMail(mail: EmailMessage) {
+  function selectMail(mail: EmailMessage, markAsRead = true) {
     // 完全按照示例前端的方式：直接设置选中邮件，不额外获取详情
     selectedMail.value = mail
-    // 打开即标记为已读并持久化
-    markMailRead(mail.id)
+    // 仅在真正打开正文时标记为已读；主界面的摘要预览不改变未读状态。
+    if (markAsRead) markMailRead(mail.id)
     console.log('Selected mail (reference frontend style):', mail)
     console.log('Mail fields available:', Object.keys(mail))
     console.log('Mail message field:', mail.message?.substring(0, 200) + '...')
@@ -818,6 +870,7 @@ export const useEmailStore = defineStore('email', () => {
       replaceMails(processedMails)
 
       if (address && !keyword) {
+        ensureMailBaseline(address, processedMails)
         syncUnreadCountForAddress(address, processedMails)
         if (newMails.length > 0) {
           console.log(`📬 Found ${newMails.length} new mails for ${address}, total unread: ${newMailCounts.value[address]}`)
@@ -990,8 +1043,15 @@ export const useEmailStore = defineStore('email', () => {
     clearLocalStorage: () => {
       localStorage.removeItem(STORAGE_KEYS.ADDRESSES)
       localStorage.removeItem(STORAGE_KEYS.SELECTED_ADDRESS)
+      localStorage.removeItem(STORAGE_KEYS.READ_MAILS)
+      localStorage.removeItem(STORAGE_KEYS.MAIL_BASELINES)
       addresses.value = []
       selectedAddress.value = null
+      mails.value = []
+      selectedMail.value = null
+      readMailIds.value = new Set()
+      mailBaselineAddresses.value = new Set()
+      newMailCounts.value = {}
       console.log('Local storage cleared for admin')
     },
 
@@ -1009,6 +1069,10 @@ export const useEmailStore = defineStore('email', () => {
       localStorage.removeItem(STORAGE_KEYS.ADDRESSES)
       localStorage.removeItem(STORAGE_KEYS.SELECTED_ADDRESS)
       localStorage.removeItem(STORAGE_KEYS.STORAGE_VERSION)
+      localStorage.removeItem(STORAGE_KEYS.READ_MAILS)
+      localStorage.removeItem(STORAGE_KEYS.MAIL_BASELINES)
+      readMailIds.value = new Set()
+      mailBaselineAddresses.value = new Set()
 
       // 清理所有地址相关的JWT
       const keysToRemove: string[] = []

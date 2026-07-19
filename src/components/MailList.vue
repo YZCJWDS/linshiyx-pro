@@ -399,7 +399,7 @@ function handlePageSizeChange(size: number) {
 // Methods
 // 单击：仅选中，在右侧第三栏显示（保留三泳道默认体验）
 function handleSelectMail(mail: EmailMessage) {
-  emailStore.selectMail(mail)
+  emailStore.selectMail(mail, false)
 }
 
 // 双击：快捷进入沉浸式阅读
