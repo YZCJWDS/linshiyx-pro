@@ -332,7 +332,7 @@ import {
   extractTextFromHtml,
   copyToClipboard,
   debounce,
-  extractVerificationCode,
+  extractMailVerificationCode,
   decodeMailSubject
 } from '@/utils/helpers'
 import SenderAvatar from './SenderAvatar.vue'
@@ -441,11 +441,9 @@ async function copyCode(mail: EmailMessage, code: string) {
   }
 }
 
-// 提取某封邮件的验证码（优先主题，其次正文）
+// 提取某封邮件的验证码（覆盖解析器可能写入的全部正文字段）
 function getMailCode(mail: EmailMessage): string | null {
-  const subjectCode = extractVerificationCode(mail.subject || '')
-  if (subjectCode) return subjectCode
-  return extractVerificationCode(extractTextFromHtml(mail.message || ''))
+  return extractMailVerificationCode(mail)
 }
 
 // 最新一封带验证码的邮件（用于顶部高亮卡片，仅在最近范围内查找避免展示过期验证码）

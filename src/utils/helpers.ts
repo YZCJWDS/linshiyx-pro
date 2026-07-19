@@ -311,34 +311,87 @@ export function parseEmailHeaders(headers: string): Record<string, string> {
   return parsed
 }
 
-// 从邮件文本中提取验证码（4-8 位数字，或含字母的验证码）
-export function extractVerificationCode(text: string): string | null {
-  if (!text) return null
+const verificationKeyword = '(?:验证码|校验码|动态码|一次性密码|verification\\s+code|verify\\s+code|security\\s+code|one[\\s-]time\\s+password|otp|code)'
+const verificationConnector = '(?:(?:\\s*(?:is|为|是|[:：#])\\s*){0,2})'
 
-  // 优先匹配「验证码/code/verification」等关键词附近的数字或字母数字组合
-  const keywordPatterns = [
-    /(?:验证码|校验码|动态码|verification code|verify code|security code|otp|code)[^0-9a-zA-Z]{0,12}([0-9]{4,8})/i,
-    /(?:验证码|校验码|动态码|verification code|verify code|security code|otp|code)[^0-9a-zA-Z]{0,12}([0-9A-Z]{4,8})/i,
-    /([0-9]{4,8})[^0-9a-zA-Z]{0,12}(?:是您的验证码|为您的验证码|验证码)/i
+function normalizeVerificationCandidate(value: string): string | null {
+  const raw = value.trim()
+  const candidate = raw.replace(/[\s-]+/g, '')
+
+  if (!/^[0-9a-zA-Z]{4,10}$/.test(candidate)) return null
+
+  // 无数字的验证码只接受全大写形式，避免把 code 后的普通英文单词误判为验证码。
+  if (!/\d/.test(candidate) && candidate !== candidate.toUpperCase()) return null
+
+  return candidate
+}
+
+function findKeywordVerificationCode(text: string): string | null {
+  const candidatePatterns = [
+    '[0-9a-zA-Z]{2,5}(?:[\\s-][0-9a-zA-Z]{2,5}){1,2}',
+    '[0-9a-zA-Z]{4,10}'
   ]
 
-  for (const pattern of keywordPatterns) {
-    const match = text.match(pattern)
-    if (match && match[1]) {
-      return match[1]
+  for (const candidatePattern of candidatePatterns) {
+    const patterns = [
+      new RegExp(`${verificationKeyword}${verificationConnector}(${candidatePattern})(?![0-9a-zA-Z])`, 'gi'),
+      new RegExp(`(?<![0-9a-zA-Z])(${candidatePattern})${verificationConnector}(?:是您的验证码|为您的验证码|作为您的验证码|${verificationKeyword})`, 'gi')
+    ]
+
+    for (const pattern of patterns) {
+      for (const match of text.matchAll(pattern)) {
+        const candidate = normalizeVerificationCandidate(match[1] || '')
+        if (candidate) return candidate
+      }
     }
   }
 
-  // 兜底：匹配独立出现的 6 位数字（最常见的验证码长度）
-  const sixDigit = text.match(/(?<![0-9])([0-9]{6})(?![0-9])/)
-  if (sixDigit && sixDigit[1]) {
-    return sixDigit[1]
-  }
+  return null
+}
 
-  // 再兜底：4 位数字
-  const fourDigit = text.match(/(?<![0-9])([0-9]{4})(?![0-9])/)
-  if (fourDigit && fourDigit[1]) {
-    return fourDigit[1]
+// 从邮件文本中提取验证码，支持 4-10 位数字、字母数字及分组格式。
+export function extractVerificationCode(text: string): string | null {
+  if (!text) return null
+
+  const normalizedText = text.replace(/\u00a0/g, ' ')
+  const keywordCode = findKeywordVerificationCode(normalizedText)
+  if (keywordCode) return keywordCode
+
+  // 无关键词时只兜底识别常见长度，混合码必须同时包含字母和数字。
+  const mixedCode = normalizedText.match(/(?<![0-9a-zA-Z])(?=[0-9a-zA-Z]{6,8}(?![0-9a-zA-Z]))(?=[0-9a-zA-Z]*\d)(?=[0-9a-zA-Z]*[a-zA-Z])([0-9a-zA-Z]{6,8})(?![0-9a-zA-Z])/)
+  if (mixedCode?.[1]) return mixedCode[1]
+
+  const sixDigit = normalizedText.match(/(?<![0-9a-zA-Z])([0-9]{6})(?![0-9a-zA-Z])/)
+  if (sixDigit?.[1]) return sixDigit[1]
+
+  const fourDigit = normalizedText.match(/(?<![0-9a-zA-Z])([0-9]{4})(?![0-9a-zA-Z])/)
+  return fourDigit?.[1] || null
+}
+
+interface VerificationMailContent {
+  subject?: string
+  text?: string
+  content?: string
+  message?: string
+  body?: string
+  raw?: string
+}
+
+// 邮件解析器会把正文放入不同字段，验证码识别必须覆盖所有规范化结果。
+export function extractMailVerificationCode(mail: VerificationMailContent): string | null {
+  const subject = decodeMailSubject(mail.subject || '', mail.raw || mail.message || '')
+  const sources = [
+    subject,
+    mail.text || '',
+    mail.content || '',
+    mail.message || '',
+    mail.body || ''
+  ]
+
+  for (const source of sources) {
+    if (!source.trim()) continue
+    const code = extractVerificationCode(extractTextFromHtml(source))
+    if (code) return code
   }
 
   return null

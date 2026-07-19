@@ -14,7 +14,7 @@ export const useEmailStore = defineStore('email', () => {
   const mails = ref<EmailMessage[]>([])
   const selectedMail = ref<EmailMessage | null>(null)
 
-  // 新邮件计数 - 记录每个邮箱的新邮件数量
+  // 每个邮箱的未读数量（保留原字段名以兼容现有组件）
   const newMailCounts = ref<Record<string, number>>({})
   const userSettings = ref<UserSettings>({
     enable: false,
@@ -70,6 +70,17 @@ export const useEmailStore = defineStore('email', () => {
     return readMailIds.value.has(String(id))
   }
 
+  function mailBelongsToAddress(mail: EmailMessage, address: string): boolean {
+    return mail.address === address || mail.to_mail === address || Boolean(mail.to_mail?.includes(`<${address}>`))
+  }
+
+  function syncUnreadCountForAddress(address: string, sourceMails = mails.value) {
+    newMailCounts.value[address] = sourceMails.reduce((count, mail) => {
+      if (!mailBelongsToAddress(mail, address) || isMailRead(mail.id)) return count
+      return count + 1
+    }, 0)
+  }
+
   function markMailRead(id: string | number | undefined | null) {
     if (id === undefined || id === null) return
     const key = String(id)
@@ -78,6 +89,9 @@ export const useEmailStore = defineStore('email', () => {
       // 触发响应式更新（Set 的 add 不会自动触发依赖）
       readMailIds.value = new Set(readMailIds.value)
       saveReadMailIds()
+      if (selectedAddress.value) {
+        syncUnreadCountForAddress(selectedAddress.value.address)
+      }
     }
   }
 
@@ -93,12 +107,21 @@ export const useEmailStore = defineStore('email', () => {
     if (changed) {
       readMailIds.value = new Set(readMailIds.value)
       saveReadMailIds()
+      if (selectedAddress.value) {
+        syncUnreadCountForAddress(selectedAddress.value.address)
+      }
     }
   }
 
-  const unreadCount = computed(() =>
-    mails.value.reduce((sum, mail) => sum + (isMailRead(mail.id) ? 0 : 1), 0)
-  )
+  const unreadCount = computed(() => {
+    const address = selectedAddress.value?.address
+    if (!address) return 0
+
+    return mails.value.reduce((sum, mail) => {
+      if (!mailBelongsToAddress(mail, address) || isMailRead(mail.id)) return sum
+      return sum + 1
+    }, 0)
+  })
 
   loadReadMailIds()
 
@@ -509,7 +532,7 @@ export const useEmailStore = defineStore('email', () => {
   const hasAddresses = computed(() => addresses.value.length > 0)
   const hasMails = computed(() => mails.value.length > 0)
 
-  // 获取指定邮箱的新邮件数量
+  // 获取指定邮箱的未读邮件数量
   const getNewMailCount = (address: string) => {
     const count = newMailCounts.value[address] || 0
     return count
@@ -524,9 +547,7 @@ export const useEmailStore = defineStore('email', () => {
   const selectedAddressMails = computed(() => {
     if (!selectedAddress.value) return []
     const address = selectedAddress.value.address
-    return mails.value.filter(mail => {
-      return mail.address === address || mail.to_mail === address || mail.to_mail?.includes(`<${address}>`)
-    })
+    return mails.value.filter(mail => mailBelongsToAddress(mail, address))
   })
 
   // Actions
@@ -658,6 +679,10 @@ export const useEmailStore = defineStore('email', () => {
 
       const processedMails = await normalizeMails(response.results || [], true)
       replaceMails(processedMails)
+      const targetAddress = address || selectedAddress.value?.address
+      if (targetAddress && !keyword) {
+        syncUnreadCountForAddress(targetAddress, processedMails)
+      }
       console.log('Loaded mails:', mails.value.length)
     } catch (error) {
       console.error('Load mails error:', error)
@@ -696,6 +721,9 @@ export const useEmailStore = defineStore('email', () => {
 
       // 从列表中移除已删除的邮件
       mails.value = mails.value.filter(mail => mail.id !== id)
+      if (selectedAddress.value) {
+        syncUnreadCountForAddress(selectedAddress.value.address)
+      }
 
       // 如果删除的是当前选中的邮件，清除选择
       if (selectedMail.value?.id === id) {
@@ -735,12 +763,6 @@ export const useEmailStore = defineStore('email', () => {
     selectedAddress.value = address
     selectedMail.value = null
 
-    // 清除该邮箱的新邮件计数
-    if (newMailCounts.value[address.address]) {
-      console.log(`🔄 Clearing ${newMailCounts.value[address.address]} new mail notifications for ${address.address}`)
-      newMailCounts.value[address.address] = 0
-    }
-
     loadMailsForAddress(address)
   }
 
@@ -776,10 +798,6 @@ export const useEmailStore = defineStore('email', () => {
       return
     }
 
-    // 记录刷新前的邮件数量，用于检测真正的新邮件
-    const isFirstLoad = mails.value.length === 0
-    console.log(`🔄 Silent refresh - First load: ${isFirstLoad}, Current mails: ${mails.value.length}`)
-
     try {
       console.log('🔄 Silent refresh mails for address:', address, 'keyword:', keyword)
 
@@ -799,13 +817,11 @@ export const useEmailStore = defineStore('email', () => {
 
       replaceMails(processedMails)
 
-      // 检测新邮件并更新计数（只有非首次加载才计算新邮件）
-      if (newMails.length > 0 && address && !isFirstLoad) {
-        const currentCount = newMailCounts.value[address] || 0
-        newMailCounts.value[address] = currentCount + newMails.length
-        console.log(`📬 Found ${newMails.length} new mails for ${address}, total unread: ${newMailCounts.value[address]}`)
-      } else if (isFirstLoad) {
-        console.log(`🔄 First load for ${address}, not counting as new mails`)
+      if (address && !keyword) {
+        syncUnreadCountForAddress(address, processedMails)
+        if (newMails.length > 0) {
+          console.log(`📬 Found ${newMails.length} new mails for ${address}, total unread: ${newMailCounts.value[address]}`)
+        }
       }
 
       console.log('✅ Silent refresh completed:', mails.value.length, 'mails')
@@ -986,6 +1002,7 @@ export const useEmailStore = defineStore('email', () => {
       selectedAddress.value = null
       mails.value = []
       selectedMail.value = null
+      newMailCounts.value = {}
       mailParseCache.clear()
 
       // 清理本地存储

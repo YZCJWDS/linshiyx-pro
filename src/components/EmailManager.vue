@@ -481,7 +481,7 @@ async function handleRefreshMails() {
 
 // Get unread mail count for an address
 function getUnreadCount(address: EmailAddress): number {
-  // 使用新的新邮件计数系统
+  // 计数由邮件 store 按持久化已读状态统一维护
   return emailStore.getNewMailCount(address.address)
 }
 

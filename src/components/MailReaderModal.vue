@@ -176,7 +176,7 @@ import {
 } from '@vicons/ionicons5'
 import { useEmailStore, useUiStore } from '@/stores'
 import MailDetail from './MailDetail.vue'
-import { extractVerificationCode, extractTextFromHtml, copyToClipboard } from '@/utils/helpers'
+import { extractMailVerificationCode, copyToClipboard } from '@/utils/helpers'
 import type { EmailMessage } from '@/types'
 
 const emailStore = useEmailStore()
@@ -208,9 +208,7 @@ const progressPercent = computed(() => {
 const verificationCode = computed(() => {
   const mail = emailStore.selectedMail
   if (!mail) return null
-  const fromSubject = extractVerificationCode(mail.subject || '')
-  if (fromSubject) return fromSubject
-  return extractVerificationCode(extractTextFromHtml(mail.message || ''))
+  return extractMailVerificationCode(mail)
 })
 
 // 验证码逐字符展示（便于做等宽字格视觉）

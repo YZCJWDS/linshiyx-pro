@@ -162,9 +162,9 @@
             </h2>
             <n-badge
               v-if="emailStore.selectedAddress"
-              :value="emailStore.selectedAddressMails.length"
+              :value="emailStore.unreadCount"
               :max="99"
-              type="success"
+              type="error"
             />
           </div>
           <div class="column-content">

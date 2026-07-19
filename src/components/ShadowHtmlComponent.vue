@@ -28,6 +28,7 @@ const shadowHost = ref<HTMLElement>()
 const useFallback = ref(false)
 let shadowRoot: ShadowRoot | null = null
 let readabilityFrame = 0
+let readabilityTimers: number[] = []
 
 const resolvedDisplayMode = computed<ReaderDisplayMode>(() => props.displayMode || 'light')
 
@@ -77,12 +78,17 @@ function parseRgb(color: string): [number, number, number, number] | null {
   const match = color.match(/rgba?\(([^)]+)\)/i)
   if (!match) return null
 
-  const parts = match[1].split(',').map(part => Number(part.trim()))
+  const parts = match[1]
+    .replace(/\s*\/\s*/, ' ')
+    .split(/,\s*|\s+/)
+    .filter(Boolean)
+    .map(part => Number(part.trim()))
   if (parts.length < 3 || parts.some((part, index) => index < 3 && Number.isNaN(part))) {
     return null
   }
 
-  return [parts[0], parts[1], parts[2], Number.isNaN(parts[3]) ? 1 : parts[3]]
+  const alpha = parts.length < 4 || Number.isNaN(parts[3]) ? 1 : parts[3]
+  return [parts[0], parts[1], parts[2], alpha]
 }
 
 function luminance([red, green, blue]: [number, number, number, number]) {
@@ -105,18 +111,39 @@ function contrastRatio(
   return (light + 0.05) / (dark + 0.05)
 }
 
+function compositeColor(
+  foreground: [number, number, number, number],
+  background: [number, number, number, number]
+): [number, number, number, number] {
+  const alpha = foreground[3] + background[3] * (1 - foreground[3])
+  if (alpha <= 0) return [0, 0, 0, 0]
+
+  return [
+    (foreground[0] * foreground[3] + background[0] * background[3] * (1 - foreground[3])) / alpha,
+    (foreground[1] * foreground[3] + background[1] * background[3] * (1 - foreground[3])) / alpha,
+    (foreground[2] * foreground[3] + background[2] * background[3] * (1 - foreground[3])) / alpha,
+    alpha
+  ]
+}
+
 function findEffectiveBackground(element: Element): [number, number, number, number] {
+  const layers: Array<[number, number, number, number]> = []
   let current: Element | null = element
 
   while (current) {
     const parsed = parseRgb(getComputedStyle(current).backgroundColor)
-    if (parsed && parsed[3] > 0.05) return parsed
+    if (parsed && parsed[3] > 0.01) layers.push(parsed)
     current = current.parentElement
   }
 
-  return resolvedDisplayMode.value === 'dark'
+  const fallback: [number, number, number, number] = resolvedDisplayMode.value === 'dark'
     ? [16, 24, 39, 1]
     : [255, 255, 255, 1]
+
+  return layers.reverse().reduce(
+    (background, layer) => compositeColor(layer, background),
+    fallback
+  )
 }
 
 function readableTextColor(background: [number, number, number, number]) {
@@ -136,24 +163,50 @@ function improveReadableColors(root: ShadowRoot) {
     if (!elementHasReadableText(element)) continue
 
     const style = getComputedStyle(element)
-    const foreground = parseRgb(style.color)
-    if (!foreground || foreground[3] < 0.45) continue
+    const textFill = parseRgb(style.getPropertyValue('-webkit-text-fill-color'))
+    const foreground = textFill || parseRgb(style.color)
+    if (!foreground || foreground[3] <= 0.01) continue
 
     const background = findEffectiveBackground(element)
-    if (contrastRatio(foreground, background) < 4.5) {
-      element.style.setProperty('color', readableTextColor(background), 'important')
+    const renderedForeground = compositeColor(foreground, background)
+    if (contrastRatio(renderedForeground, background) < 4.5) {
+      const readableColor = readableTextColor(background)
+      element.style.setProperty('color', readableColor, 'important')
+      element.style.setProperty('-webkit-text-fill-color', readableColor, 'important')
     }
   }
+}
+
+function clearReadabilityChecks() {
+  if (readabilityFrame) {
+    window.cancelAnimationFrame(readabilityFrame)
+    readabilityFrame = 0
+  }
+  readabilityTimers.forEach(timer => window.clearTimeout(timer))
+  readabilityTimers = []
+}
+
+function scheduleReadabilityChecks() {
+  clearReadabilityChecks()
+
+  const check = () => {
+    if (shadowRoot) improveReadableColors(shadowRoot)
+  }
+
+  readabilityFrame = requestAnimationFrame(() => {
+    readabilityFrame = 0
+    check()
+  })
+
+  // 外部样式、图片和字体可能在首帧后改变邮件的实际背景色。
+  readabilityTimers = [150, 800].map(delay => window.setTimeout(check, delay))
 }
 
 function renderShadowDOM() {
   if (!shadowHost.value || useFallback.value) return
 
   try {
-    if (readabilityFrame) {
-      window.cancelAnimationFrame(readabilityFrame)
-      readabilityFrame = 0
-    }
+    clearReadabilityChecks()
 
     if (!shadowRoot) {
       try {
@@ -306,12 +359,7 @@ function renderShadowDOM() {
       `
 
       shadowRoot.innerHTML = `${styles}<article class="mail-reader mail-reader-${palette.mode}">${props.htmlContent}</article>`
-      readabilityFrame = requestAnimationFrame(() => {
-        readabilityFrame = 0
-        if (shadowRoot) {
-          improveReadableColors(shadowRoot)
-        }
-      })
+      scheduleReadabilityChecks()
     }
   } catch (error) {
     console.error('Failed to render Shadow DOM, falling back to v-html:', error)
@@ -331,10 +379,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  if (readabilityFrame) {
-    window.cancelAnimationFrame(readabilityFrame)
-    readabilityFrame = 0
-  }
+  clearReadabilityChecks()
 
   if (shadowRoot) {
     shadowRoot.innerHTML = ''
