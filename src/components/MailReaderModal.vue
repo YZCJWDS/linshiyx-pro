@@ -11,7 +11,8 @@
       class="reader-shell"
       :class="{
         'reader-shell--dark': uiStore.theme === 'dark',
-        'reader-shell--focus': uiStore.readerFocusMode
+        'reader-shell--focus': uiStore.readerFocusMode,
+        'reader-shell--toolbar-hidden': uiStore.readerFocusMode && !toolbarVisible
       }"
       @mousemove="onPointerActivity"
     >
@@ -688,6 +689,12 @@ onUnmounted(() => {
   box-shadow:
     0 2px 6px rgba(33, 55, 76, 0.12),
     0 26px 64px rgba(33, 55, 76, 0.24);
+  transition: top 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: top;
+}
+
+.reader-shell--focus.reader-shell--toolbar-hidden .reader-paper {
+  top: 10px;
 }
 
 .reader-shell--dark .reader-paper {
@@ -864,6 +871,10 @@ onUnmounted(() => {
     width: 100vw;
     border-radius: 0;
     border: none;
+  }
+
+  .reader-shell--focus.reader-shell--toolbar-hidden .reader-paper {
+    top: 0;
   }
 
   .reader-toolbar {

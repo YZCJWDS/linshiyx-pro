@@ -1,6 +1,6 @@
 {
   "name": "temp-email-frontend",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "type": "module",
   "description": "Temporary Email System Frontend for Cloudflare",
   "scripts": {
