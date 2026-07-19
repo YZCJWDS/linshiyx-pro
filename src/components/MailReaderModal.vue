@@ -14,14 +14,20 @@
         'reader-shell--focus': uiStore.readerFocusMode,
         'reader-shell--toolbar-hidden': uiStore.readerFocusMode && !toolbarVisible
       }"
-      @mousemove="onPointerActivity"
     >
+      <div
+        v-if="uiStore.readerFocusMode"
+        class="reader-toolbar-activation-zone"
+        aria-hidden="true"
+        @mouseenter="showToolbar"
+      ></div>
+
       <!-- 顶部导航栏（专注模式下悬浮、可自动隐藏） -->
       <div
         class="reader-toolbar"
         :class="{ 'reader-toolbar--hidden': uiStore.readerFocusMode && !toolbarVisible }"
-        @mouseenter="lockToolbar = true"
-        @mouseleave="lockToolbar = false"
+        @mouseenter="handleToolbarEnter"
+        @mouseleave="handleToolbarLeave"
       >
         <div class="reader-toolbar-left">
           <n-button quaternary circle size="small" title="关闭 (Esc)" @click="close">
@@ -268,9 +274,22 @@ const toolbarVisible = ref(true)
 const lockToolbar = ref(false)
 let toolbarTimer: ReturnType<typeof setTimeout> | null = null
 
-function onPointerActivity() {
-  if (!uiStore.readerFocusMode) return
+function showToolbar() {
+  if (!uiStore.readerFocusMode || !uiStore.readerModalVisible) return
   toolbarVisible.value = true
+  scheduleToolbarHide()
+}
+
+function handleToolbarEnter() {
+  lockToolbar.value = true
+  if (toolbarTimer) {
+    clearTimeout(toolbarTimer)
+    toolbarTimer = null
+  }
+}
+
+function handleToolbarLeave() {
+  lockToolbar.value = false
   scheduleToolbarHide()
 }
 
@@ -604,6 +623,33 @@ onUnmounted(() => {
   background: rgba(255, 255, 255, 0.78);
 }
 
+.reader-toolbar-activation-zone {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 19;
+  height: 22px;
+}
+
+.reader-toolbar-activation-zone::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  width: 54px;
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(143, 176, 204, 0.32);
+  opacity: 0;
+  transform: translateX(-50%);
+  transition: opacity 0.2s ease;
+}
+
+.reader-shell--toolbar-hidden .reader-toolbar-activation-zone:hover::after {
+  opacity: 1;
+}
+
 .reader-toolbar--hidden {
   opacity: 0;
   transform: translate(-50%, calc(-100% - 16px)) !important;
@@ -912,6 +958,10 @@ onUnmounted(() => {
   .reader-shell--focus .reader-toolbar {
     top: 6px;
     width: calc(100vw - 12px);
+  }
+
+  .reader-toolbar-activation-zone {
+    height: 18px;
   }
 
   .reader-nav-zone {
