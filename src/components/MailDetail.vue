@@ -68,6 +68,28 @@
             {{ formatMailDetailTime(emailStore.selectedMail.created_at) }}
           </time>
         </div>
+
+        <!-- 验证码快速识别与复制横幅 -->
+        <div v-if="verificationCode" class="inline-code-banner">
+          <div class="inline-code-left">
+            <span class="inline-code-pulse"></span>
+            <span class="inline-code-label">识别到验证码</span>
+            <span class="inline-code-value">{{ verificationCode }}</span>
+          </div>
+          <button
+            type="button"
+            class="inline-code-copy-btn"
+            :class="{ 'inline-code-copy-btn--copied': codeCopied }"
+            @click="copyVerificationCode"
+            :title="`复制验证码 ${verificationCode}`"
+          >
+            <n-icon size="14">
+              <CheckmarkIcon v-if="codeCopied" />
+              <CopyIcon v-else />
+            </n-icon>
+            <span>{{ codeCopied ? '已复制！' : '一键复制' }}</span>
+          </button>
+        </div>
       </header>
 
       <div class="inline-reader-content">
@@ -397,10 +419,17 @@ import {
   Download as DownloadIcon,
   Trash as DeleteIcon,
   Attach as AttachIcon,
-  ExpandOutline as ExpandIcon
+  ExpandOutline as ExpandIcon,
+  CheckmarkOutline as CheckmarkIcon
 } from '@vicons/ionicons5'
 import { useEmailStore, useSettingsStore, useUiStore } from '@/stores'
-import { formatMailDetailTime, copyToClipboard, extractTextFromHtml, decodeMailSubject } from '@/utils/helpers'
+import {
+  formatMailDetailTime,
+  copyToClipboard,
+  extractTextFromHtml,
+  decodeMailSubject,
+  extractMailVerificationCode
+} from '@/utils/helpers'
 import type { EmailAttachment } from '@/types'
 import ShadowHtmlComponent from './ShadowHtmlComponent.vue'
 import SenderAvatar from './SenderAvatar.vue'
@@ -415,6 +444,30 @@ const message = useMessage()
 
 // Local state
 const viewMode = ref<'rendered' | 'source'>('rendered')
+
+// 验证码识别与复制状态
+const codeCopied = ref(false)
+let codeTimer: NodeJS.Timeout | null = null
+
+const verificationCode = computed<string | null>(() => {
+  if (!emailStore.selectedMail) return null
+  return extractMailVerificationCode(emailStore.selectedMail)
+})
+
+async function copyVerificationCode() {
+  if (!verificationCode.value) return
+  const success = await copyToClipboard(verificationCode.value)
+  if (success) {
+    codeCopied.value = true
+    if (codeTimer) clearTimeout(codeTimer)
+    codeTimer = setTimeout(() => {
+      codeCopied.value = false
+    }, 1800)
+    message.success(`验证码 ${verificationCode.value} 已复制到剪贴板`)
+  } else {
+    message.error('复制验证码失败')
+  }
+}
 
 // 打开沉浸式阅读弹窗
 function openReader() {
@@ -1379,6 +1432,83 @@ function handleIframeLoad(event: Event) {
   color: var(--n-text-color-3);
   font-size: 11px;
   white-space: nowrap;
+}
+
+/* 验证码识别横幅 */
+.inline-code-banner {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(56, 168, 157, 0.45);
+  background: linear-gradient(120deg, rgba(56, 194, 177, 0.16), rgba(63, 159, 211, 0.12) 60%, rgba(255, 255, 255, 0.4));
+  box-shadow: 0 2px 10px rgba(56, 168, 157, 0.12);
+}
+
+.inline-code-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.inline-code-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
+  animation: pulse-code 2s ease-in-out infinite;
+}
+
+@keyframes pulse-code {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.15); opacity: 0.8; }
+}
+
+.inline-code-label {
+  font-size: 12px;
+  color: var(--n-text-color-2);
+  font-weight: 500;
+}
+
+.inline-code-value {
+  font-family: 'JetBrains Mono', Consolas, Monaco, monospace;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--n-primary-color);
+  letter-spacing: 1.5px;
+}
+
+.inline-code-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--n-primary-color);
+  background: var(--n-primary-color-suppl);
+  color: var(--n-primary-color);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.inline-code-copy-btn:hover {
+  background: var(--n-primary-color);
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px var(--n-primary-color-suppl);
+}
+
+.inline-code-copy-btn--copied {
+  background: #10b981 !important;
+  border-color: #10b981 !important;
+  color: #ffffff !important;
 }
 
 .inline-reader-content {

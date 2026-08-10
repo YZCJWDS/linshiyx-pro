@@ -97,3 +97,19 @@ export interface NotificationMessage {
   content?: string
   duration?: number
 }
+
+// Domain Info & Styling Types
+export interface DomainInfo {
+  domain: string
+  count: number
+  unreadCount: number
+}
+
+export interface DomainColorTheme {
+  primary: string
+  border: string
+  bg: string
+  bgHover: string
+  text: string
+  glow: string
+}

@@ -1,8 +1,9 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { EmailAddress, EmailMessage, UserSettings } from '@/types'
+import type { EmailAddress, EmailMessage, UserSettings, DomainInfo } from '@/types'
 import { addressApi, mailApi, settingsApi } from '@/utils/api'
 import { parseEmailMessage } from '@/utils/wasmMailParser'
+import { getDomainFromAddress, COMMON_DOMAINS } from '@/utils/helpers'
 import { useUiStore } from './ui'
 
 export const useEmailStore = defineStore('email', () => {
@@ -593,6 +594,49 @@ export const useEmailStore = defineStore('email', () => {
     return mails.value.filter(mail => mailBelongsToAddress(mail, address))
   })
 
+  // 提取所有已知域名（配置的可用域名 + 已有地址中出现过的域名）
+  const allAvailableDomains = computed<string[]>(() => {
+    const set = new Set<string>()
+    // 1. 先加入配置中的域名
+    const configuredDomains = userSettings.value?.domains || COMMON_DOMAINS
+    configuredDomains.forEach(d => {
+      if (d && d.trim()) set.add(d.trim().toLowerCase())
+    })
+    // 2. 加入已有邮箱地址中的域名
+    addresses.value.forEach(addr => {
+      const domain = getDomainFromAddress(addr)
+      if (domain) set.add(domain)
+    })
+    return Array.from(set)
+  })
+
+  // 按域名分组的统计信息（总数、未读数）
+  const domainStats = computed<DomainInfo[]>(() => {
+    const statsMap: Record<string, { count: number; unreadCount: number }> = {}
+    
+    // 初始化所有可用域名
+    allAvailableDomains.value.forEach(domain => {
+      statsMap[domain] = { count: 0, unreadCount: 0 }
+    })
+
+    // 统计地址和未读数
+    addresses.value.forEach(addr => {
+      const domain = getDomainFromAddress(addr)
+      if (!statsMap[domain]) {
+        statsMap[domain] = { count: 0, unreadCount: 0 }
+      }
+      statsMap[domain].count += 1
+      const unread = newMailCounts.value[addr.address] || 0
+      statsMap[domain].unreadCount += unread
+    })
+
+    return allAvailableDomains.value.map(domain => ({
+      domain,
+      count: statsMap[domain]?.count || 0,
+      unreadCount: statsMap[domain]?.unreadCount || 0
+    }))
+  })
+
   // Actions
   async function loadAddresses() {
     loading.value.addresses = true
@@ -1010,6 +1054,8 @@ export const useEmailStore = defineStore('email', () => {
     addNewMailCount,
     selectedAddressMails,
     unreadCount,
+    allAvailableDomains,
+    domainStats,
 
     // 已读状态
     isMailRead,

@@ -33,19 +33,44 @@
             <span class="brand-meta">{{ emailStore.addresses.length }} 个地址</span>
           </div>
 
-          <div v-if="emailStore.selectedAddress" class="mailbox-context desktop-header-action">
-            <span class="mailbox-status-dot" aria-hidden="true"></span>
+          <div
+            v-if="emailStore.selectedAddress"
+            class="mailbox-context desktop-header-action"
+            :style="activeMailboxContextStyle"
+          >
+            <span
+              class="mailbox-status-dot"
+              :style="{
+                background: activeDomainTheme.primary,
+                boxShadow: `0 0 0 3px ${activeDomainTheme.glow}`
+              }"
+              aria-hidden="true"
+            ></span>
             <span class="mailbox-address" :title="emailStore.selectedAddress.address">
-              {{ emailStore.selectedAddress.address }}
+              <span class="addr-part-name">{{ activeAddressPrefix }}</span>
+              <span
+                class="header-domain-badge"
+                :style="{
+                  background: activeDomainTheme.bg,
+                  borderColor: activeDomainTheme.border,
+                  color: activeDomainTheme.text
+                }"
+              >
+                @{{ activeDomainName }}
+              </span>
             </span>
             <button
               type="button"
               class="copy-address-button"
-              title="复制当前邮箱地址"
+              :class="{ 'copy-address-button--success': addressCopied }"
+              :title="addressCopied ? '已复制到剪贴板！' : '复制当前邮箱地址'"
               aria-label="复制当前邮箱地址"
               @click="copySelectedAddress"
             >
-              <n-icon size="15"><CopyIcon /></n-icon>
+              <n-icon size="15">
+                <CheckmarkIcon v-if="addressCopied" />
+                <CopyIcon v-else />
+              </n-icon>
             </button>
           </div>
         </div>
@@ -377,11 +402,12 @@ import {
   MailOpenOutline as InboxIcon,
   DocumentTextOutline as DetailIcon,
   EllipsisHorizontal as MoreIcon,
-  CopyOutline as CopyIcon
+  CopyOutline as CopyIcon,
+  CheckmarkOutline as CheckmarkIcon
 } from '@vicons/ionicons5'
 import { useEmailStore, useUiStore, useAuthStore } from '@/stores'
 import { useKeyboard, commonShortcuts } from '@/composables/useKeyboard'
-import { copyToClipboard } from '@/utils/helpers'
+import { copyToClipboard, getDomainFromAddress, getDomainTheme } from '@/utils/helpers'
 import EmailManager from './EmailManager.vue'
 import MailList from './MailList.vue'
 import MailDetail from './MailDetail.vue'
@@ -559,13 +585,43 @@ async function refreshAll() {
   }
 }
 
+const addressCopied = ref(false)
+let copyTimer: NodeJS.Timeout | null = null
+
+const activeDomainName = computed(() => {
+  if (!emailStore.selectedAddress) return ''
+  return getDomainFromAddress(emailStore.selectedAddress)
+})
+
+const activeAddressPrefix = computed(() => {
+  const addr = emailStore.selectedAddress?.address
+  if (!addr) return ''
+  return addr.split('@')[0] || addr
+})
+
+const activeDomainTheme = computed(() => {
+  return getDomainTheme(activeDomainName.value, isDark.value)
+})
+
+const activeMailboxContextStyle = computed(() => {
+  if (!emailStore.selectedAddress) return {}
+  return {
+    borderColor: activeDomainTheme.value.border
+  }
+})
+
 async function copySelectedAddress() {
   const address = emailStore.selectedAddress?.address
   if (!address) return
 
   const copied = await copyToClipboard(address)
   if (copied) {
-    message.success('邮箱地址已复制')
+    addressCopied.value = true
+    if (copyTimer) clearTimeout(copyTimer)
+    copyTimer = setTimeout(() => {
+      addressCopied.value = false
+    }, 1800)
+    message.success('邮箱地址已复制到剪贴板')
   } else {
     message.error('复制邮箱地址失败')
   }
@@ -1019,16 +1075,18 @@ onUnmounted(() => {
 
 .mailbox-context {
   min-width: 0;
-  max-width: 320px;
+  max-width: 360px;
   height: 34px;
   margin-left: 8px;
-  padding: 0 5px 0 10px;
+  padding: 0 4px 0 10px;
   display: flex;
   align-items: center;
   gap: 7px;
   border: 1px solid var(--app-border);
-  border-radius: 8px;
+  border-radius: 20px;
   background: var(--app-panel-soft);
+  backdrop-filter: blur(12px);
+  transition: all 0.2s ease;
 }
 
 .mailbox-status-dot {
@@ -1036,18 +1094,37 @@ onUnmounted(() => {
   height: 7px;
   flex: 0 0 7px;
   border-radius: 50%;
-  background: var(--success-color);
-  box-shadow: 0 0 0 3px var(--success-color-suppl);
+  transition: all 0.2s ease;
 }
 
 .mailbox-address {
   min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
   overflow: hidden;
-  color: var(--n-text-color-2);
-  font-size: 12px;
-  font-weight: 500;
-  text-overflow: ellipsis;
+  font-size: 12.5px;
+  font-weight: 600;
   white-space: nowrap;
+}
+
+.addr-part-name {
+  color: var(--n-text-color);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+}
+
+.header-domain-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  flex-shrink: 0;
+  letter-spacing: -0.2px;
 }
 
 .copy-address-button {
@@ -1058,15 +1135,34 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   border: 0;
-  border-radius: 6px;
+  border-radius: 50%;
   color: var(--n-text-color-3);
   background: transparent;
-  transition: color 0.18s ease, background-color 0.18s ease;
+  transition: all 0.18s ease;
 }
 
 .copy-address-button:hover {
   color: var(--n-primary-color);
   background: var(--app-accent-soft);
+  transform: scale(1.08);
+}
+
+.copy-address-button--success {
+  color: #10b981 !important;
+  background: rgba(16, 185, 129, 0.16) !important;
+  animation: pop-success 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes pop-success {
+  0% {
+    transform: scale(0.8);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 .app-header :deep(.n-button) {

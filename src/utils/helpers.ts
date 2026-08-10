@@ -1,4 +1,5 @@
 import { DEFAULT_MAIL_DOMAIN } from '@/utils/config'
+import type { DomainColorTheme } from '@/types'
 
 // Utility functions for the application
 
@@ -60,24 +61,19 @@ export function formatRelativeTime(dateString: string, useUTCDate = false): stri
   if (!dateString) return 'Unknown time'
 
   try {
-    // 参考示例前端的处理方法：在时间字符串后添加 " UTC"
     const date = parseDateValue(dateString)
     if (!date) return dateString
 
-    // 如果设置使用UTC时间，直接返回UTC时间字符串
     if (useUTCDate) {
       return date.toUTCString()
     }
 
-    // 创建Date对象，会自动转换为本地时间
-    // 检查日期是否有效
     if (isNaN(date.getTime())) {
-      // 尝试直接解析原始字符串
       const fallbackDate = new Date(dateString)
       if (!isNaN(fallbackDate.getTime())) {
         return formatClassicTime(fallbackDate)
       }
-      return dateString // 返回原始字符串
+      return dateString
     }
 
     return formatClassicTime(date)
@@ -90,7 +86,6 @@ export function formatRelativeTime(dateString: string, useUTCDate = false): stri
 
 // 经典时间格式化：2天内相对时间，超过2天准确日期
 function formatClassicTime(date: Date): string {
-  // 强制使用中国时区
   const chinaDate = new Date(date.toLocaleString("en-US", {timeZone: "Asia/Shanghai"}))
   const now = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Shanghai"}))
 
@@ -100,9 +95,6 @@ function formatClassicTime(date: Date): string {
   const diffInHours = Math.floor(diffInMinutes / 60)
   const diffInDays = Math.floor(diffInHours / 24)
 
-  // 调试信息
-
-  // 处理未来时间
   if (diffInMs < 0) {
     const absDiffInMinutes = Math.abs(diffInMinutes)
     if (absDiffInMinutes < 60) {
@@ -128,10 +120,8 @@ function formatClassicTime(date: Date): string {
       }
       return `${diffInHours}小时前`
     } else if (diffInDays === 0) {
-      // 今天
       return `今天 ${timeStr}`
     } else if (diffInDays === 1) {
-      // 昨天
       return `昨天 ${timeStr}`
     }
   }
@@ -152,12 +142,9 @@ export function formatMailDetailTime(dateString: string): string {
   if (!dateString) return 'Unknown time'
 
   try {
-    // 参考示例前端的处理方法：在时间字符串后添加 " UTC"
     const date = parseDateValue(dateString)
     if (!date) return dateString
 
-    // 检查日期是否有效
-    // 强制使用中国时区显示完整日期时间
     const chinaDate = new Date(date.toLocaleString("en-US", {timeZone: "Asia/Shanghai"}))
 
     return chinaDate.toLocaleString('zh-CN', {
@@ -191,9 +178,32 @@ export function truncateText(text: string, maxLength = 50): string {
 
 // Extract text content from HTML
 export function extractTextFromHtml(html: string): string {
-  const div = document.createElement('div')
-  div.innerHTML = html
-  return div.textContent || div.innerText || ''
+  if (!html) return ''
+  if (!/[<>&]/.test(html)) return html
+
+  if (typeof document !== 'undefined' && document.createElement) {
+    try {
+      const div = document.createElement('div')
+      div.innerHTML = html
+      return div.textContent || div.innerText || ''
+    } catch {
+      // 降级使用正则解析
+    }
+  }
+
+  // 跨环境/降级正则提取文本
+  return html
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/\s+/g, ' ')
+    .trim()
 }
 
 // Generate email address with domain
@@ -205,6 +215,181 @@ export function generateEmailAddress(prefix: string, domain: string): string {
 export const COMMON_DOMAINS = [
   DEFAULT_MAIL_DOMAIN
 ]
+
+// 从邮箱对象或字符串中提取域名
+export function getDomainFromAddress(addressOrObj: string | { domain?: string; address?: string } | null | undefined): string {
+  if (!addressOrObj) return DEFAULT_MAIL_DOMAIN
+  if (typeof addressOrObj === 'object') {
+    if (addressOrObj.domain && addressOrObj.domain.trim()) {
+      return addressOrObj.domain.trim().toLowerCase()
+    }
+    if (addressOrObj.address) {
+      const parts = addressOrObj.address.split('@')
+      if (parts.length > 1 && parts[1]) {
+        return parts[1].trim().toLowerCase()
+      }
+    }
+    return DEFAULT_MAIL_DOMAIN
+  }
+  const parts = String(addressOrObj).split('@')
+  if (parts.length > 1 && parts[1]) {
+    return parts[1].trim().toLowerCase()
+  }
+  return DEFAULT_MAIL_DOMAIN
+}
+
+// 域名高级色彩主题调色板
+const DOMAIN_PALETTES: Array<{
+  light: DomainColorTheme
+  dark: DomainColorTheme
+}> = [
+  {
+    // 1. 极光青 (Aurora Cyan)
+    light: {
+      primary: '#0d9488',
+      border: 'rgba(13, 148, 136, 0.28)',
+      bg: 'rgba(204, 251, 241, 0.65)',
+      bgHover: 'rgba(204, 251, 241, 0.9)',
+      text: '#0f766e',
+      glow: 'rgba(13, 148, 136, 0.22)'
+    },
+    dark: {
+      primary: '#2dd4bf',
+      border: 'rgba(45, 212, 191, 0.35)',
+      bg: 'rgba(19, 78, 74, 0.4)',
+      bgHover: 'rgba(19, 78, 74, 0.6)',
+      text: '#5eead4',
+      glow: 'rgba(45, 212, 191, 0.3)'
+    }
+  },
+  {
+    // 2. 苍穹蓝 (Sky Blue)
+    light: {
+      primary: '#0284c7',
+      border: 'rgba(2, 132, 199, 0.28)',
+      bg: 'rgba(224, 242, 254, 0.7)',
+      bgHover: 'rgba(224, 242, 254, 0.95)',
+      text: '#0369a1',
+      glow: 'rgba(2, 132, 199, 0.22)'
+    },
+    dark: {
+      primary: '#38bdf8',
+      border: 'rgba(56, 189, 248, 0.35)',
+      bg: 'rgba(12, 74, 110, 0.4)',
+      bgHover: 'rgba(12, 74, 110, 0.6)',
+      text: '#7dd3fc',
+      glow: 'rgba(56, 189, 248, 0.3)'
+    }
+  },
+  {
+    // 3. 梦幻紫 (Mystic Violet)
+    light: {
+      primary: '#7c3aed',
+      border: 'rgba(124, 58, 237, 0.28)',
+      bg: 'rgba(243, 232, 255, 0.7)',
+      bgHover: 'rgba(243, 232, 255, 0.95)',
+      text: '#6d28d9',
+      glow: 'rgba(124, 58, 237, 0.22)'
+    },
+    dark: {
+      primary: '#a78bfa',
+      border: 'rgba(167, 139, 250, 0.35)',
+      bg: 'rgba(76, 29, 149, 0.4)',
+      bgHover: 'rgba(76, 29, 149, 0.6)',
+      text: '#c4b5fd',
+      glow: 'rgba(167, 139, 250, 0.3)'
+    }
+  },
+  {
+    // 4. 琥珀金 (Sunset Amber)
+    light: {
+      primary: '#d97706',
+      border: 'rgba(217, 119, 6, 0.28)',
+      bg: 'rgba(254, 243, 199, 0.7)',
+      bgHover: 'rgba(254, 243, 199, 0.95)',
+      text: '#b45309',
+      glow: 'rgba(217, 119, 6, 0.22)'
+    },
+    dark: {
+      primary: '#fbbf24',
+      border: 'rgba(251, 191, 36, 0.35)',
+      bg: 'rgba(120, 53, 15, 0.4)',
+      bgHover: 'rgba(120, 53, 15, 0.6)',
+      text: '#fde68a',
+      glow: 'rgba(251, 191, 36, 0.3)'
+    }
+  },
+  {
+    // 5. 玫瑰粉 (Rose Pink)
+    light: {
+      primary: '#e11d48',
+      border: 'rgba(225, 29, 72, 0.28)',
+      bg: 'rgba(255, 228, 230, 0.7)',
+      bgHover: 'rgba(255, 228, 230, 0.95)',
+      text: '#be123c',
+      glow: 'rgba(225, 29, 72, 0.22)'
+    },
+    dark: {
+      primary: '#fb7185',
+      border: 'rgba(251, 113, 133, 0.35)',
+      bg: 'rgba(136, 19, 55, 0.4)',
+      bgHover: 'rgba(136, 19, 55, 0.6)',
+      text: '#fda4af',
+      glow: 'rgba(251, 113, 133, 0.3)'
+    }
+  },
+  {
+    // 6. 祖母绿 (Emerald)
+    light: {
+      primary: '#059669',
+      border: 'rgba(5, 150, 105, 0.28)',
+      bg: 'rgba(209, 250, 229, 0.7)',
+      bgHover: 'rgba(209, 250, 229, 0.95)',
+      text: '#047857',
+      glow: 'rgba(5, 150, 105, 0.22)'
+    },
+    dark: {
+      primary: '#34d399',
+      border: 'rgba(52, 211, 153, 0.35)',
+      bg: 'rgba(6, 78, 59, 0.4)',
+      bgHover: 'rgba(6, 78, 59, 0.6)',
+      text: '#6ee7b7',
+      glow: 'rgba(52, 211, 153, 0.3)'
+    }
+  },
+  {
+    // 7. 靛蓝 (Indigo)
+    light: {
+      primary: '#4f46e5',
+      border: 'rgba(79, 70, 229, 0.28)',
+      bg: 'rgba(224, 231, 255, 0.7)',
+      bgHover: 'rgba(224, 231, 255, 0.95)',
+      text: '#4338ca',
+      glow: 'rgba(79, 70, 229, 0.22)'
+    },
+    dark: {
+      primary: '#818cf8',
+      border: 'rgba(129, 140, 248, 0.35)',
+      bg: 'rgba(49, 46, 129, 0.4)',
+      bgHover: 'rgba(49, 46, 129, 0.6)',
+      text: '#a5b4fc',
+      glow: 'rgba(129, 140, 248, 0.3)'
+    }
+  }
+]
+
+// 确定性域名色彩主题计算
+export function getDomainTheme(domain: string, isDark = false): DomainColorTheme {
+  const cleanDomain = (domain || '').trim().toLowerCase()
+  let hash = 0
+  for (let i = 0; i < cleanDomain.length; i++) {
+    hash = ((hash << 5) - hash) + cleanDomain.charCodeAt(i)
+    hash |= 0
+  }
+  const index = Math.abs(hash) % DOMAIN_PALETTES.length
+  const palette = DOMAIN_PALETTES[index]
+  return isDark ? palette.dark : palette.light
+}
 
 // Debounce function for search inputs
 export function debounce<T extends (...args: any[]) => any>(
@@ -442,7 +627,6 @@ export function stringToColor(input: string): string {
     hash |= 0
   }
   const hue = Math.abs(hash) % 360
-  // 柔和且在明暗主题下都可读的饱和度/亮度
   return `hsl(${hue}, 62%, 55%)`
 }
 
@@ -450,28 +634,23 @@ export function stringToColor(input: string): string {
 export function getInitial(nameOrEmail: string): string {
   const raw = (nameOrEmail || '').trim()
   if (!raw) return '?'
-  // 去掉尖括号内的邮箱，取展示名部分
   const displayPart = raw.replace(/<[^>]*>/g, '').trim() || raw
   const firstChar = displayPart.replace(/^["']|["']$/g, '').charAt(0)
   return (firstChar || '?').toUpperCase()
 }
 
-// 从发件人字段（可能形如 "顾北 <3464237869@qq.com>" 或纯邮箱）中提取邮箱地址
+// 从发件人字段中提取邮箱地址
 export function extractEmailAddress(source: string): string {
   const raw = (source || '').trim()
   if (!raw) return ''
-  // 优先取尖括号内的邮箱
   const angle = raw.match(/<([^<>]+@[^<>]+)>/)
   if (angle && angle[1]) return angle[1].trim().toLowerCase()
-  // 否则取字符串中第一个类邮箱片段
   const bare = raw.match(/[^\s<>"']+@[^\s<>"']+\.[^\s<>"']+/)
   if (bare && bare[0]) return bare[0].trim().toLowerCase()
   return ''
 }
 
-// 生成发件人真实头像的候选 URL 列表（按可靠度排序，逐个降级尝试）
-// - QQ 邮箱（纯数字用户名）：QQ 官方头像
-// - 其他邮箱：Gravatar（identicon 兜底会返回默认图，这里用 404 让前端继续降级到首字母）
+// 生成发件人真实头像的候选 URL 列表
 export function getSenderAvatarUrls(source: string): string[] {
   const email = extractEmailAddress(source)
   if (!email) return []
@@ -484,14 +663,14 @@ export function getSenderAvatarUrls(source: string): string[] {
     urls.push(`https://q1.qlogo.cn/g?b=qq&nk=${localPart}&s=100`)
   }
 
-  // 通用：Gravatar（d=404 表示无头像时返回 404，便于前端降级到首字母）
+  // 通用：Gravatar
   const hash = md5Hex(email)
   urls.push(`https://www.gravatar.com/avatar/${hash}?s=100&d=404`)
 
   return urls
 }
 
-// 轻量 MD5 实现（仅用于生成 Gravatar 邮箱哈希，非安全用途）
+// 轻量 MD5 实现
 function md5Hex(input: string): string {
   function toUtf8(str: string): string {
     return unescape(encodeURIComponent(str))

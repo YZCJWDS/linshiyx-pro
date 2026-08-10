@@ -1,5 +1,37 @@
 <template>
   <div class="send-mail-address-manager">
+    <!-- 域名过滤栏 -->
+    <div v-if="domainTabList.length > 1" class="send-domain-filter-bar">
+      <div class="send-domain-tabs-scroll">
+        <button
+          type="button"
+          class="send-domain-tab-pill"
+          :class="{ 'send-domain-tab-pill--active': selectedDomain === 'all' }"
+          @click="selectedDomain = 'all'"
+        >
+          <span>全部</span>
+          <span class="tab-count">{{ emailStore.addresses.length }}</span>
+        </button>
+
+        <button
+          v-for="item in domainTabList"
+          :key="item.domain"
+          type="button"
+          class="send-domain-tab-pill"
+          :class="{ 'send-domain-tab-pill--active': selectedDomain === item.domain }"
+          :style="getDomainTabStyle(item.domain, selectedDomain === item.domain)"
+          @click="selectedDomain = item.domain"
+        >
+          <span
+            class="tab-dot"
+            :style="{ background: getDomainTheme(item.domain, isDark).primary }"
+          ></span>
+          <span>@{{ item.domain }}</span>
+          <span class="tab-count">{{ item.count }}</span>
+        </button>
+      </div>
+    </div>
+
     <!-- Address List -->
     <n-scrollbar class="address-list">
       <div v-if="!emailStore.hasAddresses" class="empty-state">
@@ -12,20 +44,37 @@
         </n-empty>
       </div>
 
+      <div v-else-if="filteredAddresses.length === 0" class="empty-state">
+        <n-empty :description="`@${selectedDomain} 下暂无发件邮箱`">
+          <template #extra>
+            <n-button type="primary" size="small" @click="handleShowCreateModal">
+              为此域名创建邮箱
+            </n-button>
+          </template>
+        </n-empty>
+      </div>
+
       <div v-else class="address-items">
         <div
-          v-for="address in emailStore.addresses"
+          v-for="address in filteredAddresses"
           :key="address.id"
           class="address-item"
           :class="{ 
             'selected': selectedFromAddress?.id === address.id,
             'has-new-mails': getUnreadCount(address) > 0 
           }"
+          :style="getItemAccentStyle(address)"
           @click="handleSelectFromAddress(address)"
         >
           <div class="address-info">
             <div class="address-main">
-              <span class="address-text">{{ address.address }}</span>
+              <span class="address-text">{{ getAddressPrefix(address.address) }}</span>
+              <span
+                class="domain-badge"
+                :style="getDomainBadgeStyle(getDomainFromAddress(address))"
+              >
+                @{{ getDomainFromAddress(address) }}
+              </span>
               <n-badge
                 v-if="getUnreadCount(address) > 0"
                 :value="getUnreadCount(address)"
@@ -35,6 +84,7 @@
               />
             </div>
             <div class="address-meta">
+              <span class="address-name">{{ address.name || '默认' }}</span>
               <span class="address-date">{{ formatDate(address.created_at) }}</span>
             </div>
           </div>
@@ -170,15 +220,27 @@ import {
   Dice as DiceIcon
 } from '@vicons/ionicons5'
 import { useEmailStore, useUiStore } from '@/stores'
-import { generateRandomString, formatRelativeTime, copyToClipboard, COMMON_DOMAINS } from '@/utils/helpers'
+import {
+  generateRandomString,
+  formatRelativeTime,
+  copyToClipboard,
+  COMMON_DOMAINS,
+  getDomainFromAddress,
+  getDomainTheme
+} from '@/utils/helpers'
 import type { EmailAddress } from '@/types'
 
 const emailStore = useEmailStore()
 const uiStore = useUiStore()
 const message = useMessage()
+const isDark = computed(() => uiStore.theme === 'dark')
+
 const emit = defineEmits<{
   select: [address: EmailAddress | null]
 }>()
+
+// 选中的域名过滤 Tab
+const selectedDomain = ref<string>('all')
 
 // State
 const selectedFromAddress = ref<EmailAddress | null>(null)
@@ -195,19 +257,68 @@ const loading = reactive({
   creating: false
 })
 
-// Computed
-const domainOptions = computed(() => 
-  COMMON_DOMAINS.map(domain => ({
-    label: domain,
+// 域名列表
+const domainTabList = computed(() => emailStore.domainStats)
+
+// 过滤后的地址
+const filteredAddresses = computed(() => {
+  if (selectedDomain.value === 'all') {
+    return emailStore.addresses
+  }
+  return emailStore.addresses.filter(addr => getDomainFromAddress(addr) === selectedDomain.value)
+})
+
+// Domain options for select
+const domainOptions = computed(() => {
+  const domains = emailStore.allAvailableDomains || COMMON_DOMAINS
+  return domains.map(domain => ({
+    label: `@${domain}`,
     value: domain
   }))
-)
+})
 
 // Form validation rules
 const rules: FormRules = {
   domain: [
     { required: true, message: '请选择邮箱域名', trigger: 'change' }
   ]
+}
+
+function getAddressPrefix(fullAddress: string): string {
+  if (!fullAddress) return ''
+  const parts = fullAddress.split('@')
+  return parts[0] || fullAddress
+}
+
+function getDomainTabStyle(domain: string, isActive: boolean) {
+  const theme = getDomainTheme(domain, isDark.value)
+  if (isActive) {
+    return {
+      borderColor: theme.primary,
+      backgroundColor: theme.bg,
+      color: theme.text
+    }
+  }
+  return {}
+}
+
+function getDomainBadgeStyle(domain: string) {
+  const theme = getDomainTheme(domain, isDark.value)
+  return {
+    borderColor: theme.border,
+    backgroundColor: theme.bg,
+    color: theme.text
+  }
+}
+
+function getItemAccentStyle(address: EmailAddress) {
+  if (selectedFromAddress.value?.id !== address.id) return {}
+  const domain = getDomainFromAddress(address)
+  const theme = getDomainTheme(domain, isDark.value)
+  return {
+    borderColor: theme.primary,
+    boxShadow: `inset 3px 0 0 ${theme.primary}, 0 4px 14px ${theme.glow}`
+  }
 }
 
 // Methods
@@ -218,9 +329,14 @@ function handleSelectFromAddress(address: EmailAddress) {
 }
 
 function handleShowCreateModal() {
-  showCreateModal.value = true
+  if (selectedDomain.value !== 'all') {
+    form.domain = selectedDomain.value
+  } else {
+    const available = emailStore.allAvailableDomains || COMMON_DOMAINS
+    form.domain = available[0] || COMMON_DOMAINS[0]
+  }
   form.name = ''
-  form.domain = COMMON_DOMAINS[0]
+  showCreateModal.value = true
 }
 
 function generateRandomPrefix() {
@@ -232,20 +348,27 @@ async function handleCreateEmailAndClose() {
 
   try {
     await formRef.value.validate()
+    loading.creating = true
 
     const prefix = form.name.trim() || generateRandomString(8)
-    const newAddress = await emailStore.createAddress(prefix, form.domain)
+    const targetDomain = form.domain
+    const newAddress = await emailStore.createAddress(prefix, targetDomain)
     selectedFromAddress.value = newAddress
     emit('select', newAddress)
 
     // Reset form and close modal
     form.name = ''
-    form.domain = COMMON_DOMAINS[0]
     showCreateModal.value = false
+
+    if (selectedDomain.value !== 'all' && selectedDomain.value !== targetDomain) {
+      selectedDomain.value = targetDomain
+    }
 
     message.success('邮箱创建成功！')
   } catch (error) {
     console.error('Create email error:', error)
+  } finally {
+    loading.creating = false
   }
 }
 
@@ -274,7 +397,6 @@ function formatDate(dateString: string) {
   return formatRelativeTime(dateString, uiStore.useUTCDate)
 }
 
-// Expose selected address for parent component
 defineExpose({
   selectedFromAddress
 })
@@ -287,17 +409,70 @@ defineExpose({
   flex-direction: column;
   --address-item: rgba(255, 255, 255, 0.74);
   --address-hover: rgba(79, 143, 199, 0.1);
-  --address-selected: linear-gradient(90deg, rgba(79, 143, 199, 0.18), rgba(255, 255, 255, 0.84));
   --address-border: rgba(116, 146, 174, 0.22);
-  --address-shadow: 0 8px 22px rgba(48, 77, 108, 0.1);
+  --address-shadow: 0 4px 16px rgba(48, 77, 108, 0.08);
 }
 
 [data-theme="dark"] .send-mail-address-manager {
   --address-item: rgba(12, 26, 45, 0.74);
   --address-hover: rgba(114, 184, 232, 0.13);
-  --address-selected: linear-gradient(90deg, rgba(114, 184, 232, 0.22), rgba(12, 26, 45, 0.9));
   --address-border: rgba(148, 190, 225, 0.16);
-  --address-shadow: 0 8px 22px rgba(0, 0, 0, 0.22);
+  --address-shadow: 0 4px 16px rgba(0, 0, 0, 0.22);
+}
+
+.send-domain-filter-bar {
+  flex-shrink: 0;
+  padding: 8px 10px 4px;
+  border-bottom: 1px solid var(--address-border);
+}
+
+.send-domain-tabs-scroll {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.send-domain-tabs-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.send-domain-tab-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border-radius: 16px;
+  font-size: 11.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  border: 1px solid var(--address-border);
+  background: rgba(120, 140, 160, 0.08);
+  color: var(--n-text-color-2);
+  transition: all 0.16s ease;
+}
+
+.send-domain-tab-pill--active {
+  background: rgba(120, 140, 160, 0.18);
+  font-weight: 600;
+  color: var(--n-text-color);
+}
+
+.tab-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tab-count {
+  font-size: 10px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: rgba(120, 140, 160, 0.16);
+  line-height: 1.3;
 }
 
 .address-list {
@@ -320,10 +495,10 @@ defineExpose({
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
-  border-radius: 8px;
+  padding: 10px 14px;
+  border-radius: 10px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.18s ease;
   border: 1px solid var(--address-border);
   background: var(--address-item);
 }
@@ -336,30 +511,8 @@ defineExpose({
 }
 
 .address-item.selected {
-  background: var(--address-selected);
   border: 1px solid var(--n-primary-color);
-  box-shadow: inset 3px 0 0 var(--n-primary-color), var(--address-shadow);
   transform: none;
-}
-
-.address-item.has-new-mails {
-  border-left: 3px solid #e74c3c;
-}
-
-[data-theme="dark"] .address-item {
-  background: var(--address-item);
-  border-color: var(--address-border);
-}
-
-[data-theme="dark"] .address-item:hover {
-  background: var(--address-hover);
-  border-color: var(--n-primary-color);
-}
-
-[data-theme="dark"] .address-item.selected {
-  background: var(--address-selected);
-  border: 1px solid var(--n-primary-color);
-  box-shadow: inset 3px 0 0 var(--n-primary-color), var(--address-shadow);
 }
 
 .address-info {
@@ -370,15 +523,26 @@ defineExpose({
 .address-main {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   margin-bottom: 4px;
 }
 
 .address-text {
-  font-weight: 500;
+  font-weight: 600;
   color: var(--n-text-color);
-  font-size: 14px;
-  word-break: break-all;
+  font-size: 13.5px;
+  letter-spacing: -0.2px;
+}
+
+.domain-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 0 6px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  flex-shrink: 0;
 }
 
 .new-mail-badge {
@@ -391,8 +555,13 @@ defineExpose({
   gap: 8px;
 }
 
+.address-name {
+  font-size: 11.5px;
+  color: var(--n-text-color-2);
+}
+
 .address-date {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--n-text-color-disabled);
 }
 
@@ -401,7 +570,7 @@ defineExpose({
   align-items: center;
   gap: 4px;
   opacity: 0;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.18s ease;
 }
 
 .address-item:hover .address-actions {
@@ -418,11 +587,6 @@ defineExpose({
 
 .form-item {
   margin-bottom: 20px;
-}
-
-.form-input,
-.form-select {
-  width: 100%;
 }
 
 .dice-button {

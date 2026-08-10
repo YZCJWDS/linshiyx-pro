@@ -23,10 +23,23 @@
       <!-- Mail List Header -->
       <div class="mail-list-header">
         <div class="selected-address-info">
-          <n-icon size="16" class="address-icon">
-            <MailIcon />
-          </n-icon>
-          <span class="address-text" :title="emailStore.selectedAddress.address">{{ emailStore.selectedAddress.address }}</span>
+          <span
+            class="address-domain-dot"
+            :style="{ background: selectedDomainTheme.primary }"
+          ></span>
+          <span class="address-prefix-text" :title="emailStore.selectedAddress.address">
+            {{ getAddressPrefix(emailStore.selectedAddress.address) }}
+          </span>
+          <span
+            class="address-domain-tag"
+            :style="{
+              background: selectedDomainTheme.bg,
+              borderColor: selectedDomainTheme.border,
+              color: selectedDomainTheme.text
+            }"
+          >
+            @{{ getDomainFromAddress(emailStore.selectedAddress) }}
+          </span>
           <n-button
             size="tiny"
             quaternary
@@ -214,6 +227,7 @@
                   <div class="mail-tags">
                     <n-tag v-if="mail.is_html" size="tiny" type="info">HTML</n-tag>
                     <n-tag v-if="hasAttachments(mail)" size="tiny" type="warning">
+
                       <template #icon>
                         <n-icon size="12">
                           <AttachIcon />
@@ -333,7 +347,9 @@ import {
   copyToClipboard,
   debounce,
   extractMailVerificationCode,
-  decodeMailSubject
+  decodeMailSubject,
+  getDomainFromAddress,
+  getDomainTheme
 } from '@/utils/helpers'
 import SenderAvatar from './SenderAvatar.vue'
 import type { EmailMessage } from '@/types'
@@ -341,6 +357,18 @@ import type { EmailMessage } from '@/types'
 const emailStore = useEmailStore()
 const uiStore = useUiStore()
 const message = useMessage()
+const isDark = computed(() => uiStore.theme === 'dark')
+
+const selectedDomainTheme = computed(() => {
+  if (!emailStore.selectedAddress) return getDomainTheme('', isDark.value)
+  return getDomainTheme(getDomainFromAddress(emailStore.selectedAddress), isDark.value)
+})
+
+function getAddressPrefix(fullAddress: string): string {
+  if (!fullAddress) return ''
+  const parts = fullAddress.split('@')
+  return parts[0] || fullAddress
+}
 
 // Local state
 const searchKeyword = ref('')
@@ -353,7 +381,6 @@ const pageSizeOptions = [5, 10, 15, 20, 25].map(n => ({ label: `${n} 封/页`, v
 
 // Computed
 const loading = computed(() => emailStore.loading)
-
 const filteredMails = computed(() => {
   let mails = emailStore.selectedAddressMails
 
@@ -600,34 +627,46 @@ onUnmounted(() => {
   justify-content: space-between;
   gap: 10px;
   padding: 2px 2px 6px;
-  border: 0;
   border-bottom: 1px solid var(--mail-border);
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
 }
 
 .selected-address-info {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex: 1;
   min-width: 0;
   padding-right: 6px;
 }
 
-.address-icon {
-  color: var(--n-primary-color);
+.address-domain-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
   flex-shrink: 0;
+  box-shadow: 0 0 5px currentColor;
 }
 
-.address-text {
-  font-weight: 500;
+.address-prefix-text {
+  font-weight: 600;
   color: var(--n-text-color);
-  font-size: 13px;
+  font-size: 13.5px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  letter-spacing: -0.2px;
+}
+
+.address-domain-tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  flex-shrink: 0;
+  letter-spacing: -0.2px;
 }
 
 .mail-actions {
