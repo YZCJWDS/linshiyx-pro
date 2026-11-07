@@ -81,6 +81,13 @@
   --line-height-md: 1.5;
   --line-height-lg: 1.75;
   
+  /* Timing Functions */
+  --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-decel: cubic-bezier(0, 0, 0.2, 1);
+  --ease-accel: cubic-bezier(0.4, 0, 1, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  
   /* Z-Index */
   --z-index-dropdown: 1000;
   --z-index-modal: 2000;
@@ -134,16 +141,17 @@ html {
   -webkit-text-size-adjust: 100%;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  font-family: "PingFang SC", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   background-color: var(--body-color);
   color: var(--text-color);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color 0.3s var(--ease-smooth), color 0.3s var(--ease-smooth);
 }
 
-/* Scrollbar Styles */
+/* Scrollbar Styles — WebKit */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -154,20 +162,31 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(0, 0, 0, 0.18);
   border-radius: 3px;
+  transition: background 0.2s;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.28);
 }
 
 [data-theme="dark"] ::-webkit-scrollbar-thumb {
-  background: rgba(148, 190, 225, 0.28);
+  background: rgba(148, 190, 225, 0.24);
 }
 
 [data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 190, 225, 0.42);
+  background: rgba(148, 190, 225, 0.38);
+}
+
+/* Scrollbar — Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.18) transparent;
+}
+
+[data-theme="dark"] * {
+  scrollbar-color: rgba(148, 190, 225, 0.24) transparent;
 }
 
 /* Focus Styles */
@@ -178,6 +197,7 @@ body {
 *:focus-visible {
   outline: 2px solid var(--primary-color);
   outline-offset: 2px;
+  border-radius: 4px;
 }
 
 /* Selection Styles */
@@ -190,7 +210,7 @@ body {
 a {
   color: var(--primary-color);
   text-decoration: none;
-  transition: color 0.3s ease;
+  transition: color 0.2s var(--ease-smooth);
 }
 
 a:hover {
@@ -253,7 +273,7 @@ img {
 /* Animation Classes */
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.3s ease;
+  transition: opacity 0.3s var(--ease-smooth);
 }
 
 .fade-enter-from,
@@ -263,25 +283,47 @@ img {
 
 .slide-enter-active,
 .slide-leave-active {
-  transition: transform 0.3s ease;
+  transition: transform 0.3s var(--ease-decel), opacity 0.3s var(--ease-smooth);
 }
 
 .slide-enter-from {
   transform: translateX(-100%);
+  opacity: 0;
 }
 
 .slide-leave-to {
   transform: translateX(100%);
+  opacity: 0;
 }
 
 .scale-enter-active,
 .scale-leave-active {
-  transition: transform 0.3s ease;
+  transition: transform 0.3s var(--ease-spring), opacity 0.3s var(--ease-smooth);
 }
 
 .scale-enter-from,
 .scale-leave-to {
-  transform: scale(0.9);
+  transform: scale(0.92);
+  opacity: 0;
+}
+
+/* 新增: 上浮进场动画 */
+.float-up-enter-active {
+  transition: transform 0.4s var(--ease-decel), opacity 0.35s var(--ease-smooth);
+}
+
+.float-up-leave-active {
+  transition: transform 0.25s var(--ease-accel), opacity 0.2s var(--ease-smooth);
+}
+
+.float-up-enter-from {
+  transform: translateY(16px);
+  opacity: 0;
+}
+
+.float-up-leave-to {
+  transform: translateY(-8px);
+  opacity: 0;
 }
 
 /* Loading Animation */
@@ -298,6 +340,30 @@ img {
   animation: spin 1s linear infinite;
 }
 
+/* 呼吸脉冲动画 */
+@keyframes breathe {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+
+/* 流光扫过动画 */
+@keyframes shimmer-sweep {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* Responsive Utilities */
 @media (max-width: 768px) {
   html {
@@ -308,5 +374,34 @@ img {
 @media (max-width: 480px) {
   html {
     font-size: 12px;
+  }
+}
+
+/* Naive UI 全局微调 */
+.n-button {
+  transition: all 0.2s var(--ease-smooth) !important;
+}
+
+.n-card {
+  transition: box-shadow 0.3s var(--ease-smooth), transform 0.3s var(--ease-smooth) !important;
+}
+
+.n-tag {
+  transition: all 0.2s var(--ease-smooth) !important;
+}
+
+/* 优化 naive-ui 弹出层动画 */
+.n-modal-body-wrapper {
+  animation: modal-appear 0.32s var(--ease-decel) !important;
+}
+
+@keyframes modal-appear {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
   }
 }

@@ -1442,10 +1442,11 @@ function handleIframeLoad(event: Event) {
   justify-content: space-between;
   gap: 12px;
   padding: 10px 14px;
-  border-radius: 10px;
-  border: 1px solid rgba(56, 168, 157, 0.45);
-  background: linear-gradient(120deg, rgba(56, 194, 177, 0.16), rgba(63, 159, 211, 0.12) 60%, rgba(255, 255, 255, 0.4));
-  box-shadow: 0 2px 10px rgba(56, 168, 157, 0.12);
+  border-radius: 14px;
+  border: 1px solid rgba(56, 168, 157, 0.5);
+  background: linear-gradient(120deg, rgba(56, 194, 177, 0.18), rgba(63, 159, 211, 0.14) 60%, rgba(255, 255, 255, 0.55));
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8) inset, 0 4px 16px rgba(56, 168, 157, 0.15);
+  backdrop-filter: blur(8px);
 }
 
 .inline-code-left {
@@ -1525,6 +1526,7 @@ function handleIframeLoad(event: Event) {
   min-height: 100%;
   margin: 0 auto;
   background: #ffffff;
+  box-shadow: 0 0 24px rgba(33, 55, 76, 0.05);
 }
 
 .inline-text-display {

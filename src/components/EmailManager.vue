@@ -1159,7 +1159,8 @@ function getLastMailTime(address: EmailAddress): string {
 .domain-tab-pill:hover {
   background: var(--manager-panel-strong);
   color: var(--n-text-color);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(33, 55, 76, 0.08);
 }
 
 .domain-tab-pill--active {
@@ -1247,7 +1248,15 @@ function getLastMailTime(address: EmailAddress): string {
 
 .address-search-section :deep(.n-input) {
   background: var(--manager-panel-strong);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08) inset;
+  border-radius: 12px;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.4) inset, 0 2px 8px rgba(33, 55, 76, 0.04);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.address-search-section :deep(.n-input:hover) {
+  border-color: var(--n-primary-color-hover);
+}
+.address-search-section :deep(.n-input.n-input--focus) {
+  box-shadow: 0 0 0 3px var(--n-primary-color-suppl), 0 4px 12px rgba(63, 159, 211, 0.12) !important;
 }
 
 /* 列表区 */
@@ -1293,20 +1302,20 @@ function getLastMailTime(address: EmailAddress): string {
   justify-content: space-between;
   gap: 8px;
   min-height: 70px;
-  padding: 10px 10px 10px 12px;
-  border-radius: var(--radius-card, 12px);
+  padding: 11px 12px;
+  border-radius: 14px;
   border: 1px solid var(--manager-border);
   background: var(--manager-item);
   box-shadow: var(--manager-shadow);
   cursor: pointer;
-  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
 }
 
 .email-item:hover {
-  border-color: rgba(56, 194, 177, 0.45);
-  box-shadow: var(--manager-shadow-hover);
+  border-color: rgba(63, 159, 211, 0.45);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.9) inset, 0 6px 18px rgba(33, 55, 76, 0.1);
   transform: translateY(-2px);
 }
 

@@ -1025,8 +1025,8 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(63, 159, 211, 0.2);
-  border-radius: 8px;
+  border: 1px solid rgba(63, 159, 211, 0.28);
+  border-radius: 10px;
   color: var(--n-primary-color);
   background: var(--app-accent-soft);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.42);
@@ -1085,8 +1085,13 @@ onUnmounted(() => {
   border: 1px solid var(--app-border);
   border-radius: 20px;
   background: var(--app-panel-soft);
-  backdrop-filter: blur(12px);
-  transition: all 0.2s ease;
+  backdrop-filter: blur(14px);
+  box-shadow: 0 2px 8px rgba(33, 55, 76, 0.05);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.mailbox-context:hover {
+  box-shadow: 0 4px 14px rgba(33, 55, 76, 0.1);
+  transform: translateY(-1px);
 }
 
 .mailbox-status-dot {

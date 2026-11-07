@@ -590,8 +590,8 @@ onUnmounted(() => {
   --mail-item-hover: rgba(79, 143, 199, 0.12);
   --mail-item-selected: linear-gradient(100deg, rgba(63, 159, 211, 0.24), rgba(255, 255, 255, 0.9) 58%, rgba(234, 247, 248, 0.84));
   --mail-border: rgba(88, 112, 130, 0.2);
-  --mail-shadow: 0 1px 0 rgba(255, 255, 255, 0.72) inset, 0 1px 2px rgba(33, 55, 76, 0.08), 0 10px 24px rgba(33, 55, 76, 0.1);
-  --mail-shadow-hover: 0 1px 0 rgba(255, 255, 255, 0.78) inset, 0 3px 7px rgba(33, 55, 76, 0.12), 0 20px 46px rgba(33, 55, 76, 0.16);
+  --mail-shadow: 0 1px 0 rgba(255, 255, 255, 0.85) inset, 0 2px 6px rgba(33, 55, 76, 0.05), 0 12px 28px rgba(33, 55, 76, 0.08);
+  --mail-shadow-hover: 0 1px 0 rgba(255, 255, 255, 0.95) inset, 0 6px 16px rgba(63, 159, 211, 0.14), 0 22px 48px rgba(33, 55, 76, 0.12);
 }
 
 [data-theme="dark"] .mail-list {
@@ -681,7 +681,15 @@ onUnmounted(() => {
 
 .search-section :deep(.n-input) {
   background: var(--mail-panel-strong);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08) inset;
+  border-radius: 12px;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.4) inset, 0 2px 8px rgba(33, 55, 76, 0.04);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.search-section :deep(.n-input:hover) {
+  border-color: var(--n-primary-color-hover);
+}
+.search-section :deep(.n-input.n-input--focus) {
+  box-shadow: 0 0 0 3px var(--n-primary-color-suppl), 0 4px 12px rgba(63, 159, 211, 0.12) !important;
 }
 
 /* 最新验证码高亮卡片 */
